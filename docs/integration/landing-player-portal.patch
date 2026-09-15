@@ -1,0 +1,48 @@
+--- a/apps/omoba/src/components/site-header.tsx
++++ b/apps/omoba/src/components/site-header.tsx
+@@ -1,9 +1,13 @@
+ import { OMOBA_LINKS } from "@/lib/links";
++import { validatedDownloadUrl } from "@/lib/beta-access";
++
++const portalUrl = validatedDownloadUrl(process.env.OMOBA_PLAYER_PORTAL_URL);
+ 
+ const nav = [
+   { label: "How to play", href: "#how-to-play" },
+   { label: "Gameplay", href: "#evolution" },
+   { label: "Roadmap", href: "#roadmap" },
++  ...(portalUrl ? [{ label: "Player portal", href: portalUrl }] : []),
+ ];
+ 
+ export function SiteHeader() {
+@@ -51,7 +55,7 @@
+       </div>
+       <nav
+         aria-label="Mobile navigation"
+-        className="mx-auto flex max-w-6xl justify-center gap-5 border-t border-white/5 px-4 text-xs text-slate-300 md:hidden"
++        className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-5 border-t border-white/5 px-4 text-xs text-slate-300 md:hidden"
+       >
+         {nav.map((item) => (
+           <a
+--- a/apps/omoba/.env.example
++++ b/apps/omoba/.env.example
+@@ -7,3 +7,6 @@
+ # placeholder URLs keep the download unavailable. Read BETA-ACCESS.md first.
+ # Resolved at build time: rebuild the Omoba app after changing this value.
+ OMOBA_MACOS_ARM64_DOWNLOAD_URL=
++
++# Published player portal HTTPS URL. Leave unset until the portal is deployed.
++# OMOBA_PLAYER_PORTAL_URL=
+--- a/apps/omoba/BETA-ACCESS.md
++++ b/apps/omoba/BETA-ACCESS.md
+@@ -46,3 +46,11 @@
+ The source repository's asset attribution and release provenance remain authoritative.
+ Legacy creator/economy sections remain in the codebase but are no longer in the beta
+ landing flow; the roadmap preserves that longer-term vision.
++
++## Player portal
++
++The account application lives separately in `omoba-web`; the game workspace contains
++its `account-api/` service. Set `OMOBA_PLAYER_PORTAL_URL` to the verified public HTTPS
++portal URL and rebuild this landing to show the Player portal navigation link.
++Leave it unset before publication; local/private URLs are rejected. The landing
++does not handle game keys, browser sessions or database access.

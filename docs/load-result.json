@@ -1,0 +1,41 @@
+{
+  "fixture": {
+    "profiles": 10000,
+    "min_matches": 100,
+    "max_matches": 100,
+    "facts": 1000000
+  },
+  "duration_seconds": 899.960509833,
+  "requests": 18000,
+  "target_rps": 20,
+  "sessions": 50,
+  "peak_concurrency": 6,
+  "error_rate": 0,
+  "by_endpoint": {
+    "profile": {
+      "count": 9000,
+      "p50_ms": 3.148417000000336,
+      "p95_ms": 8.74645800003782,
+      "p99_ms": 41.33604100008961,
+      "errors": 0
+    },
+    "history": {
+      "count": 5400,
+      "p50_ms": 7.377124999999069,
+      "p95_ms": 15.166749999974854,
+      "p99_ms": 61.07754199998453,
+      "errors": 0
+    },
+    "statistics": {
+      "count": 3600,
+      "p50_ms": 5.067084000038449,
+      "p95_ms": 11.975124999997206,
+      "p99_ms": 65.53237499995157,
+      "errors": 0
+    }
+  },
+  "status_counts": {
+    "200": 18000
+  },
+  "passed": true
+}

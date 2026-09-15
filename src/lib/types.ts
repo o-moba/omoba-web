@@ -1,0 +1,14 @@
+export type Profile = { profile_id:string; nickname:string; rating?:number; rated_matches?:number; matches_played?:number; wins?:number; losses?:number; progression_xp?:string; level?:string };
+export type Settings = { public_profile_enabled:boolean; public_stats_enabled:boolean; discoverable:boolean; locale:'ru'|'en'; timezone:string; version:string };
+export type Account = { profile:Profile; settings:Settings; rules:{newcomer_matches:number}; session:{session_id:string} };
+export type Stats = { kills:number; deaths:number; assists:number; damage_to_heroes:number; damage_to_structures:number; damage_to_creeps:number; damage_taken:number; minion_last_hits:number; jungle_last_hits:number; structures_destroyed:number; final_level:number };
+export type Participant = {player_id:string; profile_id:string|null; nickname:string; team:string; hero_class:string; avatar:string|null; sprite_character:string|null; is_bot:boolean; disconnected:boolean; stats:Stats; rating:{before:number;after:number;delta:number}|null; progression_xp_gained:number};
+export type Match = { result_id:string; ended_at:string; started_at:string; duration_ms:string; outcome:string; winner:string|null; rated:boolean; unrated_reason:string|null; participants:Participant[]; map_profile:string; ruleset:string };
+export type MatchEntry = { result_id:string; ended_at:string; duration_ms:string; outcome:string; won:boolean|null; rated:boolean; hero_class:string; avatar:string|null; kills:number; deaths:number; assists:number; damage_to_heroes:number; rating:{before:number;after:number;delta:number}|null };
+export type History = { matches:MatchEntry[]; next_cursor:string|null; data_as_of:string };
+export type Friend = {profile:Profile; presence?:string; etag:string};
+export type Friends = {friends:Friend[]; incoming:Friend[]; outgoing:Friend[]; data_as_of:string};
+export type Aggregate = {matches:number; wins:number; losses:number; kills:number; deaths:number; assists:number; kda:number|null; win_rate:number|null; damage_per_minute:number|null; minion_last_hits:number; jungle_last_hits:number};
+export type Analytics = {summary:Aggregate; classes:(Aggregate & {hero_class:string})[]; rating:{result_id:string;ended_at:string;before:number;after:number;delta:number}[]; rating_truncated:boolean;projection_status:string;pending_results:number;data_as_of:string|null};
+export type Sessions = {sessions:{session_id:string;label:string;created_at:string;last_seen:string;expires_at:string;current:boolean}[]};
+export type Release = {platform:string;architecture:string;version:string;url:string;sha256:string;size_bytes:string;published_at:string;instructions:string;test_status:string};

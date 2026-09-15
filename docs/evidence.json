@@ -1,0 +1,138 @@
+{
+  "date": "2026-09-15",
+  "status": "LOCAL_PILOT_VERIFIED_PUBLIC_ACCEPTANCE_INCOMPLETE",
+  "game_base": "e62b728ef27d621c2447b9b78f29535ee8fe08b4",
+  "game_api_version": "0.20.0-rc.1",
+  "web_version": "0.1.0",
+  "branch": "feature/player-portal-2026-09-15",
+  "committed": false,
+  "pushed": false,
+  "production_changed": false,
+  "tests": {
+    "web_unit": 3,
+    "client_career": 31,
+    "shared": 55,
+    "passport": 8,
+    "api_unit": 2,
+    "postgres_scenarios": 4,
+    "live_signed_udp_match": 1,
+    "landing_unit": 4,
+    "web_build": "PASS",
+    "web_typecheck": "PASS",
+    "landing_build": "PASS",
+    "clippy_api_server": "PASS"
+  },
+  "load": {
+    "fixture": {
+      "profiles": 10000,
+      "min_matches": 100,
+      "max_matches": 100,
+      "facts": 1000000
+    },
+    "duration_seconds": 899.960509833,
+    "requests": 18000,
+    "target_rps": 20,
+    "sessions": 50,
+    "peak_concurrency": 6,
+    "error_rate": 0,
+    "by_endpoint": {
+      "profile": {
+        "count": 9000,
+        "p50_ms": 3.148417000000336,
+        "p95_ms": 8.74645800003782,
+        "p99_ms": 41.33604100008961,
+        "errors": 0
+      },
+      "history": {
+        "count": 5400,
+        "p50_ms": 7.377124999999069,
+        "p95_ms": 15.166749999974854,
+        "p99_ms": 61.07754199998453,
+        "errors": 0
+      },
+      "statistics": {
+        "count": 3600,
+        "p50_ms": 5.067084000038449,
+        "p95_ms": 11.975124999997206,
+        "p99_ms": 65.53237499995157,
+        "errors": 0
+      }
+    },
+    "status_counts": {
+      "200": 18000
+    },
+    "passed": true
+  },
+  "browser": {
+    "passed": true,
+    "profile_id": "5b4638dfc8644124a5b463ee814178f41036261dc80548e3b753c1168ba336a7",
+    "checks": [
+      "signed browser-bound login",
+      "same game account",
+      "HttpOnly cookies",
+      "private no-store",
+      "CSRF",
+      "route allowlist",
+      "profile",
+      "history",
+      "match report",
+      "real statistics",
+      "friends",
+      "isolated guest browser",
+      "390px layout",
+      "logout revokes session and clears cookie",
+      "360/393/430/768/1440 widths",
+      "keyboard focus",
+      "core text palette contrast >=4.5"
+    ],
+    "limitations": [
+      "Phone viewport emulation; physical iOS/Android not tested.",
+      "Approval signed by synthetic test identity, not a physical native-client UI."
+    ]
+  },
+  "privacy": {
+    "passed": true,
+    "checks": [
+      "two authenticated browser contexts retain distinct identities",
+      "opt-in public profile",
+      "public stats hidden",
+      "publication revocation is immediate",
+      "actor injection rejected",
+      "guest cannot open full match"
+    ]
+  },
+  "database_outage": {
+    "passed": true,
+    "checks": [
+      "real PostgreSQL stop",
+      "authenticated BFF returns 503",
+      "UI error",
+      "same profile/rating after database restart",
+      "existing session survives infrastructure restart"
+    ]
+  },
+  "forwarding": {
+    "passed": true,
+    "statuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      429
+    ],
+    "checks": [
+      "spoofed forwarding headers do not reset peer IP budget",
+      "429 Retry-After",
+      "correlated response request ID"
+    ]
+  },
+  "remaining": [
+    "physical iOS/Android and desktop Safari acceptance",
+    "manual native pairing and continuous human game-to-web journey",
+    "published verified build catalog",
+    "production HTTPS/ingress/roles/secrets/monitoring/backups",
+    "cold-cache and game tick profiling on target server"
+  ],
+  "test_services": "owned API, Next, game server and PostgreSQL stopped; isolated data retained"
+}
