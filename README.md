@@ -17,7 +17,7 @@ Cosmetic/NFT loadout editing and passkeys are P1, not shipped in this implementa
 Node 22.9+ supported by Next.js; verified here with Node 25.6.1. PostgreSQL 15+;
 verified with PostgreSQL 18. Use the exact package lock and Rust Cargo.lock.
 
-1. Follow [Account API operations](../omoba-bevy-player-portal/account-api/README.md)
+1. Follow [Account API operations](../omoba-bevy/account-api/README.md)
    to migrate an isolated database and start the Rust API on `127.0.0.1:40550`.
 2. `npm ci` and `npm run dev` start this site at `http://127.0.0.1:3010`.
    Optional local values are listed in `.env.example`.
@@ -70,6 +70,19 @@ Third-party packages retain their licenses. The game Account API is AGPL-3.0-onl
 Current game accounts use editable `nickname#1234` addresses in profiles, settings
 and invitations. Exact lookup shows only the player name before adding a friend;
 friend mutations still use immutable internal IDs. Requires game/API career schema
-v2 (PostgreSQL ICU). See `../omoba-bevy-player-portal/docs/player-handles.md`.
+v2 (PostgreSQL ICU). See `../omoba-bevy/docs/player-handles.md`.
 Run `node tests/handles.e2e.mjs` against isolated local fixtures to verify editing,
 case-insensitive lookup, collisions and mobile layout.
+
+## Shared accounts and Supporter
+
+`/devices` supports fresh game-confirmed device enrollment, device revocation and
+one-time recovery codes. `/supporter` shows the server-owned membership, three
+aura previews, expiry/renewal source and cosmetic preferences. Solana orders are
+account-bound and recoverable after reload. Payment providers remain unavailable
+until explicitly configured; no purchase is simulated as successful in the UI.
+
+Requires matching game Account API career v3 / portal v3. Existing limited browser
+sessions must be reauthorized for the expanded device/recovery scopes. See
+[Supporter operations](../omoba-bevy/docs/supporter.md) and
+`tests/supporter.e2e.mjs` for the disposable real API/database browser fixture.

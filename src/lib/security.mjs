@@ -21,10 +21,10 @@ export function safeEqual(a, b) {
 }
 
 export function allowedPath(path, method) {
-  if (method === 'GET') return /^(me|me\/matches|me\/statistics|me\/friends|me\/sessions|players|players\/[0-9a-f]{64}|matches\/[A-Za-z0-9_-]{1,128}|releases)$/.test(path);
-  if (method === 'PATCH') return /^(me\/profile|me\/settings)$/.test(path);
-  if (method === 'DELETE') return /^me\/sessions\/[0-9a-f]{64}$/.test(path);
-  return method === 'POST' && /^(me\/friend-actions|auth\/logout|auth\/pairings(?:\/(status|complete|cancel))?)$/.test(path);
+  if (method === 'GET') return /^(me|me\/matches|me\/statistics|me\/friends|me\/sessions|me\/devices|me\/supporter|me\/supporter\/solana\/orders|players|players\/[0-9a-f]{64}|matches\/[A-Za-z0-9_-]{1,128}|releases)$/.test(path);
+  if (method === 'PATCH') return /^(me\/profile|me\/settings|me\/supporter\/aura)$/.test(path);
+  if (method === 'DELETE') return /^me\/(?:sessions|devices)\/[0-9a-f]{64}$/.test(path);
+  return method === 'POST' && /^(me\/friend-actions|me\/devices\/(?:lookup|approve)|me\/recovery-codes|me\/supporter\/solana\/(?:checkout|confirm)|auth\/logout|auth\/pairings(?:\/(status|complete|cancel))?)$/.test(path);
 }
 
 export function mutationAllowed(origin, expected, token, cookie) {

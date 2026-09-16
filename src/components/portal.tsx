@@ -1,21 +1,13 @@
 'use client';
 import Link from 'next/link';
+import { api, ApiFailure } from '@/lib/client-api';
+import DevicesView from './devices';
+import SupporterView from './supporter';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { dictionaries, type Words } from '@/lib/i18n';
 import type {Account,Profile,History,Friends,Match,Analytics,Sessions,Release,Settings} from '@/lib/types';
 
-class ApiFailure extends Error { constructor(public code:string,public status:number){super(code);} }
-async function api<T>(path:string,method='GET',body?:unknown):Promise<T> {
-  const headers:Record<string,string>={};
-  if(method!=='GET') {
-    const csrf=await fetch('/api/csrf',{cache:'no-store'}); if(!csrf.ok)throw new ApiFailure('unavailable',503);
-    headers['X-CSRF-Token']=(await csrf.json()).token;
-    headers['Content-Type']='application/json'; headers['Idempotency-Key']=crypto.randomUUID();
-  }
-  const response=await fetch('/api/'+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});
-  const value=await response.json(); if(!response.ok)throw new ApiFailure(value.code||'failed',response.status); return value;
-}
 function errorText(error:unknown,w:Words) {
   if(error instanceof ApiFailure){if(error.code==='handle_taken')return w.handleTaken;if(error.code==='player_not_found')return w.playerNotFound;if(error.status===404)return w.private;if(error.status===409)return w.conflict;
     if(error.status===429)return w.rateLimited;if(error.code==='fresh_confirmation_required')return w.freshLogin;
@@ -123,7 +115,7 @@ export default function Portal({initialAccount,initiallyUnavailable}:{initialAcc
   const connected=useCallback(()=>{void reload();router.push('/me');},[reload,router]);
   useEffect(()=>{document.documentElement.lang=locale;},[locale]);
   useEffect(()=>{if(!account)return;const focus=()=>void reload();window.addEventListener('focus',focus);const timer=setInterval(focus,5000);return()=>{window.removeEventListener('focus',focus);clearInterval(timer);};},[Boolean(account),reload]);
-  const nav=[['/',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/me',w.profile,'◉'],['/settings',w.settings,'⚙']];
+  const nav=[['/',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/me',w.profile,'◉'],['/supporter','Supporter','✦'],['/devices',locale==='ru'?'Устройства':'Devices','▣'],['/settings',w.settings,'⚙']];
   let content:React.ReactNode;
   if(path==='/login')content=<Login w={w} onConnected={connected}/>;
   else if(path==='/download')content=<Downloads w={w}/>;
@@ -134,8 +126,10 @@ export default function Portal({initialAccount,initiallyUnavailable}:{initialAcc
   else if(path==='/me/stats')content=<StatsView w={w} tz={tz} locale={locale}/>;
   else if(path==='/friends')content=<FriendsView w={w}/>;
   else if(path==='/players')content=<PlayersView w={w} me={account.profile.profile_id}/>;
+  else if(path==='/supporter')content=<SupporterView locale={locale} nickname={account.profile.nickname}/>;
+  else if(path==='/devices')content=<DevicesView locale={locale} nickname={account.profile.nickname}/>;
   else if(path==='/settings')content=<SettingsView account={account} w={w} update={()=>void reload()}/>;
-  else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div><Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
+  else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div><Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link><Link className="button" href="/supporter">✦ Supporter</Link><Link className="button" href="/devices">{locale==='ru'?'Устройства':'Devices'}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
   else content=<Card><Empty text={w.private}/></Card>;
   return <div className="shell"><aside className="sidebar"><Link href="/" className="brand"><span className="brand-mark">O</span><span>OMOBA<small>PLAYER PORTAL</small></span></Link><nav aria-label="Main">{nav.map(([href,title,icon])=><Link key={href} href={href} className={path===href?'active':''}><span aria-hidden="true">{icon}</span>{title}</Link>)}</nav><div className="sidebar-bottom"><Link className="button" href="/download">{w.download} ↗</Link><small>OPEN SOURCE · OPEN MOBA</small></div></aside><div className="workspace"><header className="topbar"><span className="beta">BETA</span><span className="muted">{w.account}</span><div className="grow"/><select aria-label={w.language} value={locale} onChange={e=>setGuestLocale(e.target.value as 'ru'|'en')} disabled={Boolean(account)}><option value="ru">RU</option><option value="en">EN</option></select>{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button onClick={async()=>{try{await api('auth/logout','POST',{});setAccount(null);router.push('/');}catch{setUnavailable(true);}}}>{w.logout}</button></>:<Link href="/login">{w.login}</Link>}</header><main>{unavailable?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer>Omoba · {w.title}<span>2026</span></footer></div><nav className="mobile-nav" aria-label="Mobile">{nav.filter(([p])=>['/','/me/matches','/players','/friends','/me'].includes(p)).map(([href,title,icon])=><Link href={href} key={href} className={path===href?'active':''}><span aria-hidden="true">{icon}</span>{title}</Link>)}</nav></div>;
 }

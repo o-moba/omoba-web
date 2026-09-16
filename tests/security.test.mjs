@@ -22,3 +22,15 @@ test('configuration disallows remote HTTP, embedded credentials and arbitrary pa
   assert.equal(portalConfig({NODE_ENV:'production',OMOBA_ALLOW_INSECURE_LOCAL:'1'}).secure,false);
   assert.ok(cookieNames(true).session.startsWith('__Host-'));
 });
+
+test('device and Supporter routes remain a narrow browser allowlist',()=>{
+  for (const path of ['me/devices','me/supporter']) assert.equal(allowedPath(path,'GET'),true);
+  for (const path of ['me/devices/lookup','me/devices/approve','me/recovery-codes','me/supporter/solana/checkout','me/supporter/solana/confirm']) assert.equal(allowedPath(path,'POST'),true);
+  assert.equal(allowedPath('me/supporter/aura','PATCH'),true);
+  assert.equal(allowedPath('me/devices/'+'a'.repeat(64),'DELETE'),true);
+  for (const path of ['auth/devices/create','auth/devices/recover','supporter/native','supporter/apple/notifications','me/supporter/apple/verify','me/supporter/grant','me/devices/approve/admin']) {
+    assert.equal(allowedPath(path,'POST'),false);
+  }
+  assert.equal(allowedPath('me/recovery-codes','GET'),false);
+  assert.equal(allowedPath('me/devices/'+'a'.repeat(63),'DELETE'),false);
+});
