@@ -4,7 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {randomBytes,createHmac,createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
-const game=process.env.OMOBA_GAME_WORKTREE||'/Users/wotori/git/ekza/omoba-bevy-player-portal';
+const game=process.env.OMOBA_GAME_WORKTREE||new URL('../../omoba-bevy',import.meta.url).pathname;
 const base=game+'/.agent/tasks/PLAYER-PORTAL-2026-09-15',pg='/Applications/Postgres.app/Contents/Versions/18/bin/',db=base+'/postgres';
 const secret=Buffer.from((await readFile(base+'/portal-test-secret','utf8')).trim(),'hex');
 const profile=createHash('md5').update('portal-benchmark-v2-49').digest('hex')+createHash('md5').update('profile-v2-49').digest('hex');

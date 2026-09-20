@@ -2,7 +2,7 @@
 
 Дата: 2026-09-15. Статус: готово к реализации; перечисленные новые возможности
 ещё не реализованы. Документ описывает первый полезный релиз P0 и расширение P1.
-Целевая папка Next.js: `/Users/wotori/git/ekza/omoba-web`.
+Целевая папка Next.js: этот репозиторий.
 
 ## 1. Назначение и пользовательская ценность
 
@@ -556,21 +556,22 @@ PASS/FAIL/NOT_RUN с указанием версии игры/сайта/API. Н
 
 ## 15. Источники и точки входа исполнителю
 
-Локальные источники проверенного среза (факты о текущей игре):
+Источники проверенного среза (факты о текущей игре), пути от корня репозитория игры
+`omoba-bevy`:
 
-- `/Users/wotori/git/ekza/omoba-bevy-iphone/shared/src/career.rs` — структуры,
+- `shared/src/career.rs` — структуры,
   подписи, ограничения ников и ID.
-- `/Users/wotori/git/ekza/omoba-bevy-iphone/server/src/career_store.rs` — операции
+- `server/src/career_store.rs` — операции
   PostgreSQL, миграция версии 1, доступ к профилям/истории/матчам.
-- `/Users/wotori/git/ekza/omoba-bevy-iphone/server/migrations/postgres/001_career.sql`
+- `server/migrations/postgres/001_career.sql`
   и `README.md` в этой папке — реальная схема, транзакции и границы.
-- `/Users/wotori/git/ekza/omoba-bevy-iphone/docs/match-progression.md` — карьера,
+- `docs/match-progression.md` — карьера,
   идентичность, eligibility и ограничения масштаба.
-- `/Users/wotori/git/ekza/omoba-bevy-iphone/docs/bot-practice-and-social.md` —
+- `docs/bot-practice-and-social.md` —
   практика, друзья/чат и ограничения NFT-реакций.
-- `/Users/wotori/git/ekza/omoba-bevy-iphone/docs/combat-cosmetics.md` и
+- `docs/combat-cosmetics.md` и
   `docs/map-customization.md` — презентация и серверные правила.
-- `/Users/wotori/git/wotori/landing-v2/apps/omoba/BETA-ACCESS.md` — текущая
+- `apps/omoba/BETA-ACCESS.md` в репозитории лендинга — текущая
   доступность сборок и правила лендинга.
 
 Внешние первичные источники проверены 2026-09-15. Они описывают инструменты и

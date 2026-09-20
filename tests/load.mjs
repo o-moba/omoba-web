@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {performance} from 'node:perf_hooks';
-const game=process.env.OMOBA_GAME_WORKTREE||'/Users/wotori/git/ekza/omoba-bevy-player-portal';
+const game=process.env.OMOBA_GAME_WORKTREE||new URL('../../omoba-bevy',import.meta.url).pathname;
 const secret=Buffer.from((await readFile(game+'/.agent/tasks/PLAYER-PORTAL-2026-09-15/portal-test-secret','utf8')).trim(),'hex');
 const md5=s=>createHash('md5').update(s).digest('hex');const hex=()=>randomBytes(32).toString('hex');const now=Math.floor(Date.now()/1000);
 const users=Array.from({length:50},(_,i)=>({profile:md5('portal-benchmark-v2-'+i)+md5('profile-v2-'+i),session:hex(),token:hex()}));

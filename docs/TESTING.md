@@ -2,7 +2,7 @@
 
 All persistence and browser checks use a disposable PostgreSQL 18 cluster on
 127.0.0.1:55581, never a production database. The game test worktree is
-`/Users/wotori/git/ekza/omoba-bevy-player-portal`; `.agent/` contains local-only data.
+the sibling checkout `../omoba-bevy` (override with `OMOBA_GAME_WORKTREE`); `.agent/` contains local-only data.
 
 Run `OMOBA_PORTAL_TEST_DATABASE_URL=... cargo test -p omoba-account-api --test postgres
 -- --ignored --nocapture` in the game worktree for pairing,
