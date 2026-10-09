@@ -86,3 +86,7 @@ Requires matching game Account API career v3 / portal v3. Existing limited brows
 sessions must be reauthorized for the expanded device/recovery scopes. See
 [Supporter operations](../omoba-bevy/docs/supporter.md) and
 `tests/supporter.e2e.mjs` for the disposable real API/database browser fixture.
+
+## Creator library
+
+The public `/creators` route browses the game-owned asset snapshot without an account. See [Creator catalogue v1](docs/creator-catalog.md) for the import bridge, read-only SDK, contribution briefs and rollout limits. Run `npm run catalog:check` to verify the snapshot and `npm run test:creators` for the focused desktop flow.

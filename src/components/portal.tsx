@@ -115,7 +115,7 @@ export default function Portal({initialAccount,initiallyUnavailable}:{initialAcc
   const connected=useCallback(()=>{void reload();router.push('/me');},[reload,router]);
   useEffect(()=>{document.documentElement.lang=locale;},[locale]);
   useEffect(()=>{if(!account)return;const focus=()=>void reload();window.addEventListener('focus',focus);const timer=setInterval(focus,5000);return()=>{window.removeEventListener('focus',focus);clearInterval(timer);};},[Boolean(account),reload]);
-  const nav=[['/',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/me',w.profile,'◉'],['/supporter','Supporter','✦'],['/devices',locale==='ru'?'Устройства':'Devices','▣'],['/settings',w.settings,'⚙']];
+  const nav=[['/',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/me',w.profile,'◉'],['/creators',locale==='ru'?'Авторам':'Creators','✧'],['/supporter','Supporter','✦'],['/devices',locale==='ru'?'Устройства':'Devices','▣'],['/settings',w.settings,'⚙']];
   let content:React.ReactNode;
   if(path==='/login')content=<Login w={w} onConnected={connected}/>;
   else if(path==='/download')content=<Downloads w={w}/>;
