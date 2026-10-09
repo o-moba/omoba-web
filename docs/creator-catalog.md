@@ -48,6 +48,10 @@ The browser test runs one desktop Chrome viewport (1440 × 1000), places a rejec
 
 Next.js bundled guides were initially unavailable before dependency installation, so official page and server/client docs were consulted. After installation, the local `page.md`, `use-search-params.md`, and `05-server-and-client-components.md` guides were read. The static page wraps query-string client interactivity in Suspense and reads the bounded snapshot on the server.
 
+## Class composition now available
+
+The [Class Workshop](class-workshop.md) implements private class composition, central-account persistence and native local Combat Test export. This does not implement exact-slot creative asset submissions or public/ranked class admission.
+
 ## Next iterations
 
 1. Add explicit requirement ID, catalogue revision, profile version and license consent to Registry submissions. Preserve immutable original submissions and validate GLBs against the matching profile.

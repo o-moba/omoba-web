@@ -90,3 +90,7 @@ sessions must be reauthorized for the expanded device/recovery scopes. See
 ## Creator library
 
 The public `/creators` route browses the game-owned asset snapshot without an account. See [Creator catalogue v1](docs/creator-catalog.md) for the import bridge, read-only SDK, contribution briefs and rollout limits. Run `npm run catalog:check` to verify the snapshot and `npm run test:creators` for the focused desktop flow.
+
+## Class Workshop
+
+`/workshop` composes local combat-test recipes, saves browser drafts, and supports private saves under the central OMOBA account. See [Class Workshop](docs/class-workshop.md) for game import, account and Ekza boundaries, snapshot refresh and the reproducible synthetic local demo.

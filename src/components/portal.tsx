@@ -112,10 +112,11 @@ export default function Portal({initialAccount,initiallyUnavailable}:{initialAcc
   const[account,setAccount]=useState(initialAccount),[unavailable,setUnavailable]=useState(initiallyUnavailable),[guestLocale,setGuestLocale]=useState<'ru'|'en'>('ru');
   const path=usePathname();const router=useRouter();const locale=account?.settings.locale||guestLocale,w=dictionaries[locale],tz=account?.settings.timezone||'UTC';
   const reload=useCallback(async()=>{try{setAccount(await api<Account>('me'));setUnavailable(false);}catch(e){if(e instanceof ApiFailure&&e.status===401){setAccount(null);setUnavailable(false);}else setUnavailable(true);}},[]);
-  const connected=useCallback(()=>{void reload();router.push('/me');},[reload,router]);
+  const loginParams=useSearchParams();const returnTo=loginParams.get('returnTo')==='/workshop'?'/workshop':'/me';
+  const connected=useCallback(()=>{void reload();router.push(returnTo);},[reload,router,returnTo]);
   useEffect(()=>{document.documentElement.lang=locale;},[locale]);
   useEffect(()=>{if(!account)return;const focus=()=>void reload();window.addEventListener('focus',focus);const timer=setInterval(focus,5000);return()=>{window.removeEventListener('focus',focus);clearInterval(timer);};},[Boolean(account),reload]);
-  const nav=[['/',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/me',w.profile,'◉'],['/creators',locale==='ru'?'Авторам':'Creators','✧'],['/supporter','Supporter','✦'],['/devices',locale==='ru'?'Устройства':'Devices','▣'],['/settings',w.settings,'⚙']];
+  const nav=[['/',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/me',w.profile,'◉'],['/creators',locale==='ru'?'Авторам':'Creators','✧'],['/workshop',locale==='ru'?'Конструктор':'Workshop','◈'],['/supporter','Supporter','✦'],['/devices',locale==='ru'?'Устройства':'Devices','▣'],['/settings',w.settings,'⚙']];
   let content:React.ReactNode;
   if(path==='/login')content=<Login w={w} onConnected={connected}/>;
   else if(path==='/download')content=<Downloads w={w}/>;

@@ -21,6 +21,10 @@ export function safeEqual(a, b) {
 }
 
 export function allowedPath(path, method) {
+  if (method === 'GET' && /^(me\/class-builds(?:\/[0-9a-f]{64})?|me\/ekza-library)$/.test(path)) return true;
+  if (method === 'POST' && /^(me\/class-builds|me\/ekza-library\/(connect|poll))$/.test(path)) return true;
+  if (method === 'PATCH' && /^me\/class-builds\/[0-9a-f]{64}$/.test(path)) return true;
+  if (method === 'DELETE' && /^(me\/class-builds\/[0-9a-f]{64}|me\/ekza-library)$/.test(path)) return true;
   if (method === 'GET') return /^(me|me\/matches|me\/statistics|me\/friends|me\/sessions|me\/devices|me\/supporter|me\/supporter\/solana\/orders|players|players\/[0-9a-f]{64}|matches\/[A-Za-z0-9_-]{1,128}|releases)$/.test(path);
   if (method === 'PATCH') return /^(me\/profile|me\/settings|me\/supporter\/aura)$/.test(path);
   if (method === 'DELETE') return /^me\/(?:sessions|devices)\/[0-9a-f]{64}$/.test(path);

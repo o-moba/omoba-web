@@ -318,6 +318,9 @@ export default function CreatorCatalog({ catalog }: { catalog: AssetCatalog }) {
           <span aria-hidden="true">O</span> OMOBA <small>CREATORS</small>
         </a>
         <nav aria-label="Creator navigation">
+          <Link href="/workshop" prefetch={false}>
+            Build a class
+          </Link>
           <a href="https://omoba.io" target="_blank" rel="noreferrer">
             About the game ↗
           </a>
