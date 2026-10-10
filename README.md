@@ -39,6 +39,7 @@ this repository. Do not expose the database or raw Account API publicly.
 
 - `OMOBA_PORTAL_ORIGIN`: exact public HTTPS origin, no path or trailing slash.
 - `OMOBA_ACCOUNT_API_URL`: internal Account API origin; server-side only.
+- `OMOBA_ACCOUNT_MODE=disabled`: explicit public guest prototype; no account upstream requests. Defaults to `enabled` for local development.
 - `OMOBA_ALLOW_INSECURE_LOCAL=1`: loopback development/testing only.
 - `OMOBA_TRUST_LOOPBACK_PROXY=1`: only behind an ingress that **overwrites**
   `X-Real-IP`, with both Node and Rust listeners inaccessible except through that
@@ -86,3 +87,13 @@ Requires matching game Account API career v3 / portal v3. Existing limited brows
 sessions must be reauthorized for the expanded device/recovery scopes. See
 [Supporter operations](../omoba-bevy/docs/supporter.md) and
 `tests/supporter.e2e.mjs` for the disposable real API/database browser fixture.
+
+## Creator library
+
+The public `/creators` route browses the game-owned asset snapshot without an account. See [Creator catalogue v1](docs/creator-catalog.md) for the import bridge, read-only SDK, contribution briefs and rollout limits. Run `npm run catalog:check` to verify the snapshot and `npm run test:creators` for the focused desktop flow.
+
+## Class Workshop
+
+`/workshop` composes local combat-test recipes, saves browser drafts, and supports private saves under the central OMOBA account. See [Class Workshop](docs/class-workshop.md) for game import, account and Ekza boundaries, snapshot refresh and the reproducible synthetic local demo.
+
+See [Vercel deployment](docs/vercel.md) for the initial public guest mode, upload exclusions and the account-service boundary. The site root opens `/workshop`; the player account area remains `/me`.

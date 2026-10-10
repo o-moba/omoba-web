@@ -1,0 +1,16 @@
+# Never upload local credentials, fixture state, repository metadata or builds.
+.agent/
+**/.agent/**
+.env
+.env.*
+**/.env
+**/.env.*
+.git
+.git/**
+.next/
+.vercel/
+node_modules/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.DS_Store

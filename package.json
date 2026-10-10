@@ -4,12 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3010",
-    "build": "next build",
+    "build": "npm run catalog:check && npm run workshop:check && next build",
     "start": "node scripts/start.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "node tests/browser.e2e.mjs",
-    "test:load": "node tests/load.mjs"
+    "test:load": "node tests/load.mjs",
+    "catalog:import": "node scripts/import-asset-catalog.mjs",
+    "test:creators": "node tests/creators.e2e.mjs",
+    "catalog:check": "node scripts/import-asset-catalog.mjs --check",
+    "workshop:import": "node scripts/import-workshop.mjs",
+    "workshop:check": "node scripts/import-workshop.mjs --check",
+    "test:workshop": "node tests/workshop.e2e.mjs",
+    "test:guest-deployment": "node tests/guest-deployment.e2e.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

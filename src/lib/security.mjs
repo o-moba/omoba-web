@@ -1,6 +1,8 @@
 import { timingSafeEqual } from 'node:crypto';
 
 export function portalConfig(env = process.env) {
+  const accountMode = env.OMOBA_ACCOUNT_MODE || 'enabled';
+  if (!['enabled', 'disabled'].includes(accountMode)) throw new Error('Invalid account mode');
   const origin = new URL(env.OMOBA_PORTAL_ORIGIN || 'http://127.0.0.1:3010');
   const api = new URL(env.OMOBA_ACCOUNT_API_URL || 'http://127.0.0.1:40550');
   const local = u => ['127.0.0.1', 'localhost', '[::1]'].includes(u.hostname);
@@ -11,7 +13,7 @@ export function portalConfig(env = process.env) {
   if (origin.protocol !== 'https:' && env.NODE_ENV === 'production' && env.OMOBA_ALLOW_INSECURE_LOCAL !== '1') {
     throw new Error('Production portal requires HTTPS; explicit local test override only');
   }
-  return { origin: origin.origin, api: api.origin, secure: origin.protocol === 'https:' };
+  return { origin: origin.origin, api: api.origin, secure: origin.protocol === 'https:', accountEnabled: accountMode === 'enabled' };
 }
 
 export function safeEqual(a, b) {
@@ -21,6 +23,10 @@ export function safeEqual(a, b) {
 }
 
 export function allowedPath(path, method) {
+  if (method === 'GET' && /^(me\/class-builds(?:\/[0-9a-f]{64})?|me\/ekza-library)$/.test(path)) return true;
+  if (method === 'POST' && /^(me\/class-builds|me\/ekza-library\/(connect|poll))$/.test(path)) return true;
+  if (method === 'PATCH' && /^me\/class-builds\/[0-9a-f]{64}$/.test(path)) return true;
+  if (method === 'DELETE' && /^(me\/class-builds\/[0-9a-f]{64}|me\/ekza-library)$/.test(path)) return true;
   if (method === 'GET') return /^(me|me\/matches|me\/statistics|me\/friends|me\/sessions|me\/devices|me\/supporter|me\/supporter\/solana\/orders|players|players\/[0-9a-f]{64}|matches\/[A-Za-z0-9_-]{1,128}|releases)$/.test(path);
   if (method === 'PATCH') return /^(me\/profile|me\/settings|me\/supporter\/aura)$/.test(path);
   if (method === 'DELETE') return /^me\/(?:sessions|devices)\/[0-9a-f]{64}$/.test(path);

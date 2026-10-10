@@ -6,6 +6,7 @@ import { cookieNames, portalConfig } from './security.mjs';
 export async function initialAccount() {
   try {
     const config = portalConfig();
+    if (!config.accountEnabled) return { account: null, unavailable: false, disabled: true };
     const token = (await cookies()).get(cookieNames(config.secure).session)?.value;
     if (!token) return { account: null, unavailable: false };
     const forwarded:Record<string,string>={ Authorization: 'Bearer '+token };
