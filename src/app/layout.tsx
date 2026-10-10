@@ -20,6 +20,11 @@ export default async function RootLayout({
   const locale = await getLocale();
   return (
     <html lang={locale === 'zh' ? 'zh-CN' : locale}>
+      <head>
+        <link rel="preload" href="/brand/fonts/BarlowCondensed-Bold.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/brand/fonts/Inter-Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/brand/fonts/Inter-SemiBold.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+      </head>
       <body><LocaleProvider initialLocale={locale}>{children}</LocaleProvider></body>
     </html>
   );
