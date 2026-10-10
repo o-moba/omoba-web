@@ -17,7 +17,7 @@ const trap = createServer((_req, res) => {
 });
 await new Promise((resolve) => trap.listen(40559, "127.0.0.1", resolve));
 const browser = await chromium.launch({ channel: "chrome", headless: true });
-const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+const page = await browser.newPage({ locale: "en-US", viewport: { width: 1440, height: 1000 } });
 const errors = [],
   apiRequests = [],
   badAssets = [];

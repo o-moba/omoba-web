@@ -47,6 +47,7 @@ try {
   assert.equal(root.headers.get("location"), "/workshop");
   browser = await chromium.launch({ channel: "chrome", headless: true });
   const context = await browser.newContext({
+    locale: "en-US",
     viewport: { width: 1440, height: 1000 },
   });
   // Stale cookies must not trigger a server fetch or revive disabled accounts.
@@ -119,7 +120,7 @@ try {
     await page.goto(origin + path);
     await page
       .getByRole("heading", {
-        name: /Аккаунты пока недоступны|Accounts are not connected yet/,
+        name: /Твоя игра. Твой набор.|Find your play./,
       })
       .waitFor();
     assert.equal(
