@@ -22,6 +22,12 @@ test('configuration disallows remote HTTP, embedded credentials and arbitrary pa
   assert.equal(portalConfig({NODE_ENV:'production',OMOBA_ALLOW_INSECURE_LOCAL:'1'}).secure,false);
   assert.ok(cookieNames(true).session.startsWith('__Host-'));
 });
+test('account mode is explicit and local development stays enabled by default',()=>{
+  assert.equal(portalConfig({}).accountEnabled,true);
+  assert.equal(portalConfig({OMOBA_ACCOUNT_MODE:'enabled'}).accountEnabled,true);
+  assert.equal(portalConfig({OMOBA_ACCOUNT_MODE:'disabled',OMOBA_PORTAL_ORIGIN:'https://app.omoba.io',NODE_ENV:'production'}).accountEnabled,false);
+  assert.throws(()=>portalConfig({OMOBA_ACCOUNT_MODE:'disable'}),/Invalid account mode/);
+});
 
 test('device and Supporter routes remain a narrow browser allowlist',()=>{
   for (const path of ['me/devices','me/supporter']) assert.equal(allowedPath(path,'GET'),true);

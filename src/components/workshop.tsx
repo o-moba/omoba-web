@@ -56,11 +56,13 @@ export default function Workshop({
   assets,
   initialAccount,
   initiallyUnavailable,
+  accountDisabled = false,
 }: {
   catalog: WorkshopCatalog;
   assets: AssetCatalog;
   initialAccount: Account | null;
   initiallyUnavailable: boolean;
+  accountDisabled?: boolean;
 }) {
   const [document, setDocument] = useState<ClassBuildDocument>(() =>
     defaultBuild(catalog, "dawnweaver"),
@@ -393,7 +395,7 @@ export default function Workshop({
         </Link>
         <nav aria-label="Workshop navigation">
           <Link href="/creators">Asset library</Link>
-          <Link href="/" prefetch={false}>
+          <Link href="/me" prefetch={false}>
             Player portal
           </Link>
           <a href="#workshop-account">
@@ -737,13 +739,21 @@ export default function Workshop({
                 {account ? account.profile.nickname : "Your private workshop"}
               </h2>
               <p className={"workshop-account-state " + accountState}>
-                {accountState === "connected"
-                  ? "Connected to your central OMOBA account"
-                  : accountState === "unavailable"
-                    ? "Account service unavailable"
-                    : "Guest · saved only in this browser"}
+                {accountDisabled
+                  ? "Guest prototype · account service is not connected"
+                  : accountState === "connected"
+                    ? "Connected to your central OMOBA account"
+                    : accountState === "unavailable"
+                      ? "Account service unavailable"
+                      : "Guest · saved only in this browser"}
               </p>
-              {!account ? (
+              {accountDisabled ? (
+                <p>
+                  Browser drafts and JSON downloads work here. Sign-in, account
+                  saves and Ekza library connection are unavailable in this
+                  public prototype.
+                </p>
+              ) : !account ? (
                 <>
                   <p>
                     Sign in through the game to save and reopen private builds

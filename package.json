@@ -15,7 +15,8 @@
     "catalog:check": "node scripts/import-asset-catalog.mjs --check",
     "workshop:import": "node scripts/import-workshop.mjs",
     "workshop:check": "node scripts/import-workshop.mjs --check",
-    "test:workshop": "node tests/workshop.e2e.mjs"
+    "test:workshop": "node tests/workshop.e2e.mjs",
+    "test:guest-deployment": "node tests/guest-deployment.e2e.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

@@ -14,6 +14,10 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
   let config: ReturnType<typeof portalConfig>;
   try { config = portalConfig(); } catch { return fail('configuration_unavailable', 503); }
   const path = (await context.params).path.join('/');
+  if (!config.accountEnabled) return fail(
+    (path === 'csrf' && request.method === 'GET') || allowedPath(path, request.method) ? 'account_service_disabled' : 'not_found',
+    (path === 'csrf' && request.method === 'GET') || allowedPath(path, request.method) ? 503 : 404,
+  );
   const jar = await cookies();
   const names = cookieNames(config.secure);
   const options = { httpOnly:true, secure:config.secure, sameSite:'lax' as const, path:'/' };

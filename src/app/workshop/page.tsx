@@ -37,6 +37,7 @@ export default async function WorkshopPage() {
       assets={assets}
       initialAccount={session.account}
       initiallyUnavailable={session.unavailable}
+      accountDisabled={session.disabled === true}
     />
   );
 }
