@@ -2,16 +2,16 @@
 
 Use the Next.js framework preset, repository root, `npm ci` and `npm run build`. Keep the default Next.js output handling; `scripts/start.mjs` is only the local standalone launcher. The dynamic workshop function reads the verified catalogue snapshots included by Next.js file tracing. `/` redirects to `/workshop`; account navigation uses `/me`.
 
-The linked project is `omoba-app` in team `wotoris-projects-c784733b`. Its planned production guest URL is `https://omoba-app.vercel.app`; verify the deployed URL before sharing it as live. The custom domain `app.omoba.io` is assigned to this project, with Name.com DNS configuration still pending.
+The linked project is `omoba-app` in team `wotoris-projects-c784733b`. The canonical production URL is `https://app.omoba.io`, with `https://omoba-app.vercel.app` as the verified Vercel fallback. The custom domain is assigned to this project; Name.com DNS and HTTPS were verified on 2026-10-10.
 
 For the initial public guest prototype, configure these server-only production environment variables:
 
 ```text
-OMOBA_PORTAL_ORIGIN=https://omoba-app.vercel.app
+OMOBA_PORTAL_ORIGIN=https://app.omoba.io
 OMOBA_ACCOUNT_MODE=disabled
 ```
 
-Use the verified canonical HTTPS origin. After custom-domain DNS and TLS are verified, change the origin to `https://app.omoba.io` for that deployment. Do not enable `OMOBA_ALLOW_INSECURE_LOCAL` or `OMOBA_TRUST_LOOPBACK_PROXY` on Vercel. No fixture credentials or Registry tokens belong in this deployment.
+Keep the exact canonical HTTPS origin configured. The fallback hostname does not become an additional trusted origin for account mutations. Do not enable `OMOBA_ALLOW_INSECURE_LOCAL` or `OMOBA_TRUST_LOOPBACK_PROXY` on Vercel. No fixture credentials or Registry tokens belong in this deployment.
 
 Disabled mode serves the public catalogue, class editor, browser drafts and JSON exports. Account and login pages explain the limitation, and account API routes return `503 account_service_disabled` without contacting any upstream, even with a stale session cookie. No account login, cloud save or Ekza connection is claimed. Local development remains enabled by default.
 
