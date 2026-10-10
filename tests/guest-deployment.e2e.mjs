@@ -69,6 +69,9 @@ try {
   await page.goto(origin + "/");
   await page.waitForURL("**/workshop");
   await page.getByText(/Valid edits recover automatically/).waitFor();
+  const headingCopy = await page.locator(".workshop-heading").innerText();
+  assert.match(headingCopy, /Keep a browser draft, download the build/);
+  assert.doesNotMatch(headingCopy, /save it privately to your account/);
   await page
     .getByText("Guest prototype · account service is not connected", {
       exact: true,

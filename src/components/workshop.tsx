@@ -415,9 +415,10 @@ export default function Workshop({
               starts with a combination<span>.</span>
             </h1>
             <p>
-              Choose a core and arrange four skills from the game’s own rules.
-              Keep a browser draft, save it privately to your account, and test
-              the build in the native game.
+              Choose a core and arrange four skills from the game’s own rules.{" "}
+              {accountDisabled
+                ? "Keep a browser draft, download the build, and test it in the native game."
+                : "Keep a browser draft, save it privately to your account, and test the build in the native game."}
             </p>
           </div>
           <div className="workshop-version">
