@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 const config: NextConfig = {
   poweredByHeader: false,
+  // Ship route styles in the initial HTML, including page-specific stylesheets.
+  experimental: { inlineCss: true },
   output: 'standalone',
   async headers() {
     return [{ source: '/:path*', headers: [

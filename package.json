@@ -17,7 +17,8 @@
     "workshop:import": "node scripts/import-workshop.mjs",
     "workshop:check": "node scripts/import-workshop.mjs --check",
     "test:workshop": "node tests/workshop.e2e.mjs",
-    "test:guest-deployment": "node tests/guest-deployment.e2e.mjs"
+    "test:guest-deployment": "node tests/guest-deployment.e2e.mjs",
+    "test:first-paint": "node tests/first-paint.e2e.mjs"
   },
   "dependencies": {
     "next": "16.3.8",

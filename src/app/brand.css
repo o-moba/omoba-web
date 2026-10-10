@@ -2,19 +2,19 @@
   font-family: OMOBA Display;
   src: url("/brand/fonts/BarlowCondensed-Bold.ttf") format("truetype");
   font-weight: 700;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: OMOBA Sans;
   src: url("/brand/fonts/Inter-Regular.ttf") format("truetype");
   font-weight: 400;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: OMOBA Sans;
   src: url("/brand/fonts/Inter-SemiBold.ttf") format("truetype");
   font-weight: 600 900;
-  font-display: swap;
+  font-display: optional;
 }
 :root {
   --omoba-void: #080e1a;
