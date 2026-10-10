@@ -509,7 +509,7 @@
         "requirementIds": [
           "basic.riftshot.presentation",
           "motion.cast_thrust_r",
-          "wildspark.handheld.repeater"
+          "riftshot.handheld.repeater"
         ]
       },
       "description": "Accurate shots, detonation marks and a blink",
@@ -523,11 +523,11 @@
         "motion.leap_land",
         "motion.shot_heavy",
         "motion.sky_shot",
+        "riftshot.handheld.repeater",
         "skill.horizon_wave.presentation",
         "skill.rift_needle.presentation",
         "skill.rift_seal.presentation",
-        "skill.rift_step.presentation",
-        "wildspark.handheld.repeater"
+        "skill.rift_step.presentation"
       ],
       "role": "carry",
       "skills": [
@@ -742,7 +742,8 @@
         "name": "Wildspark basic attack",
         "requirementIds": [
           "basic.wildspark.presentation",
-          "motion.pistol_shoot",
+          "motion.burst_fire",
+          "motion.shot_heavy",
           "wildspark.handheld.launcher",
           "wildspark.handheld.repeater",
           "wildspark.projectile.basic-rocket"
@@ -753,11 +754,11 @@
       "name": "Wildspark",
       "requirementIds": [
         "basic.wildspark.presentation",
-        "motion.ground_shot",
+        "motion.burst_fire",
         "motion.pistol_shoot",
         "motion.reload_snap",
         "motion.shot_heavy",
-        "motion.thrust_lunge",
+        "motion.toss_underhand",
         "skill.wild_rocket.presentation",
         "skill.wild_switch.presentation",
         "skill.wild_traps.presentation",
@@ -829,10 +830,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -853,10 +854,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -877,10 +878,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -901,10 +902,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -925,10 +926,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -949,10 +950,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -973,10 +974,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -997,10 +998,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1021,10 +1022,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1045,10 +1046,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1069,10 +1070,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1093,10 +1094,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1117,10 +1118,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1141,10 +1142,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1165,10 +1166,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1189,10 +1190,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1213,10 +1214,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned basic attack accents and impact. Visuals cannot change damage, timing, collision or projectile travel.",
@@ -1510,7 +1511,8 @@
       "brief": "Shared engine-owned humanoid motion, retargeted to compatible avatars. Semantic timing is a reference; custom animation upload and browser combat playback are not supported in this iteration.",
       "classIds": [
         "ranger",
-        "riftshot"
+        "riftshot",
+        "wildspark"
       ],
       "id": "motion.burst_fire",
       "name": "Burst Fire",
@@ -1518,6 +1520,10 @@
       "role": "animation_reference",
       "status": "engine_owned",
       "uses": [
+        {
+          "basicAttackId": "wildspark",
+          "phase": "attack"
+        },
         {
           "phase": "release",
           "skillId": "quick_shot"
@@ -2046,39 +2052,6 @@
         "attribution": "Quaternius",
         "bytes": 1365547,
         "details": {
-          "contact": 0.14,
-          "duration": 0.5,
-          "looping": false,
-          "motionId": "ground_shot",
-          "sourceClip": "Pistol_Aim_Neutral + Pistol_Aim_Down + Pistol_Shoot + Idle_Loop / Open Moba ground_shot pose-key edit"
-        },
-        "kind": "reference",
-        "license": "CC0-1.0",
-        "preview": null,
-        "sha256": "56468232b58ade6ff0b59d87d2adf0502a29c3d3d1f855e33f14af69c0025da0",
-        "sourcePath": "client/assets/animations/humanoid-motion-v1.json"
-      },
-      "brief": "Shared engine-owned humanoid motion, retargeted to compatible avatars. Semantic timing is a reference; custom animation upload and browser combat playback are not supported in this iteration.",
-      "classIds": [
-        "wildspark"
-      ],
-      "id": "motion.ground_shot",
-      "name": "Ground Shot",
-      "profile": null,
-      "role": "animation_reference",
-      "status": "engine_owned",
-      "uses": [
-        {
-          "phase": "release",
-          "skillId": "wild_traps"
-        }
-      ]
-    },
-    {
-      "baseline": {
-        "attribution": "Quaternius",
-        "bytes": 1365547,
-        "details": {
           "contact": 0.3333333,
           "duration": 0.8333333,
           "looping": false,
@@ -2396,13 +2369,8 @@
       "status": "engine_owned",
       "uses": [
         {
-          "basicAttackId": "wildspark",
-          "phase": "attack",
-          "state": "rockets"
-        },
-        {
-          "basicAttackId": "wildspark",
-          "phase": "attack"
+          "phase": "release",
+          "skillId": "wild_zap"
         }
       ]
     },
@@ -2663,6 +2631,11 @@
       "role": "animation_reference",
       "status": "engine_owned",
       "uses": [
+        {
+          "basicAttackId": "wildspark",
+          "phase": "attack",
+          "state": "rockets"
+        },
         {
           "phase": "release",
           "skillId": "horizon_wave"
@@ -3054,8 +3027,7 @@
       "classIds": [
         "cinderforge",
         "edgeweaver",
-        "stormfist",
-        "wildspark"
+        "stormfist"
       ],
       "id": "motion.thrust_lunge",
       "name": "Thrust Lunge",
@@ -3074,10 +3046,6 @@
         {
           "phase": "release",
           "skillId": "edge_lunge"
-        },
-        {
-          "phase": "release",
-          "skillId": "wild_zap"
         }
       ]
     },
@@ -3103,7 +3071,8 @@
         "chainkeeper",
         "dawnweaver",
         "emberveil",
-        "mage"
+        "mage",
+        "wildspark"
       ],
       "id": "motion.toss_underhand",
       "name": "Toss Underhand",
@@ -3126,6 +3095,10 @@
         {
           "phase": "release",
           "skillId": "wandering_ember"
+        },
+        {
+          "phase": "release",
+          "skillId": "wild_traps"
         }
       ]
     },
@@ -3278,14 +3251,48 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "attribution": "Open Moba contributors",
+        "bytes": 19548,
+        "kind": "model",
+        "license": "CC-BY-4.0",
+        "preview": {
+          "bytes": 320579,
+          "sha256": "8fc541bbc50f5a3cb061e7a263b2a52b15d2bbc524e22550482bc6ebe598297e",
+          "url": "/asset-catalog/files/8fc541bbc50f5a3cb061e7a263b2a52b15d2bbc524e22550482bc6ebe598297e.png"
+        },
+        "sha256": "2508a3cac976af173457be42d80480a16ab58a75776235331a186ef7cccebe8a",
+        "sourcePath": "client/assets/weapons/wild-repeater.glb",
+        "url": "/asset-catalog/files/2508a3cac976af173457be42d80480a16ab58a75776235331a186ef7cccebe8a.glb"
+      },
+      "brief": "Riftshot retains the original repeater model. Submit a static handheld through the existing weapon profile.",
+      "classIds": [
+        "riftshot"
+      ],
+      "id": "riftshot.handheld.repeater",
+      "name": "Riftshot repeater",
+      "profile": {
+        "id": "handheld-glb-v1",
+        "version": 1
+      },
+      "role": "held_weapon",
+      "status": "supported",
+      "uses": [
+        {
+          "basicAttackId": "riftshot",
+          "phase": "attack"
+        }
+      ]
+    },
+    {
+      "baseline": {
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "anchor_step"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3306,14 +3313,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "anvil_charge"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3334,14 +3341,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "arc_bolt"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3362,14 +3369,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "barkskin"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3390,14 +3397,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "battle_rally"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3418,14 +3425,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "chain_sweep"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3446,14 +3453,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "dagger_backstab"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3474,14 +3481,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "dagger_bluff"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3502,14 +3509,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "dagger_deadly_blow"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3530,14 +3537,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "dagger_lethal_blow"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3558,14 +3565,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "orbiter",
           "skillId": "dawn_barrier"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3586,14 +3593,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "dawn_bind"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3614,14 +3621,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "zone",
           "skillId": "dawn_field"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3642,14 +3649,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "lane",
           "skillId": "dawn_ray"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3670,14 +3677,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "divine_favor"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3698,14 +3705,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "echo_strike"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3726,14 +3733,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "edge_lunge"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3754,14 +3761,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "prop",
           "skillId": "fault_line"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3782,14 +3789,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "feral_swipe"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3810,14 +3817,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "field_dressing"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3838,14 +3845,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "flame_dance"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3866,14 +3873,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "fourfold_duel"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3894,14 +3901,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "frost_lance"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3922,14 +3929,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "sector",
           "skillId": "furnace_breath"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3950,14 +3957,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "guardians_blessing"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -3978,14 +3985,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "zone",
           "skillId": "guiding_lantern"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4006,14 +4013,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "heart_tether"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4034,14 +4041,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "heroic_strike"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4062,14 +4069,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "horizon_wave"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4090,14 +4097,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "hunters_mark"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4118,14 +4125,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "cage",
           "skillId": "iron_boundary"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4146,14 +4153,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "iron_hook"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4174,14 +4181,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "kindled_wisps"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4202,14 +4209,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "longshot"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4230,14 +4237,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "mana_surge"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4258,14 +4265,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "prop",
           "skillId": "mirror_guard"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4286,14 +4293,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "mountain_echo"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4314,14 +4321,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "nightfall"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4342,14 +4349,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "wall",
           "skillId": "northwall"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4370,14 +4377,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "zone",
           "skillId": "orbital_collapse"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4398,14 +4405,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "orbital_command"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4426,14 +4433,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "zone",
           "skillId": "orbital_field"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4454,14 +4461,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "orbital_guard"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4482,14 +4489,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "patient_curse"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4510,14 +4517,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "piercing_arrow"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4538,14 +4545,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "primal_maul"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4566,14 +4573,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "pyroblast"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4594,14 +4601,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "quick_shot"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4622,14 +4629,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "rampage"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4650,14 +4657,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "renew"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4678,14 +4685,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "rift_needle"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4706,14 +4713,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "rift_seal"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4734,14 +4741,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "rift_step"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4762,14 +4769,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "shadow_lash"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4790,14 +4797,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "sheltering_leap"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4818,14 +4825,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "shield_bash"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4846,14 +4853,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "smite"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4874,14 +4881,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "thorn_volley"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4902,14 +4909,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "thunder_kick"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4930,14 +4937,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "thunder_pulse"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4958,14 +4965,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "twin_tempo"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -4986,14 +4993,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "orbiter",
           "skillId": "wandering_ember"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -5014,14 +5021,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "wild_rocket"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -5042,14 +5049,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": null,
           "skillId": "wild_switch"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -5070,14 +5077,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "prop",
           "skillId": "wild_traps"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -5098,14 +5105,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "wild_zap"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -5126,14 +5133,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "lane",
           "skillId": "winter_divide"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -5154,14 +5161,14 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "details": {
           "bodyArchetype": "traveller",
           "skillId": "winter_shard"
         },
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Game-owned cast, body, impact and sound presentation. This reference does not expose an upload slot or executable skill logic.",
@@ -5216,10 +5223,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned flash, rings, debris and embers following confirmed impact. Future cosmetic parameters must preserve authoritative damage radius and visual budgets.",
@@ -5240,10 +5247,10 @@
     },
     {
       "baseline": {
-        "bytes": 64787,
+        "bytes": 64793,
         "kind": "procedural",
         "preview": null,
-        "sha256": "df742b0bb45cd3f3f4735f26d20ac2a8efa08191ed603ae349a09469beb4e8d0",
+        "sha256": "b7e07890ae69ee5cda59b015bb9f99b3f491fe957925975ff0ceefc41ef8a95c",
         "sourcePath": "client/assets/config/skills.skillfx"
       },
       "brief": "Engine-owned procedural presentation. Use the skill art and semantic motion as references; no replaceable GLB upload slot exists.",
@@ -5269,17 +5276,17 @@
     {
       "baseline": {
         "attribution": "Open Moba contributors",
-        "bytes": 16164,
+        "bytes": 76588,
         "kind": "model",
         "license": "CC-BY-4.0",
         "preview": {
-          "bytes": 312714,
-          "sha256": "711b06d113fd929b9500b8e1a0b4721209a9475bde41918d28e735cf57b75cf2",
-          "url": "/asset-catalog/files/711b06d113fd929b9500b8e1a0b4721209a9475bde41918d28e735cf57b75cf2.png"
+          "bytes": 333323,
+          "sha256": "7fb88f39eacf9fc6a7b4d1545cb4a3140c2116d9c0d687ea5cc38203ae3272f8",
+          "url": "/asset-catalog/files/7fb88f39eacf9fc6a7b4d1545cb4a3140c2116d9c0d687ea5cc38203ae3272f8.png"
         },
-        "sha256": "45d1b78660cc0df623cad9ff0f7951c506aa3b895d81050d02e303e12277b554",
+        "sha256": "f89e32ad001c94fb0178f9740ddfe9c177f28847818153703c2ae9c007ecacf0",
         "sourcePath": "client/assets/weapons/wild-launcher.glb",
-        "url": "/asset-catalog/files/45d1b78660cc0df623cad9ff0f7951c506aa3b895d81050d02e303e12277b554.glb"
+        "url": "/asset-catalog/files/f89e32ad001c94fb0178f9740ddfe9c177f28847818153703c2ae9c007ecacf0.glb"
       },
       "brief": "The second gun in the class-default Q switch. Individual static handheld submission is supported. Mode-specific cosmetic set approval and equipment are future work; this is not a third Q weapon.",
       "classIds": [
@@ -5309,21 +5316,20 @@
     {
       "baseline": {
         "attribution": "Open Moba contributors",
-        "bytes": 19548,
+        "bytes": 77244,
         "kind": "model",
         "license": "CC-BY-4.0",
         "preview": {
-          "bytes": 320579,
-          "sha256": "8fc541bbc50f5a3cb061e7a263b2a52b15d2bbc524e22550482bc6ebe598297e",
-          "url": "/asset-catalog/files/8fc541bbc50f5a3cb061e7a263b2a52b15d2bbc524e22550482bc6ebe598297e.png"
+          "bytes": 343010,
+          "sha256": "bcf487d25c2b6eefa23684bfe2d22818e2e639e630b8f1d63454a88405c17314",
+          "url": "/asset-catalog/files/bcf487d25c2b6eefa23684bfe2d22818e2e639e630b8f1d63454a88405c17314.png"
         },
-        "sha256": "2508a3cac976af173457be42d80480a16ab58a75776235331a186ef7cccebe8a",
-        "sourcePath": "client/assets/weapons/wild-repeater.glb",
-        "url": "/asset-catalog/files/2508a3cac976af173457be42d80480a16ab58a75776235331a186ef7cccebe8a.glb"
+        "sha256": "09edd94f6296e15ce0b19e80c06970e987c06827707aad9bec13e42ecc9df29e",
+        "sourcePath": "client/assets/weapons/wildspark-repeater.glb",
+        "url": "/asset-catalog/files/09edd94f6296e15ce0b19e80c06970e987c06827707aad9bec13e42ecc9df29e.glb"
       },
-      "brief": "Default repeater, reused by Riftshot. Submit a static handheld through the existing weapon profile. A coordinated two-gun set is planned; the current explicit item selection stays selected in both modes.",
+      "brief": "Wildspark class-default repeater with engine-controlled rotor animation. Static handheld submissions are supported; custom moving-part animation and coordinated two-gun sets require a future profile. Explicit item selection stays selected in both modes.",
       "classIds": [
-        "riftshot",
         "wildspark"
       ],
       "id": "wildspark.handheld.repeater",
@@ -5335,10 +5341,6 @@
       "role": "held_weapon",
       "status": "supported",
       "uses": [
-        {
-          "basicAttackId": "riftshot",
-          "phase": "attack"
-        },
         {
           "basicAttackId": "wildspark",
           "phase": "attack",
@@ -5353,18 +5355,18 @@
     },
     {
       "baseline": {
-        "bytes": 9095,
+        "attribution": "Open Moba contributors",
+        "bytes": 53096,
         "details": {
-          "effectiveForm": "tumbler",
-          "fallbackSourcePath": "client/assets/weapons/wild-rocket.glb",
           "profile": "wild_rocket"
         },
-        "kind": "procedural",
+        "kind": "reference",
+        "license": "CC-BY-4.0",
         "preview": null,
-        "sha256": "cca1c1ec6b7915faf3ea84f8670ab2df8c94ec1166ac718771d34eae51fa6031",
-        "sourcePath": "client/assets/config/combat_visuals.json"
+        "sha256": "a6743a59dbbb27ba75b315c665cdcca570021e6bc79b5e10f2f57690d7116ac9",
+        "sourcePath": "client/assets/weapons/wild-rocket.glb"
       },
-      "brief": "The effective body is the engine-owned tumbler form. The configured wild-rocket.glb is a fallback and is not the normal rendered baseline. Damage, trajectory and collision remain authoritative.",
+      "brief": "Rocket-mode basic attacks render the bundled rocket model. Custom projectile upload is not supported. Damage, trajectory and collision remain authoritative.",
       "classIds": [
         "wildspark"
       ],
@@ -5383,17 +5385,19 @@
     },
     {
       "baseline": {
-        "bytes": 16236,
+        "attribution": "Open Moba contributors",
+        "bytes": 53064,
         "details": {
-          "downloadUnavailableReason": "Asset-specific redistribution license has not been resolved.",
+          "downloadUnavailableReason": "No validated projectile or prop contribution profile in v1.",
           "model": "rocket"
         },
         "kind": "reference",
+        "license": "CC-BY-4.0",
         "preview": null,
-        "sha256": "9b8ecef314aa746463aecc7c986eca5c6fb3139733da4883acacfcf46c3a577a",
+        "sha256": "b369a17b747e4492a098a02e1838318ab5cf8b7202592d061464741e6696b51f",
         "sourcePath": "client/assets/cosmetics/standard/rocket.glb"
       },
-      "brief": "Bundled model is used by this presentation. A dedicated validated contribution profile and game binding are future work. Public model download is withheld because its asset-specific redistribution license is unresolved.",
+      "brief": "Bundled CC-BY-4.0 model is used by this presentation. A dedicated validated contribution profile and game binding are future work; v1 publishes downloadable handheld models only.",
       "classIds": [
         "wildspark"
       ],
@@ -5411,17 +5415,19 @@
     },
     {
       "baseline": {
-        "bytes": 16956,
+        "attribution": "Open Moba contributors",
+        "bytes": 65060,
         "details": {
-          "downloadUnavailableReason": "Asset-specific redistribution license has not been resolved.",
+          "downloadUnavailableReason": "No validated projectile or prop contribution profile in v1.",
           "model": "trap"
         },
         "kind": "reference",
+        "license": "CC-BY-4.0",
         "preview": null,
-        "sha256": "4b4f72de7c0af8f8cbdf5f232e630f86e1c6684498640095de8b0ab92f1210a5",
+        "sha256": "c4837f1ab11029b6df3179012d435464ca14ccba68a8ed537054c01c2ce55510",
         "sourcePath": "client/assets/cosmetics/standard/trap.glb"
       },
-      "brief": "Bundled model is used by this presentation. A dedicated validated contribution profile and game binding are future work. Public model download is withheld because its asset-specific redistribution license is unresolved.",
+      "brief": "Bundled CC-BY-4.0 model is used by this presentation. A dedicated validated contribution profile and game binding are future work; v1 publishes downloadable handheld models only.",
       "classIds": [
         "wildspark"
       ],
@@ -6823,7 +6829,7 @@
       ]
     },
     {
-      "description": "A long-range rocket explodes on a hero, punishing wounded enemies.",
+      "description": "An accelerating rocket explodes on the first enemy hero. Damage grows with flight distance and each nearby enemy’s missing health.",
       "icon": {
         "atlasHeight": 512,
         "atlasWidth": 1024,
@@ -6888,7 +6894,7 @@
       "id": "wild_traps",
       "name": "Snapline",
       "requirementIds": [
-        "motion.ground_shot",
+        "motion.toss_underhand",
         "skill.wild_traps.presentation",
         "wildspark.prop.trap"
       ]
@@ -6911,7 +6917,7 @@
       "id": "wild_zap",
       "name": "Shockline",
       "requirementIds": [
-        "motion.thrust_lunge",
+        "motion.pistol_shoot",
         "skill.wild_zap.presentation",
         "wildspark.effect.shockline"
       ]
@@ -6962,9 +6968,9 @@
     }
   ],
   "source": {
-    "commit": "f5fb8c10d589636da6fc2bbdb66fefbf7077e4d1",
-    "gameplayRevision": "standard-kits-6",
-    "inputsSha256": "a7b983274d07c16ce02437bfcb897313174609e896b3e4d3ce5e85bfe2d88ad9"
+    "commit": "1952af24125dce8dc5be7926a56fced1a48f6b84",
+    "gameplayRevision": "standard-kits-7",
+    "inputsSha256": "4d0ae33ac69f0c4b5e62324fa5cb115e69930977c26882c0905dda6a6cfe6d78"
   },
-  "revision": "sha256-23e35f191223f5dfc63a30b7c99754e6b2fc36046bc5ce7d830cc8cbe5227c23"
+  "revision": "sha256-cf9988b3f2b4d1557a9882c155a87014e62c43221f2e29caa90255d8b0a943d8"
 }

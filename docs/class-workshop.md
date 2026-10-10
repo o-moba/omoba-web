@@ -17,7 +17,7 @@ The portable document has exactly four fields:
   "description": "A local experiment",
   "recipe": {
     "schema_version": 1,
-    "catalog_revision": "standard-kits-6",
+    "catalog_revision": "standard-kits-7",
     "core": "dawnweaver",
     "passive": "radiance",
     "skills": ["rift_needle", "dawn_barrier", "dawn_field", "dawn_ray"]

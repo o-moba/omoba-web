@@ -59,3 +59,7 @@ The [Class Workshop](class-workshop.md) implements private class composition, ce
 3. Define approved sets, class/skill bindings, rollback and fallback behavior in the game. Add runtime validation and visual regression evidence for attachment transforms, scale, VFX and motion.
 4. Add interactive 3D previews only after agreeing on a renderer/profile contract; these model reference thumbnails currently do not reproduce combat rendering.
 5. Release the public portal route and then configure the marketing destination. Deployment, backend schemas and runtime equipping are outside this patch.
+
+## 0.44.0 snapshot
+
+The shipped snapshot follows game main commit `1952af24125dce8dc5be7926a56fced1a48f6b84`, including Wildspark PR #77. Wildspark’s default repeater is distinct from Riftshot’s repeater; rocket-mode attacks reference the actual bundled rocket GLB. The corresponding workshop uses `standard-kits-7`. Older class-build documents are rejected by revision validation, preserving their saved bytes for download. New static weapon previews retain content-addressed provenance.
