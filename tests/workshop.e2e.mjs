@@ -21,6 +21,7 @@ const publicKey = createPublicKey(key)
   .toString("hex");
 const browser = await chromium.launch({ channel: "chrome", headless: true }),
   context = await browser.newContext({
+    locale: "en-US",
     viewport: { width: 1440, height: 1000 },
   }),
   page = await context.newPage();
@@ -69,7 +70,7 @@ function invalidUtf8Json(source) {
 }
 try {
   // A rejected recovery must survive both editing and reload byte-for-byte.
-  const recoveryContext = await browser.newContext();
+  const recoveryContext = await browser.newContext({ locale: "en-US" });
   const recoveryPage = await recoveryContext.newPage();
   await recoveryPage.goto(origin + "/workshop");
   await recoveryPage.getByText(/Valid edits recover automatically/).waitFor();
@@ -198,7 +199,7 @@ try {
     animations: "disabled",
   });
   await page.getByRole("link", { name: "Sign in with game account" }).click();
-  await page.getByRole("button", { name: "Получить код" }).click();
+  await page.getByRole("button", { name: "Get a code" }).click();
   const code = (await page.locator(".pair-code").innerText()).replace(
     /[^A-Z0-9]/g,
     "",
@@ -284,6 +285,7 @@ try {
   );
   assert.ok(saved);
   assert.deepEqual(saved.document, downloaded);
+  await page.getByText("Design notes (optional)", { exact: true }).click();
   await page.getByLabel("Design notes").fill("Verified account update");
   await page
     .getByRole("button", { name: "Update account build", exact: true })
@@ -363,13 +365,13 @@ try {
     .getByRole("button", { name: "Save as account copy", exact: true })
     .click();
   await saveStarted;
-  await page.getByRole("combobox").selectOption("wildspark");
+  await page.getByLabel("Core", { exact: true }).selectOption("wildspark");
   releaseSave();
   await page
     .getByRole("status")
     .filter({ hasText: "replacement editor remains a separate draft" })
     .waitFor();
-  assert.equal(await page.getByRole("combobox").inputValue(), "wildspark");
+  assert.equal(await page.getByLabel("Core", { exact: true }).inputValue(), "wildspark");
   assert.equal(
     await page
       .getByRole("button", { name: "Update account build", exact: true })

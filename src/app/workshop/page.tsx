@@ -1,3 +1,6 @@
+import { getLocale } from "@/lib/locale-server";
+import { creatorText } from "@/lib/creator-translations";
+import { publicSiteUrl } from "@/lib/navigation.mjs";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { readFile, stat } from "node:fs/promises";
@@ -9,11 +12,13 @@ import { parseWorkshopCatalog, MAX_WORKSHOP_BYTES } from "@/lib/workshop.mjs";
 import Workshop from "@/components/workshop";
 import "../creators/creators.css";
 import "./workshop.css";
-export const metadata: Metadata = {
-  title: "Class Workshop · OMOBA",
-  description:
-    "Compose a class from canonical game skills and try it in a local Combat Test.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: creatorText(locale, "Class Workshop · OMOBA"),
+    description: creatorText(locale, "Compose a class from canonical game skills and try it in a local Combat Test."),
+  };
+}
 async function snapshot(path: string, limit: number) {
   const absolute = join(process.cwd(), "public", path);
   if ((await stat(absolute)).size > limit)
@@ -33,6 +38,7 @@ export default async function WorkshopPage() {
     throw new Error("Workshop and asset gameplay revisions differ");
   return (
     <Workshop
+      siteUrl={publicSiteUrl(process.env.OMOBA_SITE_URL,process.env.NODE_ENV)}
       catalog={catalog}
       assets={assets}
       initialAccount={session.account}

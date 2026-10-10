@@ -1,7 +1,11 @@
 "use client";
+import { DEFAULT_SITE_URL } from "@/lib/navigation.mjs";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiFailure } from "@/lib/client-api";
+import { Brand } from "@/components/brand";
+import { LanguageSelector, useLocale } from "@/components/locale-provider";
+import { creatorText } from "@/lib/creator-translations";
 import type { Account } from "@/lib/types";
 import type { AssetCatalog, CatalogIcon } from "@/lib/asset-catalog-types";
 import type {
@@ -57,13 +61,17 @@ export default function Workshop({
   initialAccount,
   initiallyUnavailable,
   accountDisabled = false,
+  siteUrl = DEFAULT_SITE_URL,
 }: {
   catalog: WorkshopCatalog;
   assets: AssetCatalog;
   initialAccount: Account | null;
   initiallyUnavailable: boolean;
   accountDisabled?: boolean;
+  siteUrl?: string;
 }) {
+  const { locale, t } = useLocale();
+  const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
   const [document, setDocument] = useState<ClassBuildDocument>(() =>
     defaultBuild(catalog, "dawnweaver"),
   );
@@ -102,13 +110,18 @@ export default function Workshop({
     core = catalog.cores.find((c) => c.id === document.recipe.core)!;
   const needs = derivedAssetRequirements(document, assets),
     coreAssets = assets.classes.find((c) => c.id === document.recipe.core);
+  const coreWeapon = assets.requirements.find(
+    (r) =>
+      coreAssets?.basicAttack.requirementIds.includes(r.id) &&
+      r.baseline.preview,
+  );
   const selectedSkill = catalog.skills.find(
     (s) => s.id === document.recipe.skills[activeSlot],
   )!;
   const matches = catalog.skills.filter(
     (s) =>
       !search.trim() ||
-      [s.name, s.description, s.id, s.targeting].some((v) =>
+      [s.name, s.description, s.id, s.targeting, ct(s.name), ct(s.description), ct(s.targeting.replaceAll("_", " "))].some((v) =>
         v.toLowerCase().includes(search.trim().toLowerCase()),
       ),
   );
@@ -385,87 +398,100 @@ export default function Workshop({
       })
     : null;
   return (
-    <div className="creator-page workshop-page" lang="en">
-      <a className="creator-skip" href="#workshop-content">
-        Skip to class editor
-      </a>
+    <div className="creator-page workshop-page" lang={locale === "zh" ? "zh-CN" : locale}>
+      <a className="creator-skip" href="#workshop-content">{t("Skip to class editor")}</a>
       <header className="creator-header">
         <Link href="/creators" className="creator-brand">
-          <span aria-hidden="true">O</span> OMOBA <small>WORKSHOP</small>
+          <Brand section={t("Class workshop")} />
         </Link>
-        <nav aria-label="Workshop navigation">
-          <Link href="/creators">Asset library</Link>
-          <Link href="/me" prefetch={false}>
-            Player portal
-          </Link>
+        <nav aria-label={t("Workshop navigation")}>
+          <a href={siteUrl}>{t("OMOBA website ↗")}</a>
+          <Link href="/creators">{t("Asset library")}</Link>
+          <Link href="/me" prefetch={false}>{t("Player portal")}</Link>
           <a href="#workshop-account">
-            {account ? "My account" : "Browser draft"}
+            {account ? t("My account") : t("Browser draft")}
           </a>
         </nav>
+        <LanguageSelector />
       </header>
       <main id="workshop-content">
         <section className="workshop-heading">
           <div>
-            <span className="creator-overline">
-              CLASS WORKSHOP / LOCAL COMBAT TEST
-            </span>
-            <h1>
-              Your next class
-              <br />
-              starts with a combination<span>.</span>
+            <span className="creator-overline">{t("OMOBA / CLASS WORKSHOP")}</span>
+            <h1>{t("Build your next class")}<span>.</span>
             </h1>
-            <p>
-              Choose a core and arrange four skills from the game’s own rules.{" "}
+            <p>{t("Choose a core and arrange four skills from the game’s own rules.")}{" "}
               {accountDisabled
-                ? "Keep a browser draft, download the build, and test it in the native game."
-                : "Keep a browser draft, save it privately to your account, and test the build in the native game."}
+                ? t("Keep a browser draft, download the build, and test it in the native game.")
+                : t("Keep a browser draft, save it privately to your account, and test the build in the native game.")}
             </p>
           </div>
           <div className="workshop-version">
-            <span className="creator-overline">GAME COMPATIBILITY</span>
+            <span className="creator-overline">{t("YOUR NEXT COMBINATION")}</span>
             <strong>
-              {catalog.cores.length} cores / {catalog.skills.length} skills
-            </strong>
-            <span>
-              Recipe v{catalog.recipeSchemaVersion} · {catalog.gameplayRevision}
-            </span>
-            <span>Protocol {catalog.protocolVersion}</span>
-            <small>
-              The asset library covers {assets.classes.length} classes and{" "}
-              {assets.skills.length} skills. This editor exposes the composable
-              set.
-            </small>
+              {catalog.cores.length}{" "}{t("cores /")}{" "}{catalog.skills.length}{" "}{t("skills")}</strong>
+            <small>{t("Game-owned rules. Your choice of Q, W, E and R.")}</small>
           </div>
         </section>
-        <div className="workshop-notice">
-          Private drafts and local Combat Test only. Public matchmaking and
-          ranked play do not accept custom workshop builds. Avatar appearance
-          and cosmetic equipment remain separate.
-        </div>
+        <nav className="workshop-steps" aria-label={t("Workshop sections")}>
+          <a href="#workshop-core">
+            <span>01</span>{" "}{t("Choose a core")}</a>
+          <a href="#workshop-kit">
+            <span>02</span>{" "}{t("Arrange QWER")}</a>
+          <a href="#workshop-assets">
+            <span>03</span>{" "}{t("Explore visuals")}</a>
+          <a href="#workshop-save">
+            <span>04</span>{" "}{t("Save & test")}</a>
+        </nav>
+        <div className="workshop-notice">{t("Private drafts and local Combat Test only. Public matchmaking and ranked play do not accept custom workshop builds. Avatar appearance and cosmetic equipment remain separate.")}</div>
         {notice ? (
           <p className="workshop-feedback" role="status">
-            {notice}
+            {ct(notice)}
           </p>
         ) : null}
         {error ? (
           <p className="workshop-error" role="alert">
-            {error}
+            {ct(error)}
           </p>
         ) : null}
         <div className="workshop-layout">
-          <section className="workshop-editor" aria-label="Class editor">
+          <aside className="workshop-core-rail" aria-label={t("Class presets")}>
+            <span className="creator-overline">{t("CHOOSE YOUR CORE")}</span>
+            <p>{t("Start with a playstyle.")}</p>
+            {catalog.cores.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => chooseCore(c.id)}
+                aria-pressed={document.recipe.core === c.id}
+              >
+                <SkillIcon
+                  icon={
+                    assets.skills.find((s) => s.id === c.preset.skills[0])?.icon
+                  }
+                />
+                <span>
+                  <strong>{ct(c.name)}</strong>
+                  <small>{ct(c.attackProfile.replaceAll("_", " "))}</small>
+                </span>
+              </button>
+            ))}
+            <small>{t("Choosing a core loads its full preset.")}</small>
+          </aside>
+          <section
+            className="workshop-editor"
+            id="workshop-core"
+            aria-label={t("Class editor")}
+          >
             <div className="workshop-section-title">
-              <span className="creator-overline">01 / COMPOSE</span>
+              <span className="creator-overline">{t("01 / COMPOSE")}</span>
               <span>
                 {selectedBuild
-                  ? "Account v" + selectedBuild.version
-                  : "Browser editor"}
+                  ? t("Account v") + selectedBuild.version
+                  : t("Browser editor")}
               </span>
             </div>
             <div className="workshop-form">
-              <label>
-                Build name
-                <input
+              <label>{t("Build name")}<input
                   value={document.name}
                   maxLength={160}
                   onChange={(e) =>
@@ -473,58 +499,69 @@ export default function Workshop({
                   }
                 />
               </label>
-              <label>
-                Core
-                <select
+              <label>{t("Core")}<select
                   value={document.recipe.core}
                   onChange={(e) => chooseCore(e.target.value)}
                 >
                   {catalog.cores.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {ct(c.name)}
                     </option>
                   ))}
                 </select>
               </label>
-              <label className="workshop-description">
-                Design notes
-                <textarea
-                  rows={2}
-                  value={document.description}
-                  maxLength={2000}
-                  placeholder="What makes this combination interesting?"
-                  onChange={(e) =>
-                    setDocument({ ...document, description: e.target.value })
-                  }
-                />
-              </label>
+              <details className="workshop-design-notes">
+                <summary>{t("Design notes (optional)")}</summary>
+                <label className="workshop-description">{t("Design notes")}<textarea
+                    rows={2}
+                    value={document.description}
+                    maxLength={2000}
+                    placeholder={t("What makes this combination interesting?")}
+                    onChange={(e) =>
+                      setDocument({ ...document, description: e.target.value })
+                    }
+                  />
+                </label>
+              </details>
             </div>
-            <div className="workshop-core">
-              <strong>{core.name}</strong>
-              <p>{core.description}</p>
-              <div>
-                <span>{core.baseHp} base HP</span>
-                <span>{core.attackProfile.replaceAll("_", " ")} attacks</span>
-                <span>
-                  Passive:{" "}
-                  {
-                    catalog.passives.find(
-                      (p) => p.id === document.recipe.passive,
-                    )?.name
-                  }
-                </span>
+            <div className="workshop-core-stage">
+              <div className="workshop-core">
+                <strong>{ct(core.name)}</strong>
+                <p>{ct(core.description)}</p>
+                <div>
+                  <span>{core.baseHp}{" "}{t("base HP")}</span>
+                  <span>{ct(core.attackProfile.replaceAll("_", " "))}{" "}{t("attacks")}</span>
+                  <span>{t("Passive:")}{" "}
+                    {
+                      ct(catalog.passives.find(
+                        (p) => p.id === document.recipe.passive,
+                      )?.name)
+                    }
+                  </span>
+                </div>
+                <small>{t("Changing core loads its full preset.")}{" "}
+                  {document.recipe.passive === core.defaultPassive
+                    ? t("The passive uses the core default.")
+                    : t("The imported passive is preserved; changing core restores its default.")}
+                </small>
               </div>
-              <small>
-                Changing core loads its full preset.{" "}
-                {document.recipe.passive === core.defaultPassive
-                  ? "The passive uses the core default."
-                  : "The imported passive is preserved; changing core restores its default."}
-              </small>
+              {coreWeapon?.baseline.preview ? (
+                <figure className="workshop-core-preview">
+                  <img
+                    src={coreWeapon.baseline.preview.url}
+                    alt={ct("{name} default model reference", {name: ct(coreWeapon.name)})}
+                    width={240}
+                    height={180}
+                  />
+                  <figcaption>{ct(coreWeapon.name)}{" "}{t("· default model")}</figcaption>
+                </figure>
+              ) : null}
             </div>
             <div
               className="workshop-slot-grid"
+              id="workshop-kit"
               role="group"
-              aria-label="Assigned QWER skills"
+              aria-label={t("Assigned QWER skills")}
             >
               {document.recipe.skills.map((id, index) => {
                 const s = catalog.skills.find((s) => s.id === id)!;
@@ -534,82 +571,74 @@ export default function Workshop({
                     className={activeSlot === index ? "is-active" : ""}
                     onClick={() => setActiveSlot(index)}
                     aria-pressed={activeSlot === index}
-                    aria-label={`Edit ${slots[index]}: ${s.name}`}
+                    aria-label={ct("Edit {slot}: {name}", {slot: slots[index], name: ct(s.name)})}
                   >
                     <span className="workshop-slot-key">{slots[index]}</span>
                     <SkillIcon
                       icon={assets.skills.find((a) => a.id === id)?.icon}
                     />
-                    <strong>{s.name}</strong>
-                    <small>Unlock level {s.unlockLevel}</small>
+                    <strong>{ct(s.name)}</strong>
+                    <small>{t("Unlock level")}{" "}{s.unlockLevel}</small>
                   </button>
                 );
               })}
             </div>
             <div className="workshop-skill-detail">
               <div>
-                <span className="creator-overline">
-                  ASSIGNED TO {slots[activeSlot]}
+                <span className="creator-overline">{t("ASSIGNED TO")}{" "}{slots[activeSlot]}
                 </span>
-                <h2>{selectedSkill.name}</h2>
-                <p>{selectedSkill.description}</p>
+                <h2>{ct(selectedSkill.name)}</h2>
+                <p>{ct(selectedSkill.description)}</p>
               </div>
               <dl>
                 <div>
-                  <dt>Mana</dt>
+                  <dt>{t("Mana")}</dt>
                   <dd>
                     {selectedSkill.manaCost}
                     {selectedSkill.recastManaCost
-                      ? ` / ${selectedSkill.recastManaCost} recast`
+                      ? ` / ${selectedSkill.recastManaCost} ${t("recast")}`
                       : ""}
                   </dd>
                 </div>
                 <div>
-                  <dt>Cooldown</dt>
-                  <dd>{selectedSkill.cooldownSecs}s</dd>
+                  <dt>{t("Cooldown")}</dt>
+                  <dd>{selectedSkill.cooldownSecs}{t("s")}</dd>
                 </div>
                 <div>
-                  <dt>Range</dt>
+                  <dt>{t("Range")}</dt>
                   <dd>{selectedSkill.castRange}</dd>
                 </div>
                 <div>
-                  <dt>Unlock</dt>
-                  <dd>Level {selectedSkill.unlockLevel}</dd>
+                  <dt>{t("Unlock")}</dt>
+                  <dd>{t("Level")}{" "}{selectedSkill.unlockLevel}</dd>
                 </div>
               </dl>
               <p className="workshop-small">
-                {selectedSkill.targeting.replaceAll("_", " ")} · rank cap{" "}
-                {selectedSkill.maxRank}. Unlock follows the original skill, even
-                in a different QWER position.
-              </p>
+                {ct(selectedSkill.targeting.replaceAll("_", " "))}{" "}{t("· rank cap")}{" "}
+                {selectedSkill.maxRank}{t(". Unlock follows the original skill, even in a different QWER position.")}</p>
             </div>
             {issues.length ? (
               <div className="workshop-validation" role="alert">
-                <strong>Resolve before saving or exporting</strong>
+                <strong>{t("Resolve before saving or exporting")}</strong>
                 <ul>
                   {issues.map((issue) => (
-                    <li key={issue}>{issue}</li>
+                    <li key={ct(issue)}>{ct(issue)}</li>
                   ))}
                 </ul>
               </div>
             ) : (
-              <p className="workshop-valid" role="status">
-                ✓ Compatible with this game’s recipe rules. Balance is yours to
-                explore.
-              </p>
+              <p className="workshop-valid" role="status">{t("✓ Compatible with this game’s recipe rules. Balance is yours to explore.")}</p>
             )}
             <div className="workshop-picker">
               <div className="workshop-section-title">
-                <h2>Choose a skill for {slots[activeSlot]}</h2>
-                <span>{matches.length} skills</span>
+                <h2>{t("Choose a skill for")}{" "}{slots[activeSlot]}</h2>
+                <span>{matches.length}{" "}{t("skills")}</span>
               </div>
-              <label>
-                Search composable skills
-                <input
+              <label>{t("Search composable skills")}<input
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search name, effect or targeting…"
+                  placeholder={t("Search name, effect or targeting…")}
                   maxLength={100}
                 />
               </label>
@@ -628,40 +657,63 @@ export default function Workshop({
                       });
                       setNotice("");
                     }}
-                    aria-label={`Assign ${s.name} to ${slots[activeSlot]}`}
+                    aria-label={ct("Assign {name} to {slot}", {name: ct(s.name), slot: slots[activeSlot]})}
                     aria-pressed={document.recipe.skills[activeSlot] === s.id}
                   >
                     <SkillIcon
                       icon={assets.skills.find((a) => a.id === s.id)?.icon}
                     />
                     <span>
-                      <strong>{s.name}</strong>
+                      <strong>{ct(s.name)}</strong>
                       <small>
-                        {s.manaCost} mana · {s.cooldownSecs}s · level{" "}
+                        {s.manaCost}{" "}{t("mana ·")}{" "}{s.cooldownSecs}{t("s · level")}{" "}
                         {s.unlockLevel}
                       </small>
                     </span>
                     {document.recipe.skills.includes(s.id) ? (
-                      <em>In kit</em>
+                      <em>{t("In kit")}</em>
                     ) : null}
                   </button>
                 ))}
               </div>
               {!matches.length ? (
-                <p className="workshop-small" role="status">
-                  No matching skills. Try another name or effect.
-                </p>
+                <p className="workshop-small" role="status">{t("No matching skills. Try another name or effect.")}</p>
               ) : null}
             </div>
           </section>
           <aside className="workshop-side">
-            <section className="workshop-panel">
-              <span className="creator-overline">02 / KEEP & TEST</span>
-              <h2>Keep your build</h2>
+            <section className="workshop-panel" id="workshop-save">
+              <span className="creator-overline">{t("02 / KEEP & TEST")}</span>
+              <h2>{t("Keep your build")}</h2>
+              <div
+                className="workshop-build-summary"
+                aria-label={t("Current build summary")}
+              >
+                <strong>{document.name || t("Untitled build")}</strong>
+                <span>
+                  {ct(core.name)} ·{" "}
+                  {issues.length
+                    ? t("Needs attention")
+                    : t("Ready for local testing")}
+                </span>
+                <div>
+                  {document.recipe.skills.map((id, i) => (
+                    <span
+                      key={i}
+                      title={ct(catalog.skills.find((s) => s.id === id)?.name)}
+                    >
+                      <SkillIcon
+                        icon={assets.skills.find((s) => s.id === id)?.icon}
+                      />
+                      <b>{slots[i]}</b>
+                    </span>
+                  ))}
+                </div>
+              </div>
               <p>
                 {recoveryWritable
-                  ? "Valid edits recover automatically in this browser. Save a separate local copy or download portable JSON."
-                  : "Automatic recovery is paused to protect the previous draft. Save a separate browser copy or download your current build."}
+                  ? t("Valid edits recover automatically in this browser. Save a separate local copy or download portable JSON.")
+                  : t("Automatic recovery is paused to protect the previous draft. Save a separate browser copy or download your current build.")}
               </p>
               <div className="workshop-actions">
                 {failedRecovery !== null ? (
@@ -673,19 +725,11 @@ export default function Workshop({
                         true,
                       )
                     }
-                  >
-                    Download previous recovery
-                  </button>
+                  >{t("Download previous recovery")}</button>
                 ) : null}
-                <button onClick={saveLocal} disabled={!!issues.length}>
-                  Save browser draft
-                </button>
-                <button onClick={loadLocal} disabled={!localSaved}>
-                  Load browser draft
-                </button>
-                <button onClick={() => fileInput.current?.click()}>
-                  Import build JSON
-                </button>
+                <button onClick={saveLocal} disabled={!!issues.length}>{t("Save browser draft")}</button>
+                <button onClick={loadLocal} disabled={!localSaved}>{t("Load browser draft")}</button>
+                <button onClick={() => fileInput.current?.click()}>{t("Import build JSON")}</button>
                 <button
                   onClick={() =>
                     download(
@@ -694,9 +738,7 @@ export default function Workshop({
                     )
                   }
                   disabled={!!issues.length}
-                >
-                  Download build JSON ↓
-                </button>
+                >{t("Download build JSON ↓")}</button>
                 <button
                   className="workshop-primary"
                   onClick={() =>
@@ -706,74 +748,55 @@ export default function Workshop({
                     )
                   }
                   disabled={!!issues.length}
-                >
-                  Download Combat Test ↓
-                </button>
+                >{t("Download Combat Test ↓")}</button>
               </div>
               <input
                 ref={fileInput}
                 className="workshop-file-input"
                 type="file"
                 accept="application/json,.json"
-                aria-label="Import class build file"
+                aria-label={t("Import class build file")}
                 onChange={(e) => void importFile(e.target.files?.[0])}
               />
               <details>
-                <summary>Play this build in the game</summary>
-                <p>
-                  Use a matching game checkout and start the exported safe
-                  preset:
-                </p>
+                <summary>{t("Play this build in the game")}</summary>
+                <p>{t("Use a matching game checkout and start the exported safe preset:")}</p>
                 <code>
                   python3 scripts/combat_test.py --hero {document.recipe.core}{" "}
                   --preset /path/to/omoba-combat-test.json
                 </code>
-                <p>
-                  The native game validates the full recipe again. The template
-                  enables a target dummy and normal resources.
-                </p>
+                <p>{t("The native game validates the full recipe again. The template enables a target dummy and normal resources.")}</p>
               </details>
             </section>
             <section className="workshop-panel" id="workshop-account">
-              <span className="creator-overline">03 / OMOBA ACCOUNT</span>
+              <span className="creator-overline">{t("03 / OMOBA ACCOUNT")}</span>
               <h2>
-                {account ? account.profile.nickname : "Your private workshop"}
+                {account ? account.profile.nickname : t("Your private workshop")}
               </h2>
               <p className={"workshop-account-state " + accountState}>
                 {accountDisabled
-                  ? "Guest prototype · account service is not connected"
+                  ? t("Guest prototype · account service is not connected")
                   : accountState === "connected"
-                    ? "Connected to your central OMOBA account"
+                    ? t("Connected to your central OMOBA account")
                     : accountState === "unavailable"
-                      ? "Account service unavailable"
-                      : "Guest · saved only in this browser"}
+                      ? t("Account service unavailable")
+                      : t("Guest · saved only in this browser")}
               </p>
               {accountDisabled ? (
-                <p>
-                  Browser drafts and JSON downloads work here. Sign-in, account
-                  saves and Ekza library connection are unavailable in this
-                  public prototype.
-                </p>
+                <p>{t("Browser drafts and JSON downloads work here. Sign-in, account saves and Ekza library connection are unavailable in this public prototype.")}</p>
               ) : !account ? (
                 <>
-                  <p>
-                    Sign in through the game to save and reopen private builds
-                    on another browser. The draft here stays intact.
-                  </p>
+                  <p>{t("Sign in through the game to save and reopen private builds on another browser. The draft here stays intact.")}</p>
                   <Link
                     className="creator-primary"
                     href="/login?returnTo=/workshop"
                     prefetch={false}
-                  >
-                    Sign in with game account ↗
-                  </Link>
+                  >{t("Sign in with game account ↗")}</Link>
                   <button
                     className="workshop-text-button"
                     onClick={() => void refreshAccount()}
                     disabled={busy}
-                  >
-                    Refresh account connection
-                  </button>
+                  >{t("Refresh account connection")}</button>
                 </>
               ) : (
                 <>
@@ -784,57 +807,43 @@ export default function Workshop({
                       onClick={() => void saveAccount()}
                     >
                       {selectedBuild
-                        ? "Update account build"
-                        : "Save to account"}
+                        ? t("Update account build")
+                        : t("Save to account")}
                     </button>
                     {selectedBuild ? (
                       <button
                         disabled={busy || !!issues.length}
                         onClick={() => void saveAccount(true)}
-                      >
-                        Save as account copy
-                      </button>
+                      >{t("Save as account copy")}</button>
                     ) : null}
                     <button
                       disabled={busy}
                       onClick={() => void refreshAccount()}
-                    >
-                      Refresh saved builds
-                    </button>
+                    >{t("Refresh saved builds")}</button>
                   </div>
-                  <p className="workshop-small">
-                    Private account preferences; saving does not publish or
-                    equip a class.
-                  </p>
+                  <p className="workshop-small">{t("Private account preferences; saving does not publish or equip a class.")}</p>
                   <div className="workshop-saved-list">
                     {builds.map((build) => (
                       <article key={build.id}>
                         <strong>{build.document.name}</strong>
-                        <small>
-                          Version {build.version} · {build.document.recipe.core}
+                        <small>{t("Version")}{" "}{build.version} · {build.document.recipe.core}
                         </small>
                         <div>
                           <button
                             onClick={() => loadAccount(build)}
                             disabled={busy}
-                            aria-label={`Load account build ${build.document.name}`}
-                          >
-                            Load
-                          </button>
+                            aria-label={ct("Load account build {name}", {name: build.document.name})}
+                          >{t("Load")}</button>
                           <button
                             onClick={() => void deleteAccount(build)}
                             disabled={busy}
-                            aria-label={`Delete account build ${build.document.name}`}
-                          >
-                            Delete account copy
-                          </button>
+                            aria-label={ct("Delete account build {name}", {name: build.document.name})}
+                          >{t("Delete account copy")}</button>
                         </div>
                       </article>
                     ))}
                     {!builds.length ? (
-                      <p className="workshop-small">
-                        No account builds loaded yet.
-                      </p>
+                      <p className="workshop-small">{t("No account builds loaded yet.")}</p>
                     ) : null}
                   </div>
                 </>
@@ -843,46 +852,33 @@ export default function Workshop({
             {account ? (
               <section
                 className="workshop-panel"
-                aria-label="Ekza library connection"
+                aria-label={t("Ekza library connection")}
               >
-                <span className="creator-overline">EKZA LIBRARY</span>
+                <span className="creator-overline">{t("EKZA LIBRARY")}</span>
                 <h2>
                   {library?.state === "connected"
-                    ? "Library connected"
-                    : "Connect your creative library"}
+                    ? t("Library connected")
+                    : t("Connect your creative library")}
                 </h2>
                 {library?.prototype ? (
-                  <p className="workshop-fixture">
-                    LOCAL PROTOTYPE · synthetic Registry fixture. This does not
-                    connect a hosted Ekza account.
-                  </p>
+                  <p className="workshop-fixture">{t("LOCAL PROTOTYPE · synthetic Registry fixture. This does not connect a hosted Ekza account.")}</p>
                 ) : null}
-                <p>
-                  OMOBA owns your saved builds. A separate Ekza library
-                  connection grants read-only library access; it does not
-                  approve game assets or create unified sign-in.
-                </p>
+                <p>{t("OMOBA owns your saved builds. A separate Ekza library connection grants read-only library access; it does not approve game assets or create unified sign-in.")}</p>
                 {library?.state === "connected" ? (
                   <>
-                    <p className="workshop-valid">
-                      Verified library: {library.username}
+                    <p className="workshop-valid">{t("Verified library:")}{" "}{library.username}
                     </p>
                     <button
                       disabled={libraryBusy}
                       onClick={() => void libraryAction("disconnect")}
-                    >
-                      Disconnect Ekza library
-                    </button>
+                    >{t("Disconnect Ekza library")}</button>
                   </>
                 ) : library?.state === "pending" ? (
                   <>
-                    <p>
-                      Enter code{" "}
+                    <p>{t("Enter code")}{" "}
                       <strong className="workshop-pair-code">
                         {library.userCode}
-                      </strong>{" "}
-                      on the verification page.
-                    </p>
+                      </strong>{" "}{t("on the verification page.")}</p>
                     {verificationUrl ? (
                       <a
                         className="creator-primary"
@@ -891,71 +887,54 @@ export default function Workshop({
                         rel="noreferrer"
                       >
                         {library.prototype
-                          ? "Approve synthetic fixture"
-                          : "Open Ekza verification"}{" "}
+                          ? t("Approve synthetic fixture")
+                          : t("Open Ekza verification")}{" "}
                         ↗
                       </a>
                     ) : (
-                      <p className="workshop-error">
-                        Verification link is unavailable or not trusted.
-                      </p>
+                      <p className="workshop-error">{t("Verification link is unavailable or not trusted.")}</p>
                     )}
                     <button
                       disabled={libraryBusy}
                       onClick={() => void libraryAction("poll")}
-                    >
-                      Check connection
-                    </button>
+                    >{t("Check connection")}</button>
                   </>
                 ) : (
                   <>
                     {library?.state === "unavailable" ? (
-                      <p className="workshop-error">
-                        Library status is unavailable. An existing connection
-                        has not been removed.
-                      </p>
+                      <p className="workshop-error">{t("Library status is unavailable. An existing connection has not been removed.")}</p>
                     ) : null}
                     <button
                       disabled={libraryBusy}
                       onClick={() => void libraryAction("connect")}
-                    >
-                      Connect Ekza library
-                    </button>
+                    >{t("Connect Ekza library")}</button>
                     <button
                       className="workshop-text-button"
                       disabled={libraryBusy}
                       onClick={() => void refreshLibrary()}
-                    >
-                      Refresh library status
-                    </button>
+                    >{t("Refresh library status")}</button>
                   </>
                 )}
               </section>
             ) : null}
           </aside>
         </div>
-        <section className="workshop-asset-section">
+        <section className="workshop-asset-section" id="workshop-assets">
           <div className="workshop-section-title">
             <div>
-              <span className="creator-overline">04 / CREATIVE REFERENCES</span>
-              <h2>Visual needs for this combination</h2>
+              <span className="creator-overline">{t("04 / CREATIVE REFERENCES")}</span>
+              <h2>{t("Visual needs for this combination")}</h2>
             </div>
-            <Link href={"/creators?class=" + document.recipe.core}>
-              Explore {core.name} defaults ↗
-            </Link>
+            <Link href={"/creators?class=" + document.recipe.core}>{t("Explore")}{" "}{ct(core.name)}{" "}{t("defaults ↗")}</Link>
           </div>
-          <p className="workshop-small">
-            Core basic attack plus your selected skills. Borrowing a skill does
-            not equip its home class’s weapon. These references do not grant
-            cosmetic approval.
-          </p>
+          <p className="workshop-small">{t("Core basic attack plus your selected skills. Borrowing a skill does not equip its home class’s weapon. These references do not grant cosmetic approval.")}</p>
           <div className="workshop-asset-list">
             {needs.map((r) => (
               <article key={r.id}>
                 {r.baseline.preview ? (
                   <img
                     src={r.baseline.preview.url}
-                    alt={r.name + " default model"}
+                    alt={ct("{name} default model", {name: ct(r.name)})}
                     width={120}
                     height={90}
                     loading="lazy"
@@ -969,19 +948,19 @@ export default function Workshop({
                   </span>
                 )}
                 <div>
-                  <strong>{r.name}</strong>
+                  <strong>{ct(r.name)}</strong>
                   <span>
-                    {r.role.replaceAll("_", " ")} ·{" "}
+                    {ct(r.role.replaceAll("_", " "))} ·{" "}
                     {r.status === "supported"
-                      ? "static handheld"
+                      ? t("static handheld")
                       : r.status === "planned"
-                        ? "planned"
-                        : "engine reference"}
+                        ? t("planned")
+                        : t("engine reference")}
                   </span>
                   <small>
                     {coreAssets?.basicAttack.requirementIds.includes(r.id)
-                      ? "Core basic attack"
-                      : "Selected skill reference"}
+                      ? t("Core basic attack")
+                      : t("Selected skill reference")}
                   </small>
                 </div>
               </article>
@@ -990,28 +969,23 @@ export default function Workshop({
         </section>
         <footer className="creator-footer">
           <div>
-            <strong>OMOBA / CLASS WORKSHOP</strong>
-            <p>Private drafts. Real game rules. Local experiments.</p>
+            <strong>{t("OMOBA / CLASS WORKSHOP")}</strong>
+            <p>{t("Private drafts. Real game rules. Local experiments.")}</p>
           </div>
           <details>
-            <summary>Source & compatibility</summary>
-            <p>
-              Game rules: {catalog.gameplayRevision} / protocol{" "}
+            <summary>{t("Source & compatibility")}</summary>
+            <p>{t("Game rules:")}{" "}{catalog.gameplayRevision}{" "}{t("/ protocol")}{" "}
               {catalog.protocolVersion}
             </p>
-            <p>
-              Workshop source:{" "}
+            <p>{t("Workshop source:")}{" "}
               <code>
                 {catalog.source?.commit ||
-                  "See the game-owned workshop snapshot"}
+                  t("See the game-owned workshop snapshot")}
               </code>
             </p>
-            <p>
-              Visual source: <code>{assets.source.commit}</code>
+            <p>{t("Visual source:")}{" "}<code>{assets.source.commit}</code>
             </p>
-            <a href="/workshop/catalog.json" download>
-              Download game rules snapshot ↓
-            </a>
+            <a href="/workshop/catalog.json" download>{t("Download game rules snapshot ↓")}</a>
           </details>
         </footer>
       </main>

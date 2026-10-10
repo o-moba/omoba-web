@@ -1,0 +1,85 @@
+@font-face {
+  font-family: OMOBA Display;
+  src: url("/brand/fonts/BarlowCondensed-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: OMOBA Sans;
+  src: url("/brand/fonts/Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: OMOBA Sans;
+  src: url("/brand/fonts/Inter-SemiBold.ttf") format("truetype");
+  font-weight: 600 900;
+  font-display: swap;
+}
+:root {
+  --omoba-void: #080e1a;
+  --omoba-surface: #101b2d;
+  --omoba-raised: #17253b;
+  --omoba-line: #2a3e5a;
+  --omoba-silver: #f0f4fa;
+  --omoba-muted: #9baec6;
+  --omoba-cobalt: #3478f6;
+  --omoba-crystal: #3ddcff;
+  --omoba-gold: #c9a56a;
+  --omoba-error: #f08c86;
+  --omoba-display: "OMOBA Display", "OMOBA Sans", sans-serif;
+  --omoba-sans:
+    "OMOBA Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.omoba-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  color: var(--omoba-silver);
+}
+.omoba-brand > img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.omoba-brand > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.omoba-brand b {
+  font-family: var(--omoba-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+}
+.omoba-brand small {
+  font-family: var(--omoba-sans);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--omoba-muted);
+}
+@media (max-width: 760px) {
+  .omoba-brand > img {
+    width: 44px;
+    height: 44px;
+  }
+  .omoba-brand {
+    gap: 10px;
+  }
+  .omoba-brand b {
+    font-size: 24px;
+  }
+  .omoba-brand small {
+    font-size: 9px;
+  }
+}
+.omoba-brand > img {
+  border-radius: 12px;
+}

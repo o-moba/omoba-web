@@ -9,7 +9,7 @@ const key = createPrivateKey({ key: Buffer.concat([Buffer.from('302e020100300506
 const pub = k => createPublicKey(k).export({ format: 'der', type: 'spki' }).subarray(-32).toString('hex');
 async function native(path, body) { const r = await fetch(apiOrigin + '/v1/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const v = await r.json(); assert.equal(r.status, 200, JSON.stringify(v)); return v; }
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } }); const page = await context.newPage();
+const context = await browser.newContext({ locale: 'ru-RU', viewport: { width: 1440, height: 1000 } }); const page = await context.newPage();
 const errors = []; page.on('pageerror', e => errors.push(e.message));
 page.on('dialog', dialog => dialog.accept());
 const deviceLabel = 'Synthetic iPhone ' + randomBytes(4).toString('hex');
