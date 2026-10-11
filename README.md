@@ -41,6 +41,9 @@ this repository. Do not expose the database or raw Account API publicly.
 - `OMOBA_ACCOUNT_API_URL`: internal Account API origin; server-side only.
 - `OMOBA_ACCOUNT_MODE=disabled`: explicit public guest prototype; no account upstream requests. Defaults to `enabled` for local development.
 - `OMOBA_ALLOW_INSECURE_LOCAL=1`: loopback development/testing only.
+- `OMOBA_REGISTRY_URL`, `OMOBA_STUDIO_URL`: Ekza Registry and Studio origins for the
+  market. Defaults `https://registry.ekza.io` and `https://studio.ekza.io`; other
+  values only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1`.
 - `OMOBA_TRUST_LOOPBACK_PROXY=1`: only behind an ingress that **overwrites**
   `X-Real-IP`, with both Node and Rust listeners inaccessible except through that
   trusted ingress. Enable the same option on the API. Otherwise forwarded headers
@@ -91,6 +94,16 @@ sessions must be reauthorized for the expanded device/recovery scopes. See
 ## Creator library
 
 The public `/creators` route browses the game-owned asset snapshot without an account. See [Creator catalogue v1](docs/creator-catalog.md) for the import bridge, read-only SDK, contribution briefs and rollout limits. Run `npm run catalog:check` to verify the snapshot and `npm run test:creators` for the focused desktop flow.
+
+## Market
+
+`/market` lists free community weapons and avatars approved for OMOBA in the Ekza
+Registry, with Wildspark repeater + launcher sets featured first. "Sign in with Ekza"
+links the player's Ekza library (scope `library-claim`); "Get free" adds an item to
+that library, which the game reads for "My Ekza library". The Registry link token
+stays in an HttpOnly cookie behind the separate `/api/ekza/*` BFF. It does not use
+the Account API, so it works in guest mode. See [Market](docs/market.md);
+`npm run test:market` runs the browser flow against a fake Registry.
 
 ## Class Workshop
 

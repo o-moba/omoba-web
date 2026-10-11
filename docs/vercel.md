@@ -11,6 +11,8 @@ OMOBA_PORTAL_ORIGIN=https://app.omoba.io
 OMOBA_ACCOUNT_MODE=disabled
 ```
 
+The market (`/market`) reads the public Ekza Registry and uses its own Ekza link cookies. It needs no further variables in production: `OMOBA_REGISTRY_URL` and `OMOBA_STUDIO_URL` default to `https://registry.ekza.io` and `https://studio.ekza.io`. Do not set them on Vercel; any other value is accepted only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1` and otherwise renders "Market unavailable". In-place claims need a Registry with the `library-claim` link scope and `POST/DELETE /v1/account/library/{assetId}`; against an older Registry the market still lists items and sign-in reports that claims are not available yet. See [Market](market.md).
+
 Keep the exact canonical HTTPS origin configured. The fallback hostname does not become an additional trusted origin for account mutations. Do not enable `OMOBA_ALLOW_INSECURE_LOCAL` or `OMOBA_TRUST_LOOPBACK_PROXY` on Vercel. No fixture credentials or Registry tokens belong in this deployment.
 
 Disabled mode serves the public catalogue, class editor, browser drafts and JSON exports. Account and login pages explain the limitation, and account API routes return `503 account_service_disabled` without contacting any upstream, even with a stale session cookie. No account login, cloud save or Ekza connection is claimed. Local development remains enabled by default.
@@ -26,6 +28,7 @@ npm test
 npm run typecheck
 npm run build
 npm run test:guest-deployment
+npm run test:market
 ```
 
 The targeted smoke starts an isolated production server on loopback port 3013 with a trap Account API. It checks the root redirect, stale-cookie behavior, unavailable login/account pages, local save/export, public gallery and zero upstream calls. No hosted account service or personal credentials are used.
