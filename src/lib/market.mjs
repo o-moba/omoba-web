@@ -195,6 +195,13 @@ export function studioDraftUrl(studioOrigin = DEFAULT_STUDIO_URL, requirementId)
   return url.href;
 }
 
+/** Studio library, where created and Studio-saved items are managed (the market cannot remove them). */
+export function studioLibraryUrl(studioOrigin = DEFAULT_STUDIO_URL) {
+  const url = new URL("/studio", studioOrigin);
+  url.searchParams.set("view", "library");
+  return url.href;
+}
+
 /** Device-poll failures that waiting can fix: a busy, cold or unreachable Registry or BFF. */
 const TRANSIENT_POLL_FAILURES = new Set(["registry_unavailable", "rate_limited"]);
 export const MAX_POLL_BACKOFF_SECONDS = 30;

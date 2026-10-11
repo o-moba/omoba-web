@@ -92,6 +92,17 @@
   font-size: 12px;
   line-height: 1.6;
 }
+.market-notice {
+  color: #8ee8c3;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.market-card .market-manage {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 4px;
+}
 .market-section {
   padding: 34px 0 20px;
   border-top: 1px solid var(--creator-line);

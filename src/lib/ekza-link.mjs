@@ -178,12 +178,19 @@ export function parseLibrary(value) {
   };
 }
 
-/** Upstream failure -> stable browser code. Raw Registry messages are not forwarded. */
+/**
+ * Upstream failure -> stable browser code. Raw Registry messages are not forwarded.
+ * A link the Registry will never accept again (401, or 403 `link_scope`) is cleared,
+ * so a reload does not show a sign-in that cannot work.
+ */
 export function upstreamFailure(action, status, body) {
   const code = body && typeof body === "object" && body.error && typeof body.error.code === "string" ? body.error.code : null;
-  if (status === 401) return { status: 401, code: "link_expired", clearLink: action !== "start" && action !== "poll" };
-  if (status === 403 && code === "link_scope") return { status: 403, code: "link_scope" };
+  const linked = action !== "start" && action !== "poll";
+  if (status === 401) return { status: 401, code: "link_expired", clearLink: linked };
+  if (status === 403 && code === "link_scope") return { status: 403, code: "link_scope", clearLink: linked };
   if (status === 404 && code === "asset_not_available") return { status: 404, code: "asset_not_available" };
+  // Created items, Studio saves and other games' claims stay; the player manages them in Studio.
+  if (action === "unclaim" && status === 409 && code === "claim_not_removable") return { status: 409, code: "claim_not_removable" };
   // An older Registry rejects the scope (422) or has no claim route (404/405).
   if ((action === "start" && status === 422) || ((action === "claim" || action === "unclaim") && (status === 404 || status === 405)))
     return { status: 501, code: "claims_unsupported" };

@@ -21,7 +21,7 @@ export const marketTranslations: Record<string, { ru: string; zh: string }> = {
   "Library:": { ru: "Библиотека:", zh: "资源库：" },
   "Free items you get here appear in the game under “My Ekza library” when the game is connected to the same Ekza account.": {
     ru: "Полученные здесь бесплатные предметы появятся в игре в разделе «Моя библиотека Ekza», если игра подключена к тому же аккаунту Ekza.",
-    zh: "当游戏连接到同一个 Ekza 账号时，你在这里获取的免费物品会出现在游戏的“我的 Ekza 资源库”中。",
+    zh: "当游戏连接到同一个 Ekza 账号时，你在这里获取的免费物品会出现在游戏的“我的 Ekza 收藏”中。",
   },
   "Sign out of Ekza": { ru: "Выйти из Ekza", zh: "退出 Ekza" },
   "Approve in Ekza Studio": { ru: "Подтвердите в Ekza Studio", zh: "在 Ekza Studio 中批准" },
@@ -85,7 +85,7 @@ export const marketTranslations: Record<string, { ru: string; zh: string }> = {
   },
   "During the beta every approved free item can be used in the game. Your Ekza library decides what the game lists under “My Ekza library”.": {
     ru: "Во время беты в игре можно использовать любой одобренный бесплатный предмет. Библиотека Ekza определяет, что игра покажет в разделе «Моя библиотека Ekza».",
-    zh: "测试期间，所有已审核的免费物品都可以在游戏中使用。你的 Ekza 资源库决定游戏在“我的 Ekza 资源库”中列出哪些物品。",
+    zh: "测试期间，所有已审核的免费物品都可以在游戏中使用。你的 Ekza 资源库决定游戏在“我的 Ekza 收藏”中列出哪些物品。",
   },
   "Preview of {name}": { ru: "Превью: {name}", zh: "{name} 预览" },
   "Default Wildspark launcher": { ru: "Стандартный ракетомёт Wildspark", zh: "Wildspark 默认发射器" },
@@ -98,6 +98,12 @@ export const marketTranslations: Record<string, { ru: string; zh: string }> = {
   },
   "Owned": { ru: "В библиотеке", zh: "已拥有" },
   "Remove from library": { ru: "Убрать из библиотеки", zh: "从资源库移除" },
+  "Manage in Ekza Studio ↗": { ru: "Управлять в Ekza Studio ↗", zh: "在 Ekza Studio 中管理 ↗" },
+  "Removed from your Ekza library.": { ru: "Убрано из вашей библиотеки Ekza.", zh: "已从你的 Ekza 资源库移除。" },
+  "Signed out here. Ekza could not confirm it, so OMOBA may still be listed under Account → Connected games in Ekza Studio. You can disconnect it there.": {
+    ru: "Вы вышли на этом сайте. Ekza не подтвердила выход, поэтому OMOBA может ещё числиться в Ekza Studio в разделе Account → Connected games. Отключить её можно там.",
+    zh: "已在本站退出。Ekza 未能确认，因此 OMOBA 可能仍列在 Ekza Studio 的 Account → Connected games 中。你可以在那里断开连接。",
+  },
   "Adding…": { ru: "Добавляем…", zh: "正在添加…" },
   "Get free": { ru: "Получить бесплатно", zh: "免费获取" },
   "Waiting for Ekza approval…": { ru: "Ждём подтверждения в Ekza…", zh: "等待 Ekza 批准…" },
@@ -125,6 +131,10 @@ export const marketTranslations: Record<string, { ru: string; zh: string }> = {
   "This item is no longer available for OMOBA.": {
     ru: "Этот предмет больше недоступен для OMOBA.",
     zh: "此物品已不再适用于 OMOBA。",
+  },
+  "This item was added in Ekza Studio or by another game, so it stays in your library. Manage it in Ekza Studio.": {
+    ru: "Этот предмет добавлен в Ekza Studio или другой игрой, поэтому остаётся в библиотеке. Управляйте им в Ekza Studio.",
+    zh: "此物品是在 Ekza Studio 中或由其他游戏添加的，因此会保留在你的资源库中。请在 Ekza Studio 中管理。",
   },
   "Ekza does not accept free claims from this site yet. Try again later.": {
     ru: "Ekza пока не принимает получение бесплатных предметов с этого сайта. Попробуйте позже.",

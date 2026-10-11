@@ -105,8 +105,10 @@ The public `/creators` route browses the game-owned asset snapshot without an ac
 `/market` lists free community weapons and avatars approved for OMOBA in the Ekza
 Registry, with Wildspark repeater + launcher sets featured first. "Sign in with Ekza"
 links the player's Ekza library (scope `library-claim`); "Get free" adds an item to
-that library, which the game reads for "My Ekza library". The Registry link token
-stays in an HttpOnly cookie behind the separate `/api/ekza/*` BFF. It does not use
+that library, which the game reads for "My Ekza library"; "Remove from library" takes
+back only what the market claimed. The Registry link token stays in an HttpOnly cookie
+behind the separate `/api/ekza/*` BFF, and sign-out also ends that link in the
+Registry (best effort; the cookies are cleared either way). It does not use
 the Account API, so it works in guest mode. See [Market](docs/market.md);
 `npm run test:market` runs the browser flow against a fake Registry.
 

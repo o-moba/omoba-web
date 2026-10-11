@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
-import { MAX_POLL_BACKOFF_SECONDS, WILDSPARK_SET_REQUIREMENT, devicePollRetry, isWildsparkHandheld, marketGroups, parseMarket, studioDraftUrl } from '../src/lib/market.mjs';
+import { MAX_POLL_BACKOFF_SECONDS, WILDSPARK_SET_REQUIREMENT, devicePollRetry, isWildsparkHandheld, marketGroups, parseMarket, studioDraftUrl, studioLibraryUrl } from '../src/lib/market.mjs';
 import { ekzaConfig, ekzaCookieNames, ekzaRoute, parseDeviceStart, parseLibrary, parsePoll, safeVerificationUrl, studioOrigin, upstreamFailure } from '../src/lib/ekza-link.mjs';
-import { loadMarket, readLibrary, registryRequest } from '../src/lib/market-server.mjs';
+import { SIGN_OUT_TIMEOUT_MS, loadMarket, readLibrary, registryRequest, revokeLink } from '../src/lib/market-server.mjs';
 import { mutationAllowed } from '../src/lib/security.mjs';
 
 const REGISTRY = 'https://registry.ekza.io';
@@ -89,6 +89,9 @@ test('Studio deep links carry the Wildspark set requirement only', () => {
   }
   assert.equal(studioDraftUrl('https://studio.ekza.io', 'riftshot.handheld.repeater'), 'https://studio.ekza.io/studio?view=new');
   assert.equal(studioDraftUrl('http://127.0.0.1:5188', WILDSPARK_SET_REQUIREMENT), wildspark.replace('https://studio.ekza.io', 'http://127.0.0.1:5188'));
+  // Created and Studio-saved items are managed in the Studio library.
+  assert.equal(studioLibraryUrl(), 'https://studio.ekza.io/studio?view=library');
+  assert.equal(studioLibraryUrl('http://127.0.0.1:5188'), 'http://127.0.0.1:5188/studio?view=library');
 });
 
 test('Registry and Studio origins are fixed unless a loopback double is explicitly allowed', () => {
@@ -185,7 +188,16 @@ test('Registry failures map to stable, actionable codes without forwarding messa
   const error = code => ({ error: { code, message: 'internal detail' } });
   assert.deepEqual(upstreamFailure('claim', 401, error('link_invalid')), { status: 401, code: 'link_expired', clearLink: true });
   assert.deepEqual(upstreamFailure('library', 401, null), { status: 401, code: 'link_expired', clearLink: true });
-  assert.deepEqual(upstreamFailure('claim', 403, error('link_scope')), { status: 403, code: 'link_scope' });
+  // A link that can never add items is cleared like an expired one; the player signs in again.
+  for (const action of ['claim', 'unclaim', 'library'])
+    assert.deepEqual(upstreamFailure(action, 403, error('link_scope')), { status: 403, code: 'link_scope', clearLink: true }, action);
+  assert.deepEqual(upstreamFailure('start', 401, null), { status: 401, code: 'link_expired', clearLink: false }, 'no link is held while signing in');
+  assert.equal(upstreamFailure('poll', 403, error('link_scope')).clearLink, false);
+  assert.equal(upstreamFailure('claim', 403, error('forbidden')).clearLink, undefined, 'any other 403 keeps the link');
+  // Remove from library: the Registry refuses created items, Studio saves and other games' claims.
+  assert.deepEqual(upstreamFailure('unclaim', 409, error('claim_not_removable')), { status: 409, code: 'claim_not_removable' });
+  assert.deepEqual(upstreamFailure('unclaim', 409, { detail: 'Conflict' }), { status: 502, code: 'registry_error' });
+  assert.deepEqual(upstreamFailure('claim', 409, error('claim_not_removable')), { status: 502, code: 'registry_error' });
   assert.deepEqual(upstreamFailure('claim', 404, error('asset_not_available')), { status: 404, code: 'asset_not_available' });
   assert.deepEqual(upstreamFailure('claim', 404, { detail: 'Not Found' }), { status: 501, code: 'claims_unsupported' });
   assert.deepEqual(upstreamFailure('start', 422, error('validation_error')), { status: 501, code: 'claims_unsupported' });
@@ -275,6 +287,40 @@ test('library reads send the link token only as a Bearer header to the Registry'
     await registry.close();
   }
   assert.deepEqual(await readLibrary(registry.origin, token, { timeoutMs: 300 }), { state: 'unavailable' });
+});
+
+test('sign-out ends only the presented link in the Registry and never throws', async () => {
+  const token = 'S'.repeat(64);
+  let mode = 'ok';
+  const seen = [];
+  const registry = await fakeRegistry(async (req, res) => {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    seen.push({ method: req.method, url: req.url, authorization: req.headers.authorization, cookie: req.headers.cookie, body: Buffer.concat(chunks).length });
+    if (mode === 'hang') return;
+    if (mode === 'old') { res.writeHead(405, { 'Content-Type': 'application/json' }); return res.end('{"detail":"Method Not Allowed"}'); }
+    if (mode === 'down') { res.writeHead(503, { 'Content-Type': 'application/json' }); return res.end('{"error":{"code":"unavailable"}}'); }
+    if (mode === 'html') { res.writeHead(502, { 'Content-Type': 'text/html' }); return res.end('<html>bad gateway</html>'); }
+    res.writeHead(204);
+    res.end();
+  });
+  try {
+    assert.equal(await revokeLink(registry.origin, token), true);
+    assert.deepEqual(seen, [{ method: 'DELETE', url: '/v1/account/session', authorization: 'Bearer ' + token, cookie: undefined, body: 0 }]);
+    // An older Registry without C7, an outage or a proxy page: not confirmed, still no throw.
+    for (const next of ['old', 'down', 'html']) {
+      mode = next;
+      assert.equal(await revokeLink(registry.origin, token), false, next);
+    }
+    mode = 'hang';
+    const started = Date.now();
+    assert.equal(await revokeLink(registry.origin, token, { timeoutMs: 200 }), false);
+    assert.ok(Date.now() - started < 2000);
+    assert.ok(SIGN_OUT_TIMEOUT_MS <= 5000, 'sign-out never waits longer than a Registry read');
+  } finally {
+    await registry.close();
+  }
+  assert.equal(await revokeLink(registry.origin, token, { timeoutMs: 300 }), false, 'connection refused');
 });
 
 test('market copy has Russian and Chinese with matching placeholders', async () => {

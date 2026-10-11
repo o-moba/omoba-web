@@ -8,7 +8,7 @@ import { MAX_CATALOG_BYTES, parseAssetCatalog } from "@/lib/asset-catalog.mjs";
 import { verifyCatalogRevision } from "@/lib/asset-catalog-server.mjs";
 import type { AssetCatalog } from "@/lib/asset-catalog-types";
 import { studioOrigin } from "@/lib/ekza-link.mjs";
-import { WILDSPARK_SET_REQUIREMENT, studioDraftUrl } from "@/lib/market.mjs";
+import { WILDSPARK_SET_REQUIREMENT, studioDraftUrl, studioLibraryUrl } from "@/lib/market.mjs";
 import { loadMarket } from "@/lib/market-server.mjs";
 import { initialEkzaSession } from "@/lib/ekza-server";
 import { marketText } from "@/lib/market-translations";
@@ -48,6 +48,7 @@ export default async function MarketPage() {
       initialSession={session}
       wildsparkPreviews={previews}
       studioDraftUrl={studioDraftUrl(studioOrigin(), WILDSPARK_SET_REQUIREMENT)}
+      studioLibraryUrl={studioLibraryUrl(studioOrigin())}
       siteUrl={publicSiteUrl(process.env.OMOBA_SITE_URL, process.env.NODE_ENV)}
     />
   );

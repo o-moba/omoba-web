@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
 import { EKZA_LINK_SCOPE, LINK_TOKEN, ekzaConfig, ekzaCookieNames, ekzaRoute, parseDeviceStart, parseLibrary, parsePoll, upstreamFailure } from '@/lib/ekza-link.mjs';
 import { MARKET_PROJECT } from '@/lib/market.mjs';
-import { RegistryUnavailable, registryRequest } from '@/lib/market-server.mjs';
+import { RegistryUnavailable, registryRequest, revokeLink } from '@/lib/market-server.mjs';
 
 // Ekza Library BFF for /market. Independent of the OMOBA Account API, so it also
 // works with OMOBA_ACCOUNT_MODE=disabled. The Registry link token stays in an
@@ -36,13 +36,15 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
     request.headers.get('x-csrf-token'), jar.get(names.csrf)?.value)) return fail('csrf_rejected', 403);
   if (request.nextUrl.search) return fail('invalid_query', 400);
   // No browser body, header or query is forwarded; each action builds its own request.
-  if (route.action === 'sign-out') {
-    clear(names.link, names.device, names.csrf);
-    return reply({ status: 'signed_out' });
-  }
-  if (!ekza) return fail('configuration_unavailable', 503);
   const token = jar.get(names.link)?.value;
   const linked = token && LINK_TOKEN.test(token) ? token : undefined;
+  if (route.action === 'sign-out') {
+    // End this link in the Registry first (C7), best effort; the cookies go regardless.
+    const revoked = linked ? (ekza ? await revokeLink(ekza.registry, linked) : false) : null;
+    clear(names.link, names.device, names.csrf);
+    return reply({ status: 'signed_out', revoked });
+  }
+  if (!ekza) return fail('configuration_unavailable', 503);
   try {
     if (route.action === 'start') {
       const upstream = await registryRequest(ekza.registry, '/v1/account/device', {

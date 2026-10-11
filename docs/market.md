@@ -30,36 +30,37 @@ The Ekza BFF is `src/app/api/ekza/[...path]/route.ts`, separate from the Account
 | `GET /api/ekza/library` | `GET /v1/account/library` (Bearer link token) |
 | `POST /api/ekza/library/<uuid>` | `POST /v1/account/library/<uuid>` (Bearer link token) |
 | `DELETE /api/ekza/library/<uuid>` | `DELETE /v1/account/library/<uuid>` (Bearer link token) |
-| `POST /api/ekza/sign-out` | none; clears the Ekza cookies |
+| `POST /api/ekza/sign-out` | `DELETE /v1/account/session` (Bearer link token, best effort, 3 s), then clears the Ekza cookies |
 
 Everything else is 404 before any upstream request. Browser bodies, queries and headers are never forwarded. Mutations need the exact portal origin and the `X-CSRF-Token` matching the HttpOnly CSRF cookie (`mutationAllowed` in `src/lib/security.mjs`).
 
 1. **Sign in with Ekza** starts a device link. The device code stays in an HttpOnly cookie; the browser gets only the user code, expiry, poll interval and the Studio approval link. The link is shown only when it is exactly `{studio}/studio?view=connect&code=<userCode>`.
 2. The player approves in Studio. Studio shows the `library-claim` consent: OMOBA can read the library for this game and add the free items the player chooses.
 3. The page polls the BFF at the device interval. A Registry 5xx, timeout, network error or 429 (`registry_unavailable`, `rate_limited`) keeps polling with backoff: the delay doubles from the interval up to 30 s, a longer `Retry-After` wins (at most 5 minutes), and the panel says "Ekza is not answering. Still trying…". Any other failure, or the code's expiry, ends the sign-in with its message and returns the panel to **Sign in with Ekza**; it never stays waiting without a poll (`devicePollRetry` in `src/lib/market.mjs`). On approval the BFF checks `projectId: "omoba"`, the `library-claim` scope, the token format and a future expiry, then stores the access token **only** in an HttpOnly, SameSite=Lax cookie (Secure and `__Host-` prefixed on HTTPS; plain names on loopback HTTP). Its lifetime follows the Registry expiry (at most 90 days). The browser receives the account name.
-4. **Get free** claims the item; **Owned** comes from the library `assets` (C1), with legacy avatar `items` also counted. Only items claimed through a link (`library.reason: "claimed"`) offer **Remove from library**; created and Studio-saved items cannot be removed here.
-5. **Sign out of Ekza** clears the link, device and CSRF cookies. Every deletion repeats the attributes the cookie was set with (`expireCookie` in `src/lib/security.mjs`): a browser ignores a `__Host-` Set-Cookie without Secure, so on HTTPS a bare delete would keep the link. The Registry link itself stays valid until it expires or is revoked under Studio connections; the Registry has no self-revoke for link tokens.
+4. **Get free** claims the item; **Owned** comes from the library `assets` (C1), with legacy avatar `items` also counted. Only items this link may remove (`library.reason: "claimed"`, i.e. claimed through an OMOBA link; C7) offer **Remove from library**. A removal (Registry 204) returns the card to **Get free** with "Removed from your Ekza library.". Created items, Studio saves and other games' claims show **Owned** with **Manage in Ekza Studio ↗** (`{studio}/studio?view=library`). If the Registry still refuses a removal (`409 claim_not_removable`, for example after the item was saved in Studio while the page was open), the card says "This item was added in Ekza Studio or by another game, so it stays in your library. Manage it in Ekza Studio." and switches to the Studio link.
+5. **Sign out of Ekza** first ends this link in the Registry (`DELETE /v1/account/session`, C7: only this link, any scope; `revokeLink` in `src/lib/market-server.mjs`), so repeated sign-ins do not pile up live links under Studio connections. This is best effort with a 3 s budget: the BFF then clears the link, device and CSRF cookies whatever the Registry answered, and replies `{"status":"signed_out","revoked":true|false|null}` (`null` when no link was held). When the Registry did not confirm (down, timeout, or a Registry without C7), the page says the player is signed out here and can disconnect OMOBA under Account → Connected games in Studio. Sign-out keeps the CSRF rule; a forged request reaches neither the Registry nor the cookies. Every deletion repeats the attributes the cookie was set with (`expireCookie` in `src/lib/security.mjs`): a browser ignores a `__Host-` Set-Cookie without Secure, so on HTTPS a bare delete would keep the link.
 
-The first paint reads the library on the server (`src/lib/ekza-server.ts`) so owned items render as Owned without a flash. The token never appears in HTML, the RSC payload, JSON bodies, localStorage or public env.
+The first paint reads the library on the server (`src/lib/ekza-server.ts`) so owned items render as Owned without a flash. A server component cannot change cookies, so when that read finds the link dead (401 or a malformed cookie) the page shows **Sign in again** and makes one `GET /api/ekza/library`, which clears the cookie. The token never appears in HTML, the RSC payload, JSON bodies, localStorage or public env.
 
 Upstream errors map to stable codes; Registry messages are not forwarded:
 
 | Registry | Browser code | UI |
 |---|---|---|
-| 401 on library/claim | `link_expired` (cookie cleared) | Sign in again |
-| 403 `link_scope` | `link_scope` | Sign in again and allow adding free items |
+| 401 on library/claim/remove | `link_expired` (cookie cleared) | Sign in again |
+| 403 `link_scope` | `link_scope` (cookie cleared) | Sign in again and allow adding free items |
 | 404 `asset_not_available` | `asset_not_available` | Item no longer available for OMOBA |
+| 409 `claim_not_removable` on remove | `claim_not_removable` | Added in Ekza Studio or by another game; manage it in Studio |
 | 422 on device start, 404/405 without code on claim | `claims_unsupported` | Ekza does not accept claims from this site yet |
 | 410 on poll | `device_expired` (cookie cleared) | Code expired, start again |
 | 429 | `rate_limited` | Wait and retry (retried while signing in, honouring `Retry-After`) |
 | 5xx, timeout, network, oversized or invalid response | `registry_unavailable` | Registry unavailable (retried while signing in) |
 
-`claims_unsupported` is what a Registry without the C2 claim routes produces, for example a hosted Registry before the `library-claim` migration is deployed.
+`claims_unsupported` is what a Registry without the C2 claim routes produces, for example a hosted Registry before the `library-claim` migration is deployed. Sign-out against a Registry without C7 (`405`) still signs out locally and reports `revoked: false`.
 
 ## Beta limits
 
 - Free items stay server-admitted by approval; claiming changes what the game lists under "My Ekza library", not what it accepts.
-- The game links its own Ekza session (scope `library`). The player sees the account name in both places to confirm it is the same account.
+- The game links its own Ekza session (scope `library`). The player sees the account name in both places to confirm it is the same account. The market's copy quotes the game's own label for that list: "My Ekza library", «Моя библиотека Ekza», “我的 Ekza 收藏”.
 - No paid items. `access: "owned"` items are not listed.
 
 ## Configuration
@@ -94,6 +95,6 @@ npm run test:market # tests/market.e2e.mjs; needs the build
 npm run test:https-cookies # tests/https-cookies.e2e.mjs; needs the build
 ```
 
-`tests/market.e2e.mjs` starts the built app on loopback port 3018 (`MARKET_TEST_PORT`) in guest mode, with a fake Registry, a fake Studio approval page and a trap Account API. It runs in real Chrome. It checks the BFF CSRF, origin, allowlist and query rules; SSR listing, Wildspark grouping, placeholder fallback, licence and attribution; that hostile items are skipped; device sign-in through the Studio page; the HttpOnly SameSite=Lax cookie and that no credential reaches a response body or JS storage; Get free → Owned, a withdrawn item, reload, remove, scope error, expired link; a poll failure that ends the sign-in and a 503 then a 429 during approval that are retried until the player is signed in; sign-out; en/ru/zh; the outage state; and the phone layout. It also asserts zero Account API calls. Evidence and screenshots go to `.agent/tasks/MARKET-20261011/`.
+`tests/market.e2e.mjs` starts the built app on loopback port 3018 (`MARKET_TEST_PORT`) in guest mode, with a fake Registry, a fake Studio approval page and a trap Account API. It runs in real Chrome. It checks the BFF CSRF, origin, allowlist and query rules; SSR listing, Wildspark grouping, placeholder fallback, licence and attribution; that hostile items are skipped; device sign-in through the Studio page; the HttpOnly SameSite=Lax cookie and that no credential reaches a response body or JS storage; Get free → Owned, a withdrawn item, reload, remove (204) with its notice, a refused remove (409 `claim_not_removable`) that keeps the item Owned with the Studio link, a scope error that clears the link cookie, an expired link found on a claim and on first paint (both clear the cookie); a poll failure that ends the sign-in and a 503 then a 429 during approval that are retried until the player is signed in; sign-out that calls `DELETE /v1/account/session` with the link token, and sign-out while that call fails (cookies cleared, Studio hint shown); a forged sign-out that reaches nothing; en/ru/zh; the outage state; and the phone layout. It also asserts zero Account API calls. Evidence and screenshots go to `.agent/tasks/MARKET-20261011/`.
 
-`tests/market.e2e.mjs` runs on loopback HTTP, where cookie names carry no prefix. `tests/https-cookies.e2e.mjs` runs the built app as `https://app.omoba.io` on port 3019 (`HTTPS_COOKIE_TEST_PORT`) behind a Playwright route, with a fake Registry and a fake Account API. It walks every place either BFF sets or clears a cookie and asserts `__Host-`, Secure, HttpOnly, SameSite=Lax, `Path=/` and no Domain, with `Max-Age=0` on deletions. In Chrome it signs in, signs out and reloads (still signed out), then checks that a revoked link is removed. Evidence goes to `.agent/tasks/MARKET-20261011/https-cookies.json`.
+`tests/market.e2e.mjs` runs on loopback HTTP, where cookie names carry no prefix. `tests/https-cookies.e2e.mjs` runs the built app as `https://app.omoba.io` on port 3019 (`HTTPS_COOKIE_TEST_PORT`) behind a Playwright route, with a fake Registry and a fake Account API. It walks every place either BFF sets or clears a cookie (including a `link_scope` refusal and sign-out after the Registry revoke) and asserts `__Host-`, Secure, HttpOnly, SameSite=Lax, `Path=/` and no Domain, with `Max-Age=0` on deletions. In Chrome it signs in, signs out and reloads (still signed out), then checks that a revoked link is removed. Evidence goes to `.agent/tasks/MARKET-20261011/https-cookies.json`.

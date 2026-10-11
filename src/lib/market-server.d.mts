@@ -19,3 +19,9 @@ export function readLibrary(
   token: string,
   options?: { timeoutMs?: number; maxBytes?: number },
 ): Promise<EkzaSession>;
+export const SIGN_OUT_TIMEOUT_MS: number;
+export function revokeLink(
+  registry: string,
+  token: string,
+  options?: { timeoutMs?: number; maxBytes?: number },
+): Promise<boolean>;

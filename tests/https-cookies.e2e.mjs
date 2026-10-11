@@ -22,7 +22,7 @@ const SESSION = randomBytes(32).toString("hex");
 const USER_CODE = "ABCD2345";
 const ITEM = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
-const state = { approved: false, revoked: false, poll: [], accountCalls: [] };
+const state = { approved: false, revoked: false, scopeError: false, signOuts: 0, poll: [], accountCalls: [] };
 let registryOrigin = "", studioOrigin = "";
 function send(res, status, value, headers = {}) {
   res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers });
@@ -58,8 +58,15 @@ const registry = createServer(async (req, res) => {
     return send(res, 200, { status: "approved", scope: "library-claim", accessToken: TOKEN, projectId: "omoba",
       expiresAt: new Date(Date.now() + 90 * 86400_000).toISOString(), account: { username: "jinx-player" } });
   }
+  if (req.method === "DELETE" && url.pathname === "/v1/account/session") {
+    state.signOuts++;
+    if (authorized) state.revoked = true;
+    res.writeHead(204);
+    return res.end();
+  }
   if (url.pathname === "/v1/account/library" || url.pathname === "/v1/account/library/" + ITEM) {
     if (!authorized) return send(res, 401, { error: { code: "link_invalid" } });
+    if (req.method === "POST" && state.scopeError) return send(res, 403, { error: { code: "link_scope" } });
     if (req.method === "POST") return send(res, 200, { status: "claimed", asset: {} });
     return send(res, 200, { schema: "ekza.account.library.v1", projectId: "omoba", account: { username: "jinx-player" },
       expiresAt: new Date(Date.now() + 86400_000).toISOString(), items: [], assets: [] });
@@ -173,11 +180,21 @@ try {
   await post("device");
   state.approved = true;
   await post("device/poll");
+  state.scopeError = true;
+  const scoped = await post("library/" + ITEM);
+  state.scopeError = false;
+  assert.equal(scoped.body.code, "link_scope");
+  assert.deepEqual(scoped.expired, ["__Host-omoba-ekza-link"], "a link that cannot add items is cleared");
+  await post("device");
+  state.approved = true;
+  await post("device/poll");
   const signOut = await post("sign-out");
   assert.equal(signOut.body.status, "signed_out");
+  assert.equal(signOut.body.revoked, true, "sign-out ended the Registry link first");
+  assert.equal(state.signOuts, 1);
   assert.deepEqual(signOut.expired.sort(), ["__Host-omoba-ekza-csrf", "__Host-omoba-ekza-device", "__Host-omoba-ekza-link"]);
   assert.equal([...jar.keys()].some((name) => name.startsWith("__Host-omoba-ekza-")), false);
-  check("Ekza BFF: device, link and CSRF deletions keep Secure; Path=/ on HTTPS");
+  check("Ekza BFF: device, link (expired, malformed, wrong scope, sign-out) and CSRF deletions keep Secure; Path=/ on HTTPS");
 
   // Account BFF: pairing cancel, pairing completion and logout.
   const pair = "a".repeat(64) + "." + "b".repeat(64);

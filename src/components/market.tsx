@@ -33,6 +33,7 @@ const failureCopy: Record<string, string> = {
   link_expired: "Your Ekza sign-in expired. Sign in again.",
   link_scope: "This Ekza sign-in cannot add items. Sign in again and allow adding free items.",
   asset_not_available: "This item is no longer available for OMOBA.",
+  claim_not_removable: "This item was added in Ekza Studio or by another game, so it stays in your library. Manage it in Ekza Studio.",
   claims_unsupported: "Ekza does not accept free claims from this site yet. Try again later.",
   device_expired: "The sign-in code expired. Start again.",
   rate_limited: "Too many requests. Please wait a moment and try again.",
@@ -44,6 +45,10 @@ function failureText(error: unknown) {
   const code = error instanceof EkzaFailure ? error.code : "";
   return failureCopy[code] || "The Ekza Registry is unavailable. Try again later.";
 }
+const noticeCopy = {
+  removed: "Removed from your Ekza library.",
+  signedOutUnconfirmed: "Signed out here. Ekza could not confirm it, so OMOBA may still be listed under Account → Connected games in Ekza Studio. You can disconnect it there.",
+};
 const WILDSPARK_BRIEF = "/creators?class=wildspark&skill=wild_switch";
 
 function ItemPreview({ item, previews }: { item: MarketItem; previews: Preview[] }) {
@@ -103,6 +108,8 @@ function ItemCard({
   owned,
   busy,
   error,
+  notice,
+  studioLibraryUrl,
   onSignIn,
   onClaim,
   onRemove,
@@ -113,6 +120,8 @@ function ItemCard({
   owned: OwnedAsset | undefined;
   busy: boolean;
   error: string | undefined;
+  notice: string | undefined;
+  studioLibraryUrl: string;
   onSignIn: () => void;
   onClaim: (item: MarketItem) => void;
   onRemove: (item: MarketItem) => void;
@@ -123,11 +132,16 @@ function ItemCard({
     action = (
       <>
         <span className="market-owned">✓ {t("Owned")}</span>
+        {/* Only this site's own claims can be removed here; the rest belong to Studio. */}
         {owned.reason === "claimed" ? (
           <button className="market-text-button" disabled={busy} onClick={() => onRemove(item)}>
             {t("Remove from library")}
           </button>
-        ) : null}
+        ) : (
+          <a className="creator-studio-link market-manage" href={studioLibraryUrl} target="_blank" rel="noreferrer">
+            {t("Manage in Ekza Studio ↗")}
+          </a>
+        )}
       </>
     );
   else if (panel.state === "connected")
@@ -169,6 +183,7 @@ function ItemCard({
         </p>
         <div className="creator-asset-actions">{action}</div>
         {error ? <p role="alert" className="market-error">{t(error)}</p> : null}
+        {notice ? <p role="status" className="market-notice">{t(notice)}</p> : null}
         {item.wildspark ? (
           <Link className="creator-studio-link" href={WILDSPARK_BRIEF}>{t("Wildspark design brief ↗")}</Link>
         ) : item.kind === "weapon" ? (
@@ -278,12 +293,14 @@ export default function Market({
   initialSession,
   wildsparkPreviews,
   studioDraftUrl,
+  studioLibraryUrl,
   siteUrl = DEFAULT_SITE_URL,
 }: {
   market: MarketState;
   initialSession: EkzaSession;
   wildsparkPreviews: Preview[];
   studioDraftUrl: string;
+  studioLibraryUrl: string;
   siteUrl?: string;
 }) {
   const { locale, t } = useLocale();
@@ -293,6 +310,7 @@ export default function Market({
   const [pollRetrying, setPollRetrying] = useState(false);
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+  const [itemNotices, setItemNotices] = useState<Record<string, string>>({});
   const owned = useMemo(
     () => new Map(panel.state === "connected" ? panel.owned.map((o) => [o.assetId, o]) : []),
     [panel],
@@ -310,10 +328,15 @@ export default function Market({
       setPanel({ state: "connected", username: library.account.username, expiresAt: library.expiresAt, owned: library.owned });
       setMessage(null);
     } catch (error) {
-      if (error instanceof EkzaFailure && error.code === "link_expired") failed(error);
+      // The BFF has already cleared a link that cannot work again.
+      if (error instanceof EkzaFailure && (error.code === "link_expired" || error.code === "link_scope")) failed(error);
       else setPanel((current) => (current.state === "connected" ? current : { state: "unavailable" }));
     }
   }, [failed]);
+  // The first paint found a dead link but cannot change cookies; one BFF read clears it.
+  useEffect(() => {
+    if (initialSession.state === "expired") void ekza("library").catch(() => {});
+  }, [initialSession.state]);
   const pending = panel.state === "pending" ? panel.device : null;
   useEffect(() => {
     if (!pending) return;
@@ -368,10 +391,12 @@ export default function Market({
   async function signOut() {
     setPanelBusy(true);
     try {
-      await ekza("sign-out", "POST");
+      // The BFF ends the Registry link first (best effort), then clears the cookies.
+      const result = await ekza<{ revoked: boolean | null }>("sign-out", "POST");
       setPanel({ state: "guest" });
-      setMessage(null);
+      setMessage(result.revoked === false ? noticeCopy.signedOutUnconfirmed : null);
       setItemErrors({});
+      setItemNotices({});
     } catch (error) {
       setMessage(failureText(error));
     } finally {
@@ -381,6 +406,7 @@ export default function Market({
   async function change(item: MarketItem, method: "POST" | "DELETE") {
     setBusyItem(item.assetId);
     setItemErrors(({ [item.assetId]: _old, ...rest }) => rest);
+    setItemNotices(({ [item.assetId]: _old, ...rest }) => rest);
     try {
       const result = await ekza<{ status: string }>("library/" + item.assetId, method);
       setPanel((current) => {
@@ -393,10 +419,20 @@ export default function Market({
           owned: [...others, { assetId: item.assetId, kind: item.kind, reason: result.status === "claimed" ? "claimed" : previous?.reason ?? null }],
         };
       });
+      if (method === "DELETE") setItemNotices((current) => ({ ...current, [item.assetId]: noticeCopy.removed }));
       void refresh();
     } catch (error) {
       const code = error instanceof EkzaFailure ? error.code : "";
       if (code === "link_expired" || code === "link_scope") failed(error);
+      if (code === "claim_not_removable") {
+        // Still owned, but through Studio or another game: offer Studio instead of Remove.
+        setPanel((current) =>
+          current.state === "connected"
+            ? { ...current, owned: current.owned.map((o) => (o.assetId === item.assetId ? { ...o, reason: "saved" } : o)) }
+            : current,
+        );
+        void refresh();
+      }
       setItemErrors((current) => ({ ...current, [item.assetId]: failureText(error) }));
     } finally {
       setBusyItem(null);
@@ -411,6 +447,8 @@ export default function Market({
       owned={owned.get(item.assetId)}
       busy={busyItem === item.assetId || panelBusy}
       error={itemErrors[item.assetId]}
+      notice={itemNotices[item.assetId]}
+      studioLibraryUrl={studioLibraryUrl}
       onSignIn={() => void signIn()}
       onClaim={(i) => void change(i, "POST")}
       onRemove={(i) => void change(i, "DELETE")}

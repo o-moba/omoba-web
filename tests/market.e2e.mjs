@@ -26,8 +26,8 @@ const sha = (n) => n.repeat(64);
 const IDS = { set: uuid("a"), hammer: uuid("b"), avatar: uuid("c") };
 
 const state = {
-  outage: false, approved: false, consumed: false, revoked: false, scopeError: false,
-  owned: new Map(), requests: [], unexpected: [], deviceStarts: [], polls: 0, pollScript: [],
+  outage: false, approved: false, consumed: false, revoked: false, scopeError: false, sessionDown: false,
+  owned: new Map(), requests: [], unexpected: [], deviceStarts: [], polls: 0, pollScript: [], unclaims: [], signOuts: [],
 };
 let registryOrigin = "", studioOrigin = "";
 function catalogueItem(key, kind, name, extra = {}) {
@@ -109,13 +109,26 @@ const registry = createServer(async (req, res) => {
       expiresAt: new Date(Date.now() + 86400_000).toISOString(), items: items.filter((i) => i.assetKind === "avatar"),
       assets: items.map((i) => ({ ...i, library: { reason: state.owned.get(i.id.split(":")[2]) } })) });
   }
+  // C7 sign-out: ends exactly the presented link; 204 also for an unknown or ended one.
+  if (req.method === "DELETE" && url.pathname === "/v1/account/session") {
+    state.signOuts.push(req.headers.authorization || null);
+    if (state.sessionDown) return send(res, 503, { error: { code: "unavailable" } });
+    if (req.headers.authorization === "Bearer " + TOKEN) state.revoked = true;
+    res.writeHead(204);
+    return res.end();
+  }
   const claim = /^\/v1\/account\/library\/([0-9a-f-]{36})$/.exec(url.pathname);
   if (claim && (req.method === "POST" || req.method === "DELETE")) {
     if (!authorized) return send(res, 401, { error: { code: "link_invalid" } });
     if (state.scopeError) return send(res, 403, { error: { code: "link_scope", message: "internal scope detail" } });
     const item = catalogue().items.find((i) => i.id === "ekza:weapon:" + claim[1]);
     if (req.method === "DELETE") {
-      if (state.owned.get(claim[1]) === "claimed") state.owned.delete(claim[1]);
+      // Only this link's claims can go; created items, Studio saves and other games' claims stay (C2/C7).
+      const reason = state.owned.get(claim[1]);
+      const status = reason && reason !== "claimed" ? 409 : 204;
+      state.unclaims.push({ id: claim[1], status });
+      if (status === 409) return send(res, 409, { error: { code: "claim_not_removable", message: "internal removal detail" } });
+      state.owned.delete(claim[1]);
       res.writeHead(204);
       return res.end();
     }
@@ -200,6 +213,10 @@ try {
     assert.equal((await response.json()).code, "csrf_rejected");
   }
   assert.equal(state.deviceStarts.length, 0, "rejected mutations never reach the Registry");
+  const forgedSignOut = await fetch(origin + "/api/ekza/sign-out", { method: "POST", headers: { Origin: "https://evil.example", Cookie: "omoba-ekza-link=" + TOKEN } });
+  assert.equal(forgedSignOut.status, 403, "sign-out keeps the CSRF rule");
+  assert.equal(forgedSignOut.headers.get("set-cookie"), null);
+  assert.deepEqual(state.signOuts, [], "a rejected sign-out never reaches the Registry");
   for (const [path, method] of [["nope", "GET"], ["library/not-a-uuid", "POST"], ["library/ekza:weapon:" + IDS.set, "POST"], ["session", "POST"], ["library/" + IDS.set, "GET"]])
     assert.equal((await fetch(origin + "/api/ekza/" + path, { method, headers: { Origin: origin, "X-CSRF-Token": csrf, Cookie: jar } })).status, 404, path);
   const anonymous = await fetch(origin + "/api/ekza/library");
@@ -270,6 +287,13 @@ try {
   await popup.close();
   await page.getByRole("heading", { name: "Signed in to Ekza" }).waitFor();
   await page.getByText("jinx-player", { exact: true }).waitFor();
+  const signInAgain = async () => {
+    await page.getByRole("button", { name: "Sign in with Ekza" }).click();
+    await page.getByText(USER_CODE, { exact: true }).waitFor();
+    state.approved = true;
+    await page.getByRole("heading", { name: "Signed in to Ekza" }).waitFor();
+  };
+  const linkCookie = async () => (await context.cookies(origin)).find((c) => c.name === "omoba-ekza-link");
   cookies = await context.cookies(origin);
   const link = cookies.find((c) => c.name === "omoba-ekza-link");
   assert.equal(link?.value, TOKEN);
@@ -301,8 +325,28 @@ try {
   await page.screenshot({ path: out + "/market-signed-in.png", fullPage: true, animations: "disabled" });
   await set.getByRole("button", { name: "Remove from library" }).click();
   await set.getByRole("button", { name: "Get free" }).waitFor();
+  await set.getByRole("status").getByText("Removed from your Ekza library.").waitFor();
   assert.ok(state.requests.some((r) => r.method === "DELETE" && r.path === "/v1/account/library/" + IDS.set && r.authorization === "Bearer " + TOKEN));
-  check("SSR owned state after reload, remove claimed item");
+  assert.deepEqual(state.unclaims.at(-1), { id: IDS.set, status: 204 });
+  assert.equal(state.owned.has(IDS.set), false);
+  check("SSR owned state after reload, remove claimed item (204)");
+
+  // The Registry refuses to remove what Studio or another game added (409); the card keeps it and points to Studio.
+  await hammer.getByRole("button", { name: "Remove from library" }).waitFor();
+  state.owned.set(IDS.hammer, "saved");
+  await hammer.getByRole("button", { name: "Remove from library" }).click();
+  await hammer.getByRole("alert").getByText("This item was added in Ekza Studio or by another game, so it stays in your library. Manage it in Ekza Studio.").waitFor();
+  assert.deepEqual(state.unclaims.at(-1), { id: IDS.hammer, status: 409 });
+  await hammer.getByText("✓ Owned").waitFor();
+  assert.equal(await hammer.getByRole("button", { name: "Remove from library" }).count(), 0);
+  assert.equal(await hammer.getByRole("link", { name: "Manage in Ekza Studio ↗" }).getAttribute("href"), studioOrigin + "/studio?view=library");
+  assert.equal(await page.getByText("internal removal detail").count(), 0, "Registry messages are not forwarded");
+  await page.reload();
+  await hammer.getByText("✓ Owned").waitFor();
+  assert.equal(await hammer.getByRole("button", { name: "Remove from library" }).count(), 0, "a Studio save never offers Remove");
+  await hammer.getByRole("link", { name: "Manage in Ekza Studio ↗" }).waitFor();
+  await hammer.screenshot({ path: out + "/market-manage-in-studio.png", animations: "disabled" });
+  check("remove refused for a Studio item (409 claim_not_removable) -> Owned + manage in Studio");
 
   await page.getByLabel("Language").selectOption("ru");
   await page.getByRole("heading", { name: /Снаряжение от игроков/ }).waitFor();
@@ -318,16 +362,27 @@ try {
   await page.getByText("This Ekza sign-in cannot add items. Sign in again and allow adding free items.").first().waitFor();
   assert.equal(await page.getByText("internal scope detail").count(), 0);
   state.scopeError = false;
-  check("scope error state");
-
+  await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
+  assert.equal(await linkCookie(), undefined, "a link that cannot add items is cleared");
   await page.reload();
-  await page.getByRole("heading", { name: "Signed in to Ekza" }).waitFor();
+  await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
+  assert.equal(await page.getByText("jinx-player", { exact: true }).count(), 0, "a reload does not revive it");
+  check("scope error state, link cookie cleared");
+
+  await signInAgain();
   state.revoked = true;
   await set.getByRole("button", { name: "Get free" }).click();
   await page.getByText("Your Ekza sign-in expired. Sign in again.").first().waitFor();
   await page.getByRole("heading", { name: "Sign in again" }).waitFor();
   assert.equal((await context.cookies(origin)).some((c) => c.name === "omoba-ekza-link"), false, "expired link cookie is cleared");
-  check("expired link -> sign in again, cookie cleared");
+  // A link that dies between visits: the first paint says so, and the page clears the cookie.
+  await signInAgain();
+  state.revoked = true;
+  await page.reload();
+  await page.getByRole("heading", { name: "Sign in again" }).waitFor();
+  for (let attempt = 0; (await linkCookie()) && attempt < 40; attempt++) await page.waitForTimeout(100);
+  assert.equal(await linkCookie(), undefined, "a link found dead on first paint is cleared");
+  check("expired link -> sign in again, cookie cleared (claim and first paint)");
 
   // A failure that waiting cannot fix ends the sign-in instead of leaving it pending.
   state.pollScript.push({ status: 400, body: { error: { code: "bad_request" } } });
@@ -349,14 +404,29 @@ try {
   assert.ok(state.polls - pollsBefore >= 3, "polling resumed after transient failures");
   assert.deepEqual(state.pollScript, []);
   check("poll: terminal failure ends sign-in, transient failures retry until approval");
+  const signOuts = state.signOuts.length;
   await page.getByRole("button", { name: "Sign out of Ekza" }).click();
   await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Sign in to get" }).count(), 3);
+  assert.deepEqual(state.signOuts.slice(signOuts), ["Bearer " + TOKEN], "sign-out ends this link in the Registry");
+  assert.equal(state.revoked, true);
+  assert.equal(await page.getByText("Ekza could not confirm it", { exact: false }).count(), 0);
   cookies = await context.cookies(origin);
   assert.equal(cookies.some((c) => c.name.startsWith("omoba-ekza-")), false, "sign-out clears every Ekza cookie");
   await page.reload();
   await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
-  check("sign out clears cookies");
+  // The Registry cannot be reached: the cookies still go, and the player is told where to disconnect.
+  await signInAgain();
+  state.sessionDown = true;
+  await page.getByRole("button", { name: "Sign out of Ekza" }).click();
+  await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
+  await page.getByRole("alert").getByText("Signed out here. Ekza could not confirm it, so OMOBA may still be listed under Account → Connected games in Ekza Studio. You can disconnect it there.").waitFor();
+  state.sessionDown = false;
+  assert.equal(state.signOuts.length, signOuts + 2);
+  assert.equal((await context.cookies(origin)).some((c) => c.name.startsWith("omoba-ekza-")), false, "cookies are cleared even when the Registry is down");
+  await page.reload();
+  await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
+  check("sign out revokes the link (C7) and clears cookies, also when the Registry is down");
 
   state.outage = true;
   await page.reload();

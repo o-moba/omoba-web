@@ -93,6 +93,29 @@ export async function loadMarket(env = process.env, options = {}) {
   }
 }
 
+export const SIGN_OUT_TIMEOUT_MS = 3000;
+
+/**
+ * Sign-out (Registry C7): `DELETE /v1/account/session` ends exactly this link, any
+ * scope; the account's other links stay. Best effort with a short budget: it never
+ * throws, and the caller clears its cookies whatever the answer. True only when the
+ * Registry confirmed (204, also for an already ended link).
+ */
+export async function revokeLink(registry, token, options = {}) {
+  try {
+    const response = await registryRequest(registry, "/v1/account/session", {
+      timeoutMs: SIGN_OUT_TIMEOUT_MS,
+      maxBytes: 64 * 1024,
+      ...options,
+      method: "DELETE",
+      token,
+    });
+    return response.status === 204;
+  } catch {
+    return false;
+  }
+}
+
 /** @returns {Promise<import('./market-types').EkzaSession>} */
 export async function readLibrary(registry, token, options = {}) {
   try {
