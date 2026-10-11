@@ -27,7 +27,7 @@ const IDS = { set: uuid("a"), hammer: uuid("b"), avatar: uuid("c") };
 
 const state = {
   outage: false, approved: false, consumed: false, revoked: false, scopeError: false,
-  owned: new Map(), requests: [], unexpected: [], deviceStarts: [],
+  owned: new Map(), requests: [], unexpected: [], deviceStarts: [], polls: 0, pollScript: [],
 };
 let registryOrigin = "", studioOrigin = "";
 function catalogueItem(key, kind, name, extra = {}) {
@@ -92,6 +92,9 @@ const registry = createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/v1/account/device/poll") {
     const value = await body(req);
+    state.polls++;
+    const scripted = state.pollScript.shift();
+    if (scripted) return send(res, scripted.status, scripted.body, scripted.headers);
     if (value?.deviceCode !== DEVICE || state.consumed) return send(res, 410, { error: { code: "link_expired" } });
     if (!state.approved) return send(res, 200, { status: "pending" });
     state.consumed = true;
@@ -326,10 +329,26 @@ try {
   assert.equal((await context.cookies(origin)).some((c) => c.name === "omoba-ekza-link"), false, "expired link cookie is cleared");
   check("expired link -> sign in again, cookie cleared");
 
+  // A failure that waiting cannot fix ends the sign-in instead of leaving it pending.
+  state.pollScript.push({ status: 400, body: { error: { code: "bad_request" } } });
+  await page.getByRole("button", { name: "Sign in with Ekza" }).click();
+  await page.getByRole("alert").getByText("Ekza returned an unexpected response. Try again later.").waitFor();
+  await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Sign in to get" }).count(), 3);
+  // A Registry 5xx and a 429 during the approval window keep polling with backoff.
+  const pollsBefore = state.polls;
+  state.pollScript.push(
+    { status: 503, body: { error: { code: "unavailable" } } },
+    { status: 429, body: { error: { code: "rate_limited" } }, headers: { "Retry-After": "1" } },
+  );
   await page.getByRole("button", { name: "Sign in with Ekza" }).click();
   await page.getByText(USER_CODE, { exact: true }).waitFor();
   state.approved = true;
+  await page.getByText("Ekza is not answering. Still trying…").waitFor();
   await page.getByRole("heading", { name: "Signed in to Ekza" }).waitFor();
+  assert.ok(state.polls - pollsBefore >= 3, "polling resumed after transient failures");
+  assert.deepEqual(state.pollScript, []);
+  check("poll: terminal failure ends sign-in, transient failures retry until approval");
   await page.getByRole("button", { name: "Sign out of Ekza" }).click();
   await page.getByRole("heading", { name: "Sign in with Ekza" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Sign in to get" }).count(), 3);

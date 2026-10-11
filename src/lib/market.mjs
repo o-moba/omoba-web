@@ -194,3 +194,21 @@ export function studioDraftUrl(studioOrigin = DEFAULT_STUDIO_URL, requirementId)
   }
   return url.href;
 }
+
+/** Device-poll failures that waiting can fix: a busy, cold or unreachable Registry or BFF. */
+const TRANSIENT_POLL_FAILURES = new Set(["registry_unavailable", "rate_limited"]);
+export const MAX_POLL_BACKOFF_SECONDS = 30;
+
+/**
+ * Milliseconds until the next device poll after `failures` consecutive failed
+ * polls, the last one ending in `code`; null when waiting cannot help (expired
+ * code, wrong scope, stale page, unexpected answer). Backoff doubles from the
+ * device interval up to 30 s; a longer Retry-After wins, up to 5 minutes.
+ */
+export function devicePollRetry(code, failures, interval, retryAfter = null) {
+  if (!TRANSIENT_POLL_FAILURES.has(code)) return null;
+  const base = Number.isSafeInteger(interval) && interval > 0 ? interval : 3;
+  const backoff = Math.min(MAX_POLL_BACKOFF_SECONDS, base * 2 ** Math.min(Math.max(failures, 1) - 1, 8));
+  const asked = Number.isSafeInteger(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 300) : 0;
+  return Math.max(backoff, asked) * 1000;
+}

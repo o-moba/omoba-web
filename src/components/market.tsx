@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Brand } from "@/components/brand";
 import { LanguageSelector, useLocale } from "@/components/locale-provider";
 import { DEFAULT_SITE_URL } from "@/lib/navigation.mjs";
-import { marketGroups } from "@/lib/market.mjs";
+import { devicePollRetry, marketGroups } from "@/lib/market.mjs";
 import type { EkzaDevice, EkzaSession, MarketItem, MarketState, OwnedAsset } from "@/lib/market-types";
 
 type Preview = { id: string; url: string };
 type Panel = EkzaSession | { state: "pending"; device: EkzaDevice };
 class EkzaFailure extends Error {
-  constructor(public code: string, public status: number) { super(code); }
+  constructor(public code: string, public status: number, public retryAfter: number | null = null) { super(code); }
 }
 /** Credentials stay in HttpOnly cookies; every mutation carries an origin-bound CSRF proof. */
 async function ekza<T>(path: string, method = "GET"): Promise<T> {
@@ -23,7 +23,10 @@ async function ekza<T>(path: string, method = "GET"): Promise<T> {
   const response = await fetch("/api/ekza/" + path, { method, headers, cache: "no-store" }).catch(() => null);
   if (!response) throw new EkzaFailure("registry_unavailable", 503);
   const value = await response.json().catch(() => ({}));
-  if (!response.ok) throw new EkzaFailure(value.code || "registry_unavailable", response.status);
+  if (!response.ok) {
+    const retry = response.headers.get("retry-after");
+    throw new EkzaFailure(value.code || "registry_unavailable", response.status, retry && /^\d{1,4}$/.test(retry) ? Number(retry) : null);
+  }
   return value;
 }
 const failureCopy: Record<string, string> = {
@@ -200,6 +203,7 @@ function ItemCard({
 function AccountPanel({
   panel,
   busy,
+  retrying,
   message,
   onSignIn,
   onSignOut,
@@ -207,6 +211,7 @@ function AccountPanel({
 }: {
   panel: Panel;
   busy: boolean;
+  retrying: boolean;
   message: string | null;
   onSignIn: () => void;
   onSignOut: () => void;
@@ -237,7 +242,9 @@ function AccountPanel({
           ) : (
             <p className="market-error">{t("Verification link is unavailable or not trusted.")}</p>
           )}
-          <p className="market-small" role="status">{t("This page updates after you approve.")}</p>
+          <p className="market-small" role="status">
+            {retrying ? t("Ekza is not answering. Still trying…") : t("This page updates after you approve.")}
+          </p>
           <button className="market-text-button" disabled={busy} onClick={onSignOut}>{t("Cancel")}</button>
         </>
       ) : (
@@ -283,6 +290,7 @@ export default function Market({
   const [panel, setPanel] = useState<Panel>(initialSession);
   const [panelBusy, setPanelBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [pollRetrying, setPollRetrying] = useState(false);
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
   const owned = useMemo(
@@ -311,20 +319,38 @@ export default function Market({
     if (!pending) return;
     let live = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let failures = 0;
+    // A failure that waiting cannot fix ends the sign-in; the panel never stays pending.
+    const stop = (error: unknown) => {
+      setPollRetrying(false);
+      failed(error);
+      setPanel((current) => (current.state === "pending" ? { state: "guest" } : current));
+    };
     const tick = async () => {
       try {
         const result = await ekza<{ status: string }>("device/poll", "POST");
         if (!live) return;
+        failures = 0;
+        setPollRetrying(false);
         if (result.status === "connected") await refresh();
         else timer = setTimeout(tick, pending.interval * 1000);
       } catch (error) {
-        if (live) failed(error);
+        if (!live) return;
+        // A cold start, a 5xx, a timeout or a 429 keeps polling with backoff.
+        const failure = error instanceof EkzaFailure ? error : new EkzaFailure("registry_unavailable", 503);
+        const delay = devicePollRetry(failure.code, ++failures, pending.interval, failure.retryAfter);
+        if (delay === null) return stop(failure);
+        const left = Date.parse(pending.expiresAt) - Date.now();
+        if (left <= 0) return stop(new EkzaFailure("device_expired", 410));
+        setPollRetrying(true);
+        timer = setTimeout(tick, left < delay ? left : delay);
       }
     };
     timer = setTimeout(tick, pending.interval * 1000);
     return () => {
       live = false;
       clearTimeout(timer);
+      setPollRetrying(false);
     };
   }, [pending, refresh, failed]);
   async function signIn() {
@@ -419,6 +445,7 @@ export default function Market({
           <AccountPanel
             panel={panel}
             busy={panelBusy}
+            retrying={pollRetrying}
             message={message ? t(message) : null}
             onSignIn={() => void signIn()}
             onSignOut={() => void signOut()}

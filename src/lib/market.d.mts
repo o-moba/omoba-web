@@ -16,3 +16,10 @@ export function marketGroups(items: MarketItem[]): {
 };
 export function isWildsparkHandheld(requirementId: string | null | undefined): boolean;
 export function studioDraftUrl(studioOrigin?: string, requirementId?: string | null): string;
+export const MAX_POLL_BACKOFF_SECONDS: number;
+export function devicePollRetry(
+  code: string,
+  failures: number,
+  interval: number,
+  retryAfter?: number | null,
+): number | null;

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
-import { WILDSPARK_SET_REQUIREMENT, isWildsparkHandheld, marketGroups, parseMarket, studioDraftUrl } from '../src/lib/market.mjs';
+import { MAX_POLL_BACKOFF_SECONDS, WILDSPARK_SET_REQUIREMENT, devicePollRetry, isWildsparkHandheld, marketGroups, parseMarket, studioDraftUrl } from '../src/lib/market.mjs';
 import { ekzaConfig, ekzaCookieNames, ekzaRoute, parseDeviceStart, parseLibrary, parsePoll, safeVerificationUrl, studioOrigin, upstreamFailure } from '../src/lib/ekza-link.mjs';
 import { loadMarket, readLibrary, registryRequest } from '../src/lib/market-server.mjs';
 import { mutationAllowed } from '../src/lib/security.mjs';
@@ -201,6 +201,20 @@ async function fakeRegistry(handler) {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   return { origin: 'http://127.0.0.1:' + server.address().port, close: () => new Promise(resolve => server.close(resolve)) };
 }
+
+test('device polling backs off on transient failures and stops on terminal ones', () => {
+  // A cold start, one 5xx or a timeout must not strand a pending sign-in.
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 20].map(n => devicePollRetry('registry_unavailable', n, 3)), [3000, 6000, 12000, 24000, 30000, 30000, 30000]);
+  assert.equal(MAX_POLL_BACKOFF_SECONDS, 30);
+  assert.equal(devicePollRetry('rate_limited', 1, 1), 1000);
+  assert.equal(devicePollRetry('rate_limited', 1, 1, 7), 7000, 'a longer Retry-After wins');
+  assert.equal(devicePollRetry('rate_limited', 4, 3, 2), 24000, 'a shorter Retry-After does not shorten the backoff');
+  assert.equal(devicePollRetry('rate_limited', 1, 3, 9999), 300000, 'Retry-After is bounded');
+  for (const bad of [0, -1, 1.5, NaN, null, undefined]) assert.equal(devicePollRetry('registry_unavailable', 1, 3, bad), 3000);
+  assert.equal(devicePollRetry('registry_unavailable', 0, 0), 3000, 'a malformed interval falls back to 3 s');
+  for (const code of ['device_expired', 'link_scope', 'link_expired', 'claims_unsupported', 'csrf_rejected', 'invalid_service_response', 'registry_error', 'configuration_unavailable', 'not_found', ''])
+    assert.equal(devicePollRetry(code, 1, 3), null, code);
+});
 
 test('market reads are bounded and an outage is unavailable, never an empty list', async () => {
   let mode = 'ok';

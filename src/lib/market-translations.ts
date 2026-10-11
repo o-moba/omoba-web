@@ -35,6 +35,10 @@ export const marketTranslations: Record<string, { ru: string; zh: string }> = {
     ru: "Страница обновится после подтверждения.",
     zh: "批准后此页面会自动更新。",
   },
+  "Ekza is not answering. Still trying…": {
+    ru: "Ekza не отвечает. Пробуем снова…",
+    zh: "Ekza 暂无响应，正在重试…",
+  },
   "Sign in again": { ru: "Войдите снова", zh: "请重新登录" },
   "Sign in with Ekza": { ru: "Войти через Ekza", zh: "使用 Ekza 登录" },
   "Your Ekza sign-in expired. Sign in again.": {
