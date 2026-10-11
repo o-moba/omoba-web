@@ -62,6 +62,10 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Создать черновик в Studio ↗",
     "zh": "在 Studio 中创建草稿 ↗"
   },
+  "Community sets in the market ↗": {
+    "ru": "Наборы сообщества в маркете ↗",
+    "zh": "市场中的社区套装 ↗"
+  },
   "The brief could not be prepared. Please try again.": {
     "ru": "Не удалось подготовить задание. Попробуйте ещё раз.",
     "zh": "无法生成设计说明，请重试。"
