@@ -163,6 +163,10 @@ export const dictionaries = { ru, en, zh };
 export type Locale = keyof typeof dictionaries;
 export type Words = typeof ru;
 const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
+  "Market": {
+    "ru": "Маркет",
+    "zh": "市场"
+  },
   "One account. Every device.": {
     "ru": "Один аккаунт. Все устройства.",
     "zh": "一个账号，所有设备。"

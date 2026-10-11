@@ -407,6 +407,7 @@ export default function Workshop({
         <nav aria-label={t("Workshop navigation")}>
           <a href={siteUrl}>{t("OMOBA website ↗")}</a>
           <Link href="/creators">{t("Asset library")}</Link>
+          <Link href="/market">{t("Market")}</Link>
           <Link href="/me" prefetch={false}>{t("Player portal")}</Link>
           <a href="#workshop-account">
             {account ? t("My account") : t("Browser draft")}

@@ -1,0 +1,154 @@
+import type { Locale } from "@/lib/i18n";
+
+/** Market display copy. Registry item names, creators and licences stay as published. */
+export const marketTranslations: Record<string, { ru: string; zh: string }> = {
+  "Market · OMOBA": { ru: "Маркет · OMOBA", zh: "市场 · OMOBA" },
+  "Free community weapons and avatars approved for OMOBA.": {
+    ru: "Бесплатное оружие и аватары от сообщества, одобренные для OMOBA.",
+    zh: "经 OMOBA 审核通过的免费社区武器和头像。",
+  },
+  "Skip to market": { ru: "Перейти к маркету", zh: "跳到市场" },
+  "OMOBA market": { ru: "Маркет OMOBA", zh: "OMOBA 市场" },
+  "Market navigation": { ru: "Навигация маркета", zh: "市场导航" },
+  "OMOBA / COMMUNITY MARKET": { ru: "OMOBA / МАРКЕТ СООБЩЕСТВА", zh: "OMOBA / 社区市场" },
+  "Gear made by players": { ru: "Снаряжение от игроков", zh: "玩家打造的装备" },
+  "Weapons and avatars from Ekza Studio creators, reviewed and approved for OMOBA. Everything is free during the beta: add an item to your Ekza library, then pick it in the game.": {
+    ru: "Оружие и аватары от авторов Ekza Studio, проверенные и одобренные для OMOBA. Во время беты всё бесплатно: добавьте предмет в библиотеку Ekza и выберите его в игре.",
+    zh: "来自 Ekza Studio 创作者的武器和头像，均已通过 OMOBA 审核。测试期间全部免费：将物品加入你的 Ekza 资源库，然后在游戏中选用。",
+  },
+  "Ekza library": { ru: "Библиотека Ekza", zh: "Ekza 资源库" },
+  "Signed in to Ekza": { ru: "Вы вошли через Ekza", zh: "已登录 Ekza" },
+  "Library:": { ru: "Библиотека:", zh: "资源库：" },
+  "Free items you get here appear in the game under “My Ekza library” when the game is connected to the same Ekza account.": {
+    ru: "Полученные здесь бесплатные предметы появятся в игре в разделе «Моя библиотека Ekza», если игра подключена к тому же аккаунту Ekza.",
+    zh: "当游戏连接到同一个 Ekza 账号时，你在这里获取的免费物品会出现在游戏的“我的 Ekza 资源库”中。",
+  },
+  "Sign out of Ekza": { ru: "Выйти из Ekza", zh: "退出 Ekza" },
+  "Approve in Ekza Studio": { ru: "Подтвердите в Ekza Studio", zh: "在 Ekza Studio 中批准" },
+  "Confirm this code on the Ekza Studio page:": {
+    ru: "Подтвердите этот код на странице Ekza Studio:",
+    zh: "请在 Ekza Studio 页面确认此代码：",
+  },
+  "Sign-in code": { ru: "Код входа", zh: "登录代码" },
+  "Open Ekza Studio ↗": { ru: "Открыть Ekza Studio ↗", zh: "打开 Ekza Studio ↗" },
+  "This page updates after you approve.": {
+    ru: "Страница обновится после подтверждения.",
+    zh: "批准后此页面会自动更新。",
+  },
+  "Sign in again": { ru: "Войдите снова", zh: "请重新登录" },
+  "Sign in with Ekza": { ru: "Войти через Ekza", zh: "使用 Ekza 登录" },
+  "Your Ekza sign-in expired. Sign in again.": {
+    ru: "Срок входа через Ekza истёк. Войдите снова.",
+    zh: "你的 Ekza 登录已过期，请重新登录。",
+  },
+  "Your Ekza library is unavailable right now. Your sign-in has not been removed.": {
+    ru: "Библиотека Ekza сейчас недоступна. Вход не сброшен.",
+    zh: "你的 Ekza 资源库暂时不可用，登录状态未被清除。",
+  },
+  "Free items are kept in your Ekza library, the same library the game reads. OMOBA can read your library for this game and add the free items you choose.": {
+    ru: "Бесплатные предметы хранятся в вашей библиотеке Ekza — её же читает игра. OMOBA сможет читать вашу библиотеку для этой игры и добавлять выбранные вами бесплатные предметы.",
+    zh: "免费物品保存在你的 Ekza 资源库中，游戏读取的也是这个资源库。OMOBA 可以读取你在本游戏中的资源库，并添加你选择的免费物品。",
+  },
+  "Retry": { ru: "Повторить", zh: "重试" },
+  "Market unavailable": { ru: "Маркет недоступен", zh: "市场暂不可用" },
+  "The Ekza Registry could not be reached, so community items cannot be shown right now. Nothing in your library has changed.": {
+    ru: "Не удалось связаться с Ekza Registry, поэтому предметы сообщества сейчас не показать. В вашей библиотеке ничего не изменилось.",
+    zh: "无法连接 Ekza Registry，暂时无法显示社区物品。你的资源库没有任何变化。",
+  },
+  "FEATURED / WILDSPARK": { ru: "ИЗБРАННОЕ / WILDSPARK", zh: "精选 / WILDSPARK" },
+  "Wildspark sets": { ru: "Наборы для Wildspark", zh: "Wildspark 套装" },
+  "One set carries both of Wildspark’s guns, the repeater and the launcher. In the game, Wildspark’s Q switches between them.": {
+    ru: "Один набор содержит обе пушки Wildspark: скорострел и ракетомёт. В игре Q у Wildspark переключает между ними.",
+    zh: "一个套装包含 Wildspark 的两把枪：连发枪和发射器。在游戏中，Wildspark 的 Q 技能会在两者之间切换。",
+  },
+  "Make one in Ekza Studio ↗": { ru: "Создать в Ekza Studio ↗", zh: "在 Ekza Studio 中制作 ↗" },
+  "Read the Wildspark brief": { ru: "Читать бриф Wildspark", zh: "阅读 Wildspark 设计说明" },
+  "No Wildspark sets yet": { ru: "Наборов для Wildspark пока нет", zh: "暂无 Wildspark 套装" },
+  "Be the first: build a repeater + launcher set from the brief and submit it for OMOBA in Ekza Studio.": {
+    ru: "Станьте первым: соберите набор «скорострел + ракетомёт» по брифу и отправьте его для OMOBA в Ekza Studio.",
+    zh: "成为第一人：按照设计说明制作“连发枪 + 发射器”套装，并在 Ekza Studio 中提交给 OMOBA。",
+  },
+  "02 / WEAPONS": { ru: "02 / ОРУЖИЕ", zh: "02 / 武器" },
+  "Weapons": { ru: "Оружие", zh: "武器" },
+  "No other approved weapons yet.": { ru: "Другого одобренного оружия пока нет.", zh: "暂无其他已审核武器。" },
+  "03 / AVATARS": { ru: "03 / АВАТАРЫ", zh: "03 / 头像" },
+  "Avatars": { ru: "Аватары", zh: "头像" },
+  "No approved avatars yet.": { ru: "Одобренных аватаров пока нет.", zh: "暂无已审核头像。" },
+  "OMOBA / MARKET": { ru: "OMOBA / МАРКЕТ", zh: "OMOBA / 市场" },
+  "Items, creators and licences come from the Ekza Registry.": {
+    ru: "Предметы, авторы и лицензии берутся из Ekza Registry.",
+    zh: "物品、创作者和许可证信息均来自 Ekza Registry。",
+  },
+  "During the beta every approved free item can be used in the game. Your Ekza library decides what the game lists under “My Ekza library”.": {
+    ru: "Во время беты в игре можно использовать любой одобренный бесплатный предмет. Библиотека Ekza определяет, что игра покажет в разделе «Моя библиотека Ekza».",
+    zh: "测试期间，所有已审核的免费物品都可以在游戏中使用。你的 Ekza 资源库决定游戏在“我的 Ekza 资源库”中列出哪些物品。",
+  },
+  "Preview of {name}": { ru: "Превью: {name}", zh: "{name} 预览" },
+  "Default Wildspark launcher": { ru: "Стандартный ракетомёт Wildspark", zh: "Wildspark 默认发射器" },
+  "Default Wildspark repeater": { ru: "Стандартный скорострел Wildspark", zh: "Wildspark 默认连发枪" },
+  "DEFAULT SET · REFERENCE": { ru: "СТАНДАРТНЫЙ НАБОР · РЕФЕРЕНС", zh: "默认套装 · 参考" },
+  "No preview yet": { ru: "Превью пока нет", zh: "暂无预览" },
+  "The creator has not published a thumbnail.": {
+    ru: "Автор ещё не опубликовал миниатюру.",
+    zh: "创作者尚未发布缩略图。",
+  },
+  "Owned": { ru: "В библиотеке", zh: "已拥有" },
+  "Remove from library": { ru: "Убрать из библиотеки", zh: "从资源库移除" },
+  "Adding…": { ru: "Добавляем…", zh: "正在添加…" },
+  "Get free": { ru: "Получить бесплатно", zh: "免费获取" },
+  "Waiting for Ekza approval…": { ru: "Ждём подтверждения в Ekza…", zh: "等待 Ekza 批准…" },
+  "Library unavailable": { ru: "Библиотека недоступна", zh: "资源库不可用" },
+  "Sign in to get": { ru: "Войдите, чтобы получить", zh: "登录后获取" },
+  "Avatar": { ru: "Аватар", zh: "头像" },
+  "Weapon": { ru: "Оружие", zh: "武器" },
+  "Wildspark set": { ru: "Набор Wildspark", zh: "Wildspark 套装" },
+  "REPEATER + LAUNCHER": { ru: "СКОРОСТРЕЛ + РАКЕТОМЁТ", zh: "连发枪 + 发射器" },
+  "OMOBA AVATAR": { ru: "АВАТАР OMOBA", zh: "OMOBA 头像" },
+  "HELD WEAPON": { ru: "ОРУЖИЕ В РУКАХ", zh: "手持武器" },
+  "Free": { ru: "Бесплатно", zh: "免费" },
+  "by {creator}": { ru: "автор: {creator}", zh: "创作者：{creator}" },
+  "No attribution provided": { ru: "Атрибуция не указана", zh: "未提供署名" },
+  "Wildspark design brief ↗": { ru: "Бриф Wildspark ↗", zh: "Wildspark 设计说明 ↗" },
+  "Weapon design briefs ↗": { ru: "Брифы оружия ↗", zh: "武器设计说明 ↗" },
+  "Technical details": { ru: "Технические данные", zh: "技术信息" },
+  "Asset": { ru: "Ассет", zh: "资源" },
+  "Revision": { ru: "Ревизия", zh: "版本" },
+  "Size": { ru: "Размер", zh: "大小" },
+  "This Ekza sign-in cannot add items. Sign in again and allow adding free items.": {
+    ru: "Этот вход через Ekza не позволяет добавлять предметы. Войдите снова и разрешите добавление бесплатных предметов.",
+    zh: "此 Ekza 登录无法添加物品。请重新登录并允许添加免费物品。",
+  },
+  "This item is no longer available for OMOBA.": {
+    ru: "Этот предмет больше недоступен для OMOBA.",
+    zh: "此物品已不再适用于 OMOBA。",
+  },
+  "Ekza does not accept free claims from this site yet. Try again later.": {
+    ru: "Ekza пока не принимает получение бесплатных предметов с этого сайта. Попробуйте позже.",
+    zh: "Ekza 暂不支持从本站领取免费物品，请稍后再试。",
+  },
+  "The sign-in code expired. Start again.": {
+    ru: "Срок действия кода входа истёк. Начните заново.",
+    zh: "登录代码已过期，请重新开始。",
+  },
+  "Too many requests. Please wait a moment and try again.": {
+    ru: "Слишком много запросов. Подождите немного и повторите.",
+    zh: "请求过多，请稍候再试。",
+  },
+  "This page is out of date. Reload it and try again.": {
+    ru: "Страница устарела. Обновите её и повторите.",
+    zh: "此页面已过期，请刷新后重试。",
+  },
+  "Ekza returned an unexpected response. Try again later.": {
+    ru: "Ekza вернула неожиданный ответ. Попробуйте позже.",
+    zh: "Ekza 返回了意外的响应，请稍后再试。",
+  },
+  "The Ekza Registry is unavailable. Try again later.": {
+    ru: "Ekza Registry недоступен. Попробуйте позже.",
+    zh: "Ekza Registry 暂不可用，请稍后再试。",
+  },
+};
+
+export function marketText(locale: Locale, source: string, values: Record<string, string | number> = {}): string {
+  const text = locale === "en" ? source : marketTranslations[source]?.[locale] ?? source;
+  return text.replace(/\{(\w+)\}/g, (match, key: string) => String(values[key] ?? match));
+}
