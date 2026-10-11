@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
-import { mutationAllowed, portalConfig } from '@/lib/security.mjs';
+import { cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
 import { EKZA_LINK_SCOPE, LINK_TOKEN, ekzaConfig, ekzaCookieNames, ekzaRoute, parseDeviceStart, parseLibrary, parsePoll, upstreamFailure } from '@/lib/ekza-link.mjs';
 import { MARKET_PROJECT } from '@/lib/market.mjs';
 import { RegistryUnavailable, registryRequest } from '@/lib/market-server.mjs';
@@ -24,7 +24,9 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
   if (!route) return fail('not_found', 404);
   const jar = await cookies();
   const names = ekzaCookieNames(portal.secure);
-  const options = { httpOnly: true, secure: portal.secure, sameSite: 'lax' as const, path: '/' };
+  const options = cookieOptions(portal.secure);
+  // Expiry keeps Secure: a browser ignores a `__Host-` deletion without it.
+  const clear = (...list: string[]) => { for (const name of list) expireCookie(jar, name, portal.secure); };
   if (route.action === 'csrf') {
     const token = jar.get(names.csrf)?.value || randomBytes(32).toString('hex');
     jar.set(names.csrf, token, { ...options, maxAge: 86400 });
@@ -35,7 +37,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
   if (request.nextUrl.search) return fail('invalid_query', 400);
   // No browser body, header or query is forwarded; each action builds its own request.
   if (route.action === 'sign-out') {
-    jar.delete(names.link); jar.delete(names.device); jar.delete(names.csrf);
+    clear(names.link, names.device, names.csrf);
     return reply({ status: 'signed_out' });
   }
   if (!ekza) return fail('configuration_unavailable', 503);
@@ -60,16 +62,16 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
       });
       if (upstream.status !== 200) return failure(route.action, upstream);
       let result: ReturnType<typeof parsePoll>;
-      try { result = parsePoll(upstream.json); } catch { jar.delete(names.device); return fail('invalid_service_response', 502); }
+      try { result = parsePoll(upstream.json); } catch { clear(names.device); return fail('invalid_service_response', 502); }
       if (result.status === 'pending') return reply({ status: 'pending' });
-      jar.delete(names.device);
+      clear(names.device);
       // A link that cannot add items is not stored; the player signs in again.
       if (result.scope !== null && result.scope !== EKZA_LINK_SCOPE) return fail('link_scope', 403);
       jar.set(names.link, result.accessToken, { ...options, maxAge: result.maxAge });
       return reply({ status: 'connected', account: { username: result.username }, expiresAt: result.expiresAt });
     }
     if (!linked) {
-      if (token) jar.delete(names.link);
+      if (token) clear(names.link);
       return fail('link_expired', 401);
     }
     if (route.action === 'library') {
@@ -98,8 +100,8 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
 
   function failure(action: string, upstream: { status: number; json: unknown; headers: Headers }) {
     const mapped = upstreamFailure(action, upstream.status, upstream.json);
-    if (mapped.clearLink) jar.delete(names.link);
-    if (mapped.clearDevice) jar.delete(names.device);
+    if (mapped.clearLink) clear(names.link);
+    if (mapped.clearDevice) clear(names.device);
     const response = fail(mapped.code, mapped.status);
     const retry = upstream.headers.get('retry-after');
     if (retry && /^\d{1,4}$/.test(retry)) response.headers.set('Retry-After', retry);

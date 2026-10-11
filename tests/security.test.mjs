@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allowedPath, mutationAllowed, portalConfig, cookieNames } from '../src/lib/security.mjs';
+import nextCookies from 'next/dist/compiled/@edge-runtime/cookies/index.js';
+import { allowedPath, mutationAllowed, portalConfig, cookieNames, cookieOptions, expireCookie } from '../src/lib/security.mjs';
 
 test('BFF denies arbitrary proxies, trusted methods and native proofs',()=>{
   for(const path of ['https://evil.example','../me','auth/pairings/approve','matches/../../me','me/rating']) assert.equal(allowedPath(path,'POST'),false);
@@ -39,4 +40,20 @@ test('device and Supporter routes remain a narrow browser allowlist',()=>{
   }
   assert.equal(allowedPath('me/recovery-codes','GET'),false);
   assert.equal(allowedPath('me/devices/'+'a'.repeat(63),'DELETE'),false);
+});
+test('cookie expiry keeps the attributes a __Host- cookie was set with',()=>{
+  // Next's own serializer: a browser ignores a __Host- Set-Cookie without Secure.
+  for (const secure of [true,false]) {
+    const headers=new Headers(), jar=new nextCookies.ResponseCookies(headers);
+    const name=cookieNames(secure).session;
+    jar.set(name,'a'.repeat(64),{...cookieOptions(secure),maxAge:60});
+    expireCookie(jar,name,secure);
+    const [line,...rest]=headers.getSetCookie();
+    assert.deepEqual(rest,[]);
+    const attributes=line.split('; ');
+    assert.equal(attributes[0],name+'=');
+    for (const required of ['Path=/','Max-Age=0','HttpOnly','SameSite=lax']) assert.ok(attributes.includes(required),required+': '+line);
+    assert.equal(attributes.includes('Secure'),secure,line);
+    assert.equal(attributes.some(a=>a.startsWith('Domain=')),false,line);
+  }
 });

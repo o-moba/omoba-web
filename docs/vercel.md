@@ -29,6 +29,9 @@ npm run typecheck
 npm run build
 npm run test:guest-deployment
 npm run test:market
+npm run test:https-cookies
 ```
 
 The targeted smoke starts an isolated production server on loopback port 3013 with a trap Account API. It checks the root redirect, stale-cookie behavior, unavailable login/account pages, local save/export, public gallery and zero upstream calls. No hosted account service or personal credentials are used.
+
+`npm run test:https-cookies` runs the build as `https://app.omoba.io` behind a Playwright route, so the `__Host-` cookie rules of the production origin apply. It checks that every cookie the Account and Ekza BFFs set or delete is Secure, HttpOnly, SameSite=Lax and `Path=/`, and that Chrome actually drops the Ekza link on sign-out and after a revoked link.

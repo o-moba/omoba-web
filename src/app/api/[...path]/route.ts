@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
-import { allowedPath, cookieNames, mutationAllowed, portalConfig } from '@/lib/security.mjs';
+import { allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,9 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
   );
   const jar = await cookies();
   const names = cookieNames(config.secure);
-  const options = { httpOnly:true, secure:config.secure, sameSite:'lax' as const, path:'/' };
+  const options = cookieOptions(config.secure);
+  // Expiry keeps Secure: a browser ignores a `__Host-` deletion without it.
+  const clear = (...list:string[]) => { for (const name of list) expireCookie(jar, name, config.secure); };
   if (path === 'csrf' && request.method === 'GET') {
     const token = jar.get(names.csrf)?.value || randomBytes(32).toString('hex');
     jar.set(names.csrf, token, {...options, maxAge:86400});
@@ -95,12 +97,12 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (upstream.ok && path === 'auth/pairings/complete') {
       if(typeof result.session_token!=='string'||!/^[a-f0-9]{64}$/.test(result.session_token)) return fail('invalid_service_response',502);
       jar.set(names.session,result.session_token,{...options,maxAge:7*86400});
-      jar.delete(names.pair); jar.delete(names.csrf);
+      clear(names.pair, names.csrf);
       result={status:'connected'};
     }
-    if(upstream.ok && path==='auth/pairings/cancel') jar.delete(names.pair);
+    if(upstream.ok && path==='auth/pairings/cancel') clear(names.pair);
     if(path==='auth/logout' && (upstream.ok||upstream.status===401)) {
-      jar.delete(names.session); jar.delete(names.csrf); jar.delete(names.pair);
+      clear(names.session, names.csrf, names.pair);
       if(upstream.status===401)return NextResponse.json({status:'revoked'},{headers:noStore});
     }
     const response=NextResponse.json(result,{status:upstream.status,headers:noStore});

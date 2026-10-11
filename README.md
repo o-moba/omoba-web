@@ -52,11 +52,16 @@ this repository. Do not expose the database or raw Account API publicly.
 The browser receives HttpOnly session/preauth cookies. Pair secrets and API bearer
 values never enter localStorage, public environment variables or rendered JSON.
 Mutations require same-origin CSRF proof; private reads and HTML are dynamic/no-store.
+On HTTPS every cookie is `__Host-` prefixed and Secure. Deletions repeat those
+attributes (`expireCookie` in `src/lib/security.mjs`): a browser ignores a `__Host-`
+Set-Cookie without Secure, so a bare delete would leave the cookie in place.
 
 ## Verification
 
 - `npm test`: BFF path, origin and cookie-token security rules.
 - `npm run typecheck` and `npm run build`.
+- `npm run test:https-cookies`: after the build, every cookie write and deletion of
+  both BFFs on an HTTPS portal origin, by header and in real Chrome.
 - `npm run test:e2e`: real Chrome + running local BFF/API/PostgreSQL, after the
   synthetic identity fixture described in [testing](docs/TESTING.md).
 - `npm run test:load`: dedicated synthetic local benchmark only; see testing.

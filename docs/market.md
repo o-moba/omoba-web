@@ -38,7 +38,7 @@ Everything else is 404 before any upstream request. Browser bodies, queries and 
 2. The player approves in Studio. Studio shows the `library-claim` consent: OMOBA can read the library for this game and add the free items the player chooses.
 3. The page polls the BFF. On approval the BFF checks `projectId: "omoba"`, the `library-claim` scope, the token format and a future expiry, then stores the access token **only** in an HttpOnly, SameSite=Lax cookie (Secure and `__Host-` prefixed on HTTPS; plain names on loopback HTTP). Its lifetime follows the Registry expiry (at most 90 days). The browser receives the account name.
 4. **Get free** claims the item; **Owned** comes from the library `assets` (C1), with legacy avatar `items` also counted. Only items claimed through a link (`library.reason: "claimed"`) offer **Remove from library**; created and Studio-saved items cannot be removed here.
-5. **Sign out of Ekza** clears the link, device and CSRF cookies. The Registry link itself stays valid until it expires or is revoked under Studio connections; the Registry has no self-revoke for link tokens.
+5. **Sign out of Ekza** clears the link, device and CSRF cookies. Every deletion repeats the attributes the cookie was set with (`expireCookie` in `src/lib/security.mjs`): a browser ignores a `__Host-` Set-Cookie without Secure, so on HTTPS a bare delete would keep the link. The Registry link itself stays valid until it expires or is revoked under Studio connections; the Registry has no self-revoke for link tokens.
 
 The first paint reads the library on the server (`src/lib/ekza-server.ts`) so owned items render as Owned without a flash. The token never appears in HTML, the RSC payload, JSON bodies, localStorage or public env.
 
@@ -91,6 +91,9 @@ npm test            # includes tests/market.test.mjs
 npm run typecheck
 npm run build
 npm run test:market # tests/market.e2e.mjs; needs the build
+npm run test:https-cookies # tests/https-cookies.e2e.mjs; needs the build
 ```
 
 `tests/market.e2e.mjs` starts the built app on loopback port 3018 (`MARKET_TEST_PORT`) in guest mode, with a fake Registry, a fake Studio approval page and a trap Account API. It runs in real Chrome. It checks the BFF CSRF, origin, allowlist and query rules; SSR listing, Wildspark grouping, placeholder fallback, licence and attribution; that hostile items are skipped; device sign-in through the Studio page; the HttpOnly SameSite=Lax cookie and that no credential reaches a response body or JS storage; Get free → Owned, a withdrawn item, reload, remove, scope error, expired link and sign-out; en/ru/zh; the outage state; and the phone layout. It also asserts zero Account API calls. Evidence and screenshots go to `.agent/tasks/MARKET-20261011/`.
+
+`tests/market.e2e.mjs` runs on loopback HTTP, where cookie names carry no prefix. `tests/https-cookies.e2e.mjs` runs the built app as `https://app.omoba.io` on port 3019 (`HTTPS_COOKIE_TEST_PORT`) behind a Playwright route, with a fake Registry and a fake Account API. It walks every place either BFF sets or clears a cookie and asserts `__Host-`, Secure, HttpOnly, SameSite=Lax, `Path=/` and no Domain, with `Max-Age=0` on deletions. In Chrome it signs in, signs out and reloads (still signed out), then checks that a revoked link is removed. Evidence goes to `.agent/tasks/MARKET-20261011/https-cookies.json`.

@@ -41,3 +41,24 @@ export function cookieNames(secure) {
   const prefix = secure ? '__Host-' : '';
   return { session: prefix+'omoba-session', pair: prefix+'omoba-pair', csrf: prefix+'omoba-csrf' };
 }
+
+/**
+ * Attributes of every portal cookie: host-only, HttpOnly, Lax, Secure on HTTPS.
+ * @param {boolean} secure
+ * @returns {{httpOnly: true, secure: boolean, sameSite: 'lax', path: '/'}}
+ */
+export function cookieOptions(secure) {
+  return { httpOnly: true, secure, sameSite: 'lax', path: '/' };
+}
+
+/**
+ * Expires a cookie with the attributes it was set with. A browser ignores a
+ * `__Host-` Set-Cookie without Secure, so a bare `delete(name)` keeps the cookie
+ * on an HTTPS portal.
+ * @param {{set(name: string, value: string, options: object): unknown}} jar
+ * @param {string} name
+ * @param {boolean} secure
+ */
+export function expireCookie(jar, name, secure) {
+  jar.set(name, '', { ...cookieOptions(secure), maxAge: 0, expires: new Date(0) });
+}
