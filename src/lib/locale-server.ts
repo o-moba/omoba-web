@@ -1,12 +1,14 @@
 import 'server-only';
 import { cookies, headers } from 'next/headers';
-import { LOCALE_COOKIE, resolveLocale } from './locale.mjs';
+import { requestHostname, resolveLocale, storedLocale } from './locale.mjs';
+import { contourName } from './contour.mjs';
 import type { Locale } from './i18n';
 
 export async function getLocale(): Promise<Locale> {
   const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
   return resolveLocale({
-    cookie: cookieStore.get(LOCALE_COOKIE)?.value,
+    // The dev contour has its own preference cookie; see localeCookieName.
+    cookie: storedLocale(name => cookieStore.get(name)?.value, requestHostname(requestHeaders.get('host')), contourName()),
     acceptLanguage: requestHeaders.get('accept-language'),
     country: requestHeaders.get('x-vercel-ip-country'),
   });

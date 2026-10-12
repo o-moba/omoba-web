@@ -1,6 +1,6 @@
 import { getLocale } from "@/lib/locale-server";
 import { creatorText } from "@/lib/creator-translations";
-import { publicSiteUrl } from "@/lib/navigation.mjs";
+import { contourSiteUrl } from "@/lib/navigation.mjs";
 import type { Metadata } from "next";
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
@@ -35,7 +35,7 @@ export default async function CreatorsPage() {
         </main>
       }
     >
-      <CreatorCatalog siteUrl={publicSiteUrl(process.env.OMOBA_SITE_URL,process.env.NODE_ENV)} studioUrl={studioOrigin()} catalog={catalog} />
+      <CreatorCatalog siteUrl={contourSiteUrl()} studioUrl={studioOrigin()} catalog={catalog} />
     </Suspense>
   );
 }

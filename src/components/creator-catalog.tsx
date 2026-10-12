@@ -9,7 +9,7 @@ import type {
   CatalogIcon,
 } from "@/lib/asset-catalog-types";
 import { contributionBrief } from "@/lib/asset-catalog.mjs";
-import { DEFAULT_STUDIO_URL, isWildsparkHandheld, studioDraftUrl } from "@/lib/market.mjs";
+import { isWildsparkHandheld, studioDraftUrl } from "@/lib/market.mjs";
 import { Brand } from "@/components/brand";
 import { LanguageSelector, useLocale } from "@/components/locale-provider";
 import { creatorText } from "@/lib/creator-translations";
@@ -62,7 +62,7 @@ function RequirementCard({
   classId: string;
   skillId?: string;
   selected: boolean;
-  studioUrl: string;
+  studioUrl: string | null;
 }) {
   const { locale, t } = useLocale();
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
@@ -166,7 +166,7 @@ function RequirementCard({
         <div className="creator-asset-actions">
           <button onClick={downloadBrief}>{t("Download brief")}{" "}<span aria-hidden="true">↓</span>
           </button>
-          {r.status === "supported" ? (
+          {r.status === "supported" && studioUrl ? (
             <a
               className="creator-studio-link"
               href={studioDraftUrl(studioUrl, r.id)}
@@ -233,7 +233,8 @@ function RequirementCard({
     </article>
   );
 }
-export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL, studioUrl=DEFAULT_STUDIO_URL }: { catalog: AssetCatalog; siteUrl?:string; studioUrl?:string }) {
+/** `studioUrl` is the active contour's Studio; null hides the Studio links. */
+export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL, studioUrl }: { catalog: AssetCatalog; siteUrl?:string; studioUrl:string|null }) {
   const { locale, t } = useLocale();
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
   const params = useSearchParams();

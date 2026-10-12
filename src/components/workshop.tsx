@@ -62,6 +62,7 @@ export default function Workshop({
   initiallyUnavailable,
   accountDisabled = false,
   siteUrl = DEFAULT_SITE_URL,
+  studioUrl,
 }: {
   catalog: WorkshopCatalog;
   assets: AssetCatalog;
@@ -69,6 +70,8 @@ export default function Workshop({
   initiallyUnavailable: boolean;
   accountDisabled?: boolean;
   siteUrl?: string;
+  /** Studio of the active contour; null hides hosted approval links. */
+  studioUrl: string | null;
 }) {
   const { locale, t } = useLocale();
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
@@ -389,6 +392,7 @@ export default function Workshop({
   }
   const verificationUrl = library?.verificationUrl
     ? safeLibraryVerificationUrl(library.verificationUrl, {
+        studio: studioUrl,
         prototype: library.prototype === true,
         loopback:
           hydrated &&

@@ -2,12 +2,13 @@
 // Registry link token in an HttpOnly cookie; nothing here is sent to the browser
 // except the user code, a verified Studio link and the account name.
 import { DEFAULT_STUDIO_URL, MARKET_PROJECT } from "./market.mjs";
+import { CONTOURS, contourName, contourServiceOrigin, isDevContourHost } from "./contour.mjs";
 
-export const DEFAULT_REGISTRY_URL = "https://registry.ekza.io";
+// Production defaults; the active contour (OMOBA_CONTOUR, contour.mjs) decides.
+export const DEFAULT_REGISTRY_URL = CONTOURS.production.registry;
 export { DEFAULT_STUDIO_URL };
 export const EKZA_LINK_SCOPE = "library-claim";
 export const MAX_LINK_SECONDS = 90 * 86400;
-const LOOPBACK = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const OWNED_ID = /^ekza:(weapon|avatar):([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
 const USER_CODE = /^[A-HJ-NP-Z2-9]{8}$/;
@@ -15,42 +16,49 @@ const DEVICE_CODE = /^[A-Za-z0-9_-]{32,128}$/;
 export const LINK_TOKEN = /^[A-Za-z0-9_-]{32,256}$/;
 const REASONS = new Set(["created", "saved", "claimed"]);
 
-function serviceOrigin(raw, fallback, allowLocal, label) {
-  if (raw === undefined || raw === "") return fallback;
-  let url;
-  try {
-    url = new URL(raw);
-  } catch {
-    throw new Error("Invalid " + label + " URL");
-  }
-  if (url.username || url.password || url.search || url.hash || url.pathname !== "/")
-    throw new Error(label + " URL must be a bare origin");
-  if (url.origin === fallback) return fallback;
-  // The hosted service is fixed; a test double is only accepted on loopback.
-  if (!allowLocal || !LOOPBACK.has(url.hostname) || !["http:", "https:"].includes(url.protocol))
-    throw new Error(label + " URL must be " + fallback + " (loopback only with OMOBA_ALLOW_INSECURE_LOCAL=1)");
-  return url.origin;
-}
-
-/** @returns {{registry: string, studio: string}} */
+/**
+ * Registry and Studio of the active contour (`OMOBA_CONTOUR`, default production).
+ * An unknown contour, or an override outside that contour, throws: the market is
+ * then unavailable instead of talking to another contour's services.
+ * @returns {{registry: string, studio: string}}
+ */
 export function ekzaConfig(env = process.env) {
+  const contour = contourName(env);
   const allowLocal = env.OMOBA_ALLOW_INSECURE_LOCAL === "1";
   return {
-    registry: serviceOrigin(env.OMOBA_REGISTRY_URL, DEFAULT_REGISTRY_URL, allowLocal, "Registry"),
-    studio: serviceOrigin(env.OMOBA_STUDIO_URL, DEFAULT_STUDIO_URL, allowLocal, "Studio"),
+    registry: contourServiceOrigin(env.OMOBA_REGISTRY_URL, contour, "registry", allowLocal, "Registry"),
+    studio: contourServiceOrigin(env.OMOBA_STUDIO_URL, contour, "studio", allowLocal, "Studio"),
   };
 }
 
-/** Links are rendered even when the Registry override is misconfigured. */
-export function studioOrigin(env = process.env) {
+/** @param {string | undefined} raw */
+function namesDevHost(raw) {
   try {
-    return ekzaConfig(env).studio;
+    return isDevContourHost(new URL(raw || "").hostname);
   } catch {
-    try {
-      return serviceOrigin(env.OMOBA_STUDIO_URL, DEFAULT_STUDIO_URL, env.OMOBA_ALLOW_INSECURE_LOCAL === "1", "Studio");
-    } catch {
-      return DEFAULT_STUDIO_URL;
-    }
+    return false;
+  }
+}
+
+/**
+ * Studio links are rendered even when the Registry override is misconfigured.
+ * Production keeps its rule: a rejected Studio override links the production
+ * Studio. Null (links hidden) when the contour is unknown, under dev for any
+ * rejected value, and under production for a dev-contour Studio: a link never
+ * crosses contours.
+ * @returns {string | null}
+ */
+export function studioOrigin(env = process.env) {
+  let contour;
+  try {
+    contour = contourName(env);
+  } catch {
+    return null;
+  }
+  try {
+    return contourServiceOrigin(env.OMOBA_STUDIO_URL, contour, "studio", env.OMOBA_ALLOW_INSECURE_LOCAL === "1", "Studio");
+  } catch {
+    return contour === "production" && !namesDevHost(env.OMOBA_STUDIO_URL) ? CONTOURS.production.studio : null;
   }
 }
 

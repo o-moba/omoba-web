@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
 import { EKZA_LINK_SCOPE, LINK_TOKEN, ekzaConfig, ekzaCookieNames, ekzaRoute, parseDeviceStart, parseLibrary, parsePoll, upstreamFailure } from '@/lib/ekza-link.mjs';
 import { MARKET_PROJECT } from '@/lib/market.mjs';
+import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
 import { RegistryUnavailable, registryRequest, revokeLink } from '@/lib/market-server.mjs';
 
 // Ekza Library BFF for /market. Independent of the OMOBA Account API, so it also
@@ -18,6 +19,8 @@ function fail(code: string, status: number) { return reply({ code }, status); }
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   let portal: ReturnType<typeof portalConfig>, ekza: ReturnType<typeof ekzaConfig> | null = null;
   try { portal = portalConfig(); } catch { return fail('configuration_unavailable', 503); }
+  // A request under the other contour's host never reaches this contour's Registry.
+  if (contourHostProblem(contourName(), requestHostname(request.headers.get('host')))) return fail('configuration_unavailable', 503);
   // A wrong Registry override still lets the player clear their cookies.
   try { ekza = ekzaConfig(); } catch {}
   const route = ekzaRoute((await context.params).path.join('/'), request.method);

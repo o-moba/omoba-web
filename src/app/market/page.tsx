@@ -1,5 +1,5 @@
 import { getLocale } from "@/lib/locale-server";
-import { publicSiteUrl } from "@/lib/navigation.mjs";
+import { contourSiteUrl } from "@/lib/navigation.mjs";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { readFile, stat } from "node:fs/promises";
@@ -37,6 +37,8 @@ async function wildsparkPreviews() {
 // Public Registry read on every request; the Ekza link cookie never leaves the server.
 export default async function MarketPage() {
   await connection();
+  // Null when the contour or the Studio override is wrong: the links are hidden.
+  const studio = studioOrigin();
   const [market, session, previews] = await Promise.all([
     loadMarket(),
     initialEkzaSession(),
@@ -47,9 +49,9 @@ export default async function MarketPage() {
       market={market}
       initialSession={session}
       wildsparkPreviews={previews}
-      studioDraftUrl={studioDraftUrl(studioOrigin(), WILDSPARK_SET_REQUIREMENT)}
-      studioLibraryUrl={studioLibraryUrl(studioOrigin())}
-      siteUrl={publicSiteUrl(process.env.OMOBA_SITE_URL, process.env.NODE_ENV)}
+      studioDraftUrl={studio ? studioDraftUrl(studio, WILDSPARK_SET_REQUIREMENT) : null}
+      studioLibraryUrl={studio ? studioLibraryUrl(studio) : null}
+      siteUrl={contourSiteUrl()}
     />
   );
 }
