@@ -103,31 +103,47 @@ DNS (zone `omoba.io` at Name.com, set by the owner): host `app.dev`, type `CNAME
 
 ### Runbook
 
-`scripts/vercel-dev.sh` does the work. Without `--apply` it only prints the commands (dry run). In both modes it refuses production project names (`omoba-app`, `landing-v2-omoba`, `landing-v2-ekza`), a project name without `-dev`, any ref but `dev`, production identifiers (`vds-eternal`, `77.246.105.57`, `snrjxwutqxokeujuiepn`, the `omoba-app` project id) in its settings, and `VERCEL_PROJECT_ID`/`VERCEL_ORG_ID` in the environment (the CLI prefers them over any link). The domain is fixed to `app.dev.omoba.io`. `tests/vercel-dev.test.mjs` runs it against a fake CLI.
+`scripts/vercel-dev.sh` does the work. Without `--apply` it only prints the commands (dry run). In both modes it refuses production project names (`omoba-app`, `landing-v2-omoba`, `landing-v2-ekza`), a project name without `-dev`, any ref but `dev`, production identifiers (`vds-eternal`, `77.246.105.57`, `snrjxwutqxokeujuiepn`, the `omoba-app` project id) in its settings, and any non-empty `VERCEL_PROJECT_ID`, `VERCEL_ORG_ID`, `NOW_PROJECT_ID` or `NOW_ORG_ID` in the environment; it then unsets all four. The CLI reads each ID as `VERCEL_<X>`, or else the legacy `NOW_<X>` (`getPlatformEnv` in `@vercel/build-utils`). With both IDs set, `vercel deploy` without `--project` deploys to that project instead of the one in `.vercel/project.json`, and `vercel link --project omoba-app-dev` links that project instead (verified with 63.1.2). The domain is fixed to `app.dev.omoba.io`. `tests/vercel-dev.test.mjs` runs it against a fake CLI. `VERCEL_CLI=<…/node_modules/vercel/dist/vc.js> npm run test:vercel-cli` (`tests/vercel-cli.e2e.mjs`) runs it through the real pinned CLI against a loopback fake of the Vercel API, and checks those CLI rules; rerun it whenever the pin moves.
 
 ```sh
 VC="npx --cache /tmp/npm-cache-vercel --yes vercel@63.1.2"   # default; or the cached .bin/vercel path
 export VC
 scripts/vercel-dev.sh plan              # dry run of everything below
 scripts/vercel-dev.sh --apply setup     # idempotent: project, build settings, env (production+preview), domain
-scripts/vercel-dev.sh --apply deploy    # origin/dev -> fresh export -> gate -> link the export -> deploy --prod
+scripts/vercel-dev.sh --apply deploy    # resolve id -> origin/dev -> fresh export -> gate -> link -> deploy --prod --project -> check projectId
 scripts/vercel-dev.sh --apply check     # read-only checks of the live dev project
 ```
 
 - `setup` creates the project only if `vercel project inspect` does not find it, sets Next.js, Node 24.x, `npm ci` and `npm run build`, writes the env with `--force` (re-runs overwrite the same values), and attaches `app.dev.omoba.io` only if the project does not list it yet. It never passes `--force` to `domains add`: that would move the domain from another project.
-- `deploy` refuses a `.vercel` directory in the checkout. It fetches `origin/dev`, exports that commit with `git archive` into a fresh `mktemp -d` outside the checkout, and gates the export: `npm ci`, `npm test`, `npm run typecheck`, and `npm run build` with the env above (`GATE=0` skips the gate). Then it runs `vercel link --project omoba-app-dev --cwd <export>`. If `<export>/.vercel/project.json` names the production project id, or a project other than `omoba-app-dev`, it stops before deploying. Finally it runs `vercel deploy --prod --cwd <export> -m contour=dev -m gitRef=dev -m gitSha=<sha>`. The checkout is only read; no `.vercel` ever lands in it.
+- `deploy` refuses a `.vercel` directory in the checkout. It first resolves the dev project: `vercel api /v9/projects/omoba-app-dev` must answer a `prj_` id that is not the production id, under the name `omoba-app-dev`. It fetches `origin/dev`, exports that commit with `git archive` into a fresh `mktemp -d` outside the checkout, and gates the export: `npm ci`, `npm test`, `npm run typecheck`, and `npm run build` with the env above (`GATE=0` skips the gate). Then it runs `vercel link --project omoba-app-dev --cwd <export>`. Unless `<export>/.vercel/project.json` holds exactly the resolved id (and team), it stops before deploying. It runs `vercel deploy --prod --project omoba-app-dev --cwd <export> -m contour=dev -m gitRef=dev -m gitSha=<sha>`; an explicit `--project` wins over environment IDs in the CLI. Finally it reads the new deployment (`vercel api /v13/deployments/<id or URL>`, from the URL or JSON the CLI prints) and requires its `projectId` to be the resolved id. Otherwise it exits 2 and says to roll `omoba-app` back at once if the deployment landed there. The checkout is only read; no `.vercel` ever lands in it.
 - `check` reads the domain config (`misconfigured` must be false), refuses env drift (missing keys, or any of the three forbidden ones), and checks the live site: `/` redirects to `/workshop`, `/market` sends `X-Robots-Tag: noindex, nofollow` and shows the `DEV` badge, `/robots.txt` disallows `/`, and the only Studio link is `https://studio.dev.ekza.io`.
 
-The same steps by hand, if the script cannot be used (never in a checkout):
+The same steps by hand, if the script cannot be used. Save them as a file outside any checkout (for example `/tmp/omoba-dev-deploy.sh`) and run `bash /tmp/omoba-dev-deploy.sh`. Use bash, not an interactive zsh: zsh does not split `$VC` into words, and `exit` would close the shell.
 
 ```sh
-S=wotoris-projects-c784733b; R=/path/to/omoba-web    # R is only read
-$VC project inspect omoba-app-dev --scope $S >/dev/null 2>&1 || $VC project create omoba-app-dev --scope $S
+set -euo pipefail
+VC=${VC:-npx --cache /tmp/npm-cache-vercel --yes vercel@63.1.2}
+S=wotoris-projects-c784733b; P=omoba-app-dev; R=${R:-/path/to/omoba-web}   # R is only read
+PROD=prj_9pxN1QpGTWA2ZvuSOL13F4AWTrdL                                       # omoba-app: only ever refused
+# The CLI prefers VERCEL_* or NOW_* project IDs over the link, even over `link --project`.
+for v in VERCEL_PROJECT_ID VERCEL_ORG_ID NOW_PROJECT_ID NOW_ORG_ID; do
+  [ -z "${!v:-}" ] || { echo "REFUSED: $v is set; unset it" >&2; exit 2; }
+done
+unset VERCEL_PROJECT_ID VERCEL_ORG_ID NOW_PROJECT_ID NOW_ORG_ID
+$VC project inspect $P --scope $S >/dev/null 2>&1 || $VC project create $P --scope $S
+ID=$($VC api /v9/projects/$P -X GET --scope $S | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const p=JSON.parse(s);if(p.name!==process.argv[1]||!/^prj_/.test(p.id)||p.id===process.argv[2])process.exit(1);console.log(p.id)})' $P $PROD) ||
+  { echo "REFUSED: $P does not resolve to a dev project" >&2; exit 2; }
 git -C $R fetch -q origin dev; SHA=$(git -C $R rev-parse origin/dev)
 X=$(mktemp -d /tmp/omoba-web-dev.XXXXXX); git -C $R archive $SHA | tar -x -C $X
-$VC link --yes --project omoba-app-dev --scope $S --cwd $X
-node -e 'const p=require(process.argv[1]+"/.vercel/project.json"); if (p.projectId==="prj_9pxN1QpGTWA2ZvuSOL13F4AWTrdL" || (p.projectName && p.projectName!=="omoba-app-dev")) { console.error("NOT THE DEV PROJECT"); process.exit(1) }' $X \
-  && $VC deploy --prod --yes --cwd $X --scope $S -m contour=dev -m gitRef=dev -m gitSha=$SHA
+$VC link --yes --project $P --scope $S --cwd $X
+node -e 'if (require(process.argv[1]+"/.vercel/project.json").projectId!==process.argv[2]) process.exit(1)' $X $ID ||
+  { echo "REFUSED: $X is not linked to $P ($ID); nothing was deployed" >&2; exit 2; }
+OUT=$($VC deploy --prod --yes --project $P --cwd $X --scope $S -m contour=dev -m gitRef=dev -m gitSha=$SHA); echo "$OUT"
+DEP=$(printf '%s' "$OUT" | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | tail -1 | sed 's|^https://||') && [ -n "$DEP" ] ||
+  { echo "cannot tell which deployment the CLI made: confirm by hand that it is on $P, not omoba-app" >&2; exit 2; }
+$VC api /v13/deployments/$DEP -X GET --scope $S | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.exit(JSON.parse(s).projectId===process.argv[1]?0:1))' $ID ||
+  { echo "DEPLOYMENT $DEP IS NOT ON $P: if it is on omoba-app, roll omoba-app back now (Instant Rollback)" >&2; exit 2; }
+echo "deployed $SHA to $P ($ID): https://$DEP"
 ```
 
 Protection: Standard Protection (`ssoProtection.deploymentType=all_except_custom_domains`, as on production). The custom domain is public, and `*.vercel.app` deployment URLs need a team login. Dev hostnames appear in certificate-transparency logs; `noindex` and `robots.txt` keep them out of search results. Use synthetic test accounts only; never copy production data into the dev contour.

@@ -1,58 +1,54 @@
 // scripts/vercel-dev.sh against a fake Vercel CLI and a throwaway git origin. No
 // network, no Vercel account: the fake records every call and answers like the
-// CLI would for a project that does not exist yet.
+// CLI would for a project that does not exist yet. tests/vercel-cli.e2e.mjs runs
+// the same script through the real pinned CLI against a loopback fake API.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
+import { PROD_ID, SCRIPT, devOrigin, sh } from './vercel-rig.mjs';
 
-const SCRIPT = new URL('../scripts/vercel-dev.sh', import.meta.url).pathname;
-const PROD_ID = 'prj_9pxN1QpGTWA2ZvuSOL13F4AWTrdL';
+const DEV_ID = 'prj_dev123';
+const DEPLOY_URL = 'https://omoba-app-dev-abc.vercel.app';
 
-function sh(cmd, args, options = {}) {
-  const result = spawnSync(cmd, args, { encoding: 'utf8', ...options });
-  if (options.check !== false && result.status !== 0) throw new Error(`${cmd} ${args.join(' ')}: ${result.stderr}`);
-  return result;
-}
-
-/** A bare origin with main and dev, a plain clone of it, and a fake `vercel`. */
-function rig({ linkId = 'prj_dev123', domains = '[]' } = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'vercel-dev-test-'));
-  const git = (cwd, ...args) => sh('git', ['-C', cwd, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...args]);
-  const seed = join(root, 'seed');
-  mkdirSync(seed);
-  git(seed, 'init', '-q', '-b', 'main');
-  writeFileSync(join(seed, 'package.json'), '{"name":"fixture"}\n');
-  git(seed, 'add', '.');
-  git(seed, 'commit', '-qm', 'main');
-  git(seed, 'checkout', '-qb', 'dev');
-  writeFileSync(join(seed, 'DEV'), 'dev\n');
-  git(seed, 'add', '.');
-  git(seed, 'commit', '-qm', 'dev');
-  sh('git', ['clone', '-q', '--bare', seed, join(root, 'origin.git')]);
-  const repo = join(root, 'repo');
-  sh('git', ['clone', '-q', join(root, 'origin.git'), repo]);
+/**
+ * A bare origin with main and dev, a plain clone of it, and a fake `vercel`.
+ * linkId: what `link` writes; apiProject: GET /v9/projects/<name>;
+ * deployOut: stdout of `deploy`; deployedProjectId: GET /v13/deployments/<x>.
+ */
+function rig({
+  linkId = DEV_ID, domains = '[]',
+  apiProject = `{"id":"${DEV_ID}","name":"omoba-app-dev","accountId":"team_x"}`,
+  deployOut = DEPLOY_URL, deployedProjectId = DEV_ID,
+} = {}) {
+  const { root, repo } = devOrigin('vercel-dev-test-');
   const log = join(root, 'calls.log');
+  const leaks = join(root, 'leaked-env.log');
   const fake = join(root, 'vercel');
   writeFileSync(fake, `#!/usr/bin/env bash
 printf '%s\\n' "$*" >> ${JSON.stringify(log)}
+# Project overrides must never reach the CLI, not even empty ones.
+env | grep -E '^(VERCEL|NOW)_(PROJECT|ORG)_ID=' >> ${JSON.stringify(leaks)}
 case "$1 $2" in
   "project inspect") exit 1;;
-  "api /v9/projects/"*) echo '{"domains":${domains}}';;
+  "api /v9/projects/"*/domains) echo '{"domains":${domains}}';;
+  "api /v9/projects/"*/env) echo '{"envs":[]}';;
+  "api /v9/projects/"*) echo '${apiProject}';;
+  "api /v13/deployments/"*) echo '{"id":"dpl_test1","projectId":"${deployedProjectId}"}';;
   "link --yes")
     while [ $# -gt 0 ]; do [ "$1" = --cwd ] && dir=$2; shift; done
     mkdir -p "$dir/.vercel"
     echo '{"projectId":"${linkId}","orgId":"team_x","projectName":"omoba-app-dev"}' > "$dir/.vercel/project.json";;
-  "deploy --prod") echo https://omoba-app-dev-abc.vercel.app;;
+  "deploy --prod") echo '${deployOut}';;
 esac
 exit 0
 `);
   chmodSync(fake, 0o755);
   const env = { PATH: process.env.PATH, HOME: process.env.HOME, TMPDIR: root, VC: fake, REPO: repo, GATE: '0' };
   const calls = () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n').filter(Boolean) : []);
-  return { root, repo, env, calls, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+  const leaked = () => (existsSync(leaks) ? readFileSync(leaks, 'utf8').trim() : '');
+  return { root, repo, env, calls, leaked, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 
 const run = (env, ...args) => spawnSync('bash', [SCRIPT, ...args], { encoding: 'utf8', env });
@@ -87,6 +83,10 @@ test('vercel-dev.sh refuses production identifiers, a non-dev ref and CLI overri
       [{ DEV_REF: 'main' }, /dev branch only/],
       [{ VERCEL_PROJECT_ID: PROD_ID }, /VERCEL_PROJECT_ID is set/],
       [{ VERCEL_ORG_ID: 'team_x' }, /VERCEL_ORG_ID is set/],
+      // The CLI falls back to the legacy NOW_* names (@vercel/build-utils getPlatformEnv).
+      [{ NOW_PROJECT_ID: PROD_ID }, /NOW_PROJECT_ID is set/],
+      [{ NOW_ORG_ID: 'team_x' }, /NOW_ORG_ID is set/],
+      [{ NOW_PROJECT_ID: PROD_ID, NOW_ORG_ID: 'team_x' }, /NOW_PROJECT_ID is set/],
       [{ VERCEL_SCOPE: 'vds-eternal' }, /production identifier/],
       [{ VC: 'ssh 77.246.105.57 vercel' }, /production identifier/],
       [{ REPO: '/tmp/snrjxwutqxokeujuiepn' }, /production identifier/],
@@ -137,23 +137,85 @@ test('setup writes only to omoba-app-dev and never moves a domain', () => {
   } finally { again.cleanup(); }
 });
 
-test('deploy links only a fresh export of dev and deploys it to omoba-app-dev', () => {
+test('deploy resolves the dev project, links only a fresh export of dev and confirms the deployment', () => {
   const r = rig();
   try {
     const result = run(r.env, '--apply', 'deploy');
     assert.equal(result.status, 0, result.stderr);
     const calls = r.calls();
-    assert.equal(calls.length, 2, calls.join('\n'));
-    const link = /^link --yes --project omoba-app-dev --scope wotoris-projects-c784733b --cwd (\S+)$/.exec(calls[0]);
-    assert.ok(link, calls[0]);
+    assert.equal(calls.length, 4, calls.join('\n'));
+    assert.equal(calls[0], 'api /v9/projects/omoba-app-dev -X GET --scope wotoris-projects-c784733b');
+    const link = /^link --yes --project omoba-app-dev --scope wotoris-projects-c784733b --cwd (\S+)$/.exec(calls[1]);
+    assert.ok(link, calls[1]);
     const work = link[1];
     assert.ok(work.startsWith(r.root) && !work.startsWith(r.repo), work);
     // The export is the dev commit, without repository metadata.
     assert.ok(existsSync(join(work, 'DEV')) && !existsSync(join(work, '.git')));
     const sha = sh('git', ['-C', r.repo, 'rev-parse', 'origin/dev']).stdout.trim();
-    assert.equal(calls[1], `deploy --prod --yes --cwd ${work} --scope wotoris-projects-c784733b -m contour=dev -m gitRef=dev -m gitSha=${sha}`);
+    // --project: an explicit project wins over VERCEL_*/NOW_* IDs in the CLI.
+    assert.equal(calls[2], `deploy --prod --yes --project omoba-app-dev --cwd ${work} --scope wotoris-projects-c784733b -m contour=dev -m gitRef=dev -m gitSha=${sha}`);
+    assert.equal(calls[3], 'api /v13/deployments/omoba-app-dev-abc.vercel.app -X GET --scope wotoris-projects-c784733b');
+    assert.match(result.stdout, /omoba-app-dev is prj_dev123 in team_x/);
+    assert.match(result.stdout, /deployment dpl_test1 belongs to omoba-app-dev \(prj_dev123\)/);
     assert.ok(!existsSync(join(r.repo, '.vercel')), 'a link landed in the checkout');
+    assert.equal(r.leaked(), '');
   } finally { r.cleanup(); }
+  // Non-interactive CLIs (agents, --non-interactive) print JSON instead of the URL.
+  for (const deployOut of [
+    `{"status":"ok","deployment":{"id":"dpl_test1","url":"${DEPLOY_URL}"}}`,
+    `{"id":"dpl_test1","url":"${DEPLOY_URL}","readyState":"READY"}`,
+  ]) {
+    const json = rig({ deployOut });
+    try {
+      const result = run(json.env, '--apply', 'deploy');
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(json.calls().at(-1), 'api /v13/deployments/dpl_test1 -X GET --scope wotoris-projects-c784733b');
+    } finally { json.cleanup(); }
+  }
+});
+
+test('NOW_* project IDs are refused like VERCEL_* (the reported bypass), empty ones are dropped', () => {
+  const r = rig();
+  try {
+    for (const args of [['plan'], ['--apply', 'deploy'], ['--apply', 'check']]) {
+      const result = run({ ...r.env, NOW_PROJECT_ID: PROD_ID, NOW_ORG_ID: 'team_x' }, ...args);
+      assert.equal(result.status, 2, args.join(' '));
+      assert.match(result.stderr, /REFUSED: NOW_PROJECT_ID is set in the environment/, args.join(' '));
+    }
+    assert.deepEqual(r.calls(), []);
+    // Empty values do not select a project; the script unsets them before any CLI call.
+    const empty = { VERCEL_PROJECT_ID: '', VERCEL_ORG_ID: '', NOW_PROJECT_ID: '', NOW_ORG_ID: '' };
+    const result = run({ ...r.env, ...empty }, '--apply', 'deploy');
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(r.calls().length, 4);
+    assert.equal(r.leaked(), '', 'a project override reached the CLI');
+  } finally { r.cleanup(); }
+});
+
+test('deploy refuses when the API, the link or the deployment is not the dev project', () => {
+  for (const [options, pattern, deployed] of [
+    [{ apiProject: `{"id":"${PROD_ID}","name":"omoba-app-dev"}` }, /resolves to the PRODUCTION project id/, false],
+    [{ apiProject: `{"id":"prj_other","name":"omoba-app"}` }, /names project prj_other "omoba-app", not omoba-app-dev/, false],
+    [{ apiProject: '{"error":{"code":"not_found"}}' }, /has no project id/, false],
+    [{ apiProject: 'not json' }, /not JSON/, false],
+    [{ linkId: 'prj_other' }, /linked to prj_other, not omoba-app-dev \(prj_dev123\)/, false],
+    [{ deployedProjectId: PROD_ID }, /deployment omoba-app-dev-abc\.vercel\.app is NOT on omoba-app-dev[\s\S]*Instant Rollback/, true],
+    [{ deployOut: 'Error: something went sideways' }, /cannot tell which deployment the CLI made/, true],
+    [{ deployOut: 'Error: see https://vercel.link/project-not-found' }, /cannot tell which deployment the CLI made/, true],
+  ]) {
+    const r = rig(options);
+    const label = JSON.stringify(options);
+    try {
+      const result = run(r.env, '--apply', 'deploy');
+      assert.equal(result.status, 2, label + result.stderr);
+      assert.match(result.stderr, pattern, label);
+      const calls = r.calls();
+      assert.equal(calls.some((c) => c.startsWith('deploy')), deployed, label + calls.join('\n'));
+      // A wrong API answer stops before the export is even linked.
+      if (options.apiProject) assert.ok(!calls.some((c) => c.startsWith('link')), label);
+      if (!deployed) assert.match(result.stderr, /nothing was deployed/, label);
+    } finally { r.cleanup(); }
+  }
 });
 
 test('deploy refuses a checkout link and an export linked to production', () => {

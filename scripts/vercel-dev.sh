@@ -8,15 +8,18 @@
 #
 #   setup   create the project if missing, set build settings, set the dev env on
 #           the production and preview targets, attach app.dev.omoba.io. Idempotent.
-#   deploy  export origin/dev with git archive into a fresh temp dir, gate it
-#           (npm ci/test/typecheck/dev build), link THAT dir, deploy --prod. The
-#           checkout this script lives in is only read, never linked.
+#   deploy  resolve the dev project id, export origin/dev with git archive into a
+#           fresh temp dir, gate it (npm ci/test/typecheck/dev build), link THAT
+#           dir, deploy --prod --project <dev>, then confirm the deployment's
+#           projectId. The checkout this script lives in is only read, never linked.
 #   check   read-only: domain config, env keys, live headers/robots/badge/links.
 #   plan    setup + deploy + check, always as a dry run.
 #
 # Never touches omoba-app (production). It refuses production project names,
-# hostnames and hosts, a non-dev ref, VERCEL_PROJECT_ID/VERCEL_ORG_ID overrides,
-# a .vercel link in the checkout, and an export linked to anything but the dev project.
+# hostnames and hosts, a non-dev ref, project overrides in the environment
+# (VERCEL_PROJECT_ID, VERCEL_ORG_ID and the legacy NOW_PROJECT_ID, NOW_ORG_ID),
+# a .vercel link in the checkout, an export linked to anything but the dev
+# project, and reports a deployment that landed anywhere else.
 set -euo pipefail
 
 PROD_PROJECT_ID=prj_9pxN1QpGTWA2ZvuSOL13F4AWTrdL   # omoba-app; refusal guard only
@@ -37,12 +40,18 @@ OMOBA_REGISTRY_URL=https://registry.dev.ekza.io
 OMOBA_STUDIO_URL=https://studio.dev.ekza.io
 OMOBA_SITE_URL=https://dev.omoba.io"
 FORBIDDEN_ENV="OMOBA_ALLOW_INSECURE_LOCAL OMOBA_TRUST_LOOPBACK_PROXY OMOBA_ACCOUNT_API_URL"
+# The CLI reads a project from VERCEL_<X> or else NOW_<X> (@vercel/build-utils
+# getPlatformEnv). With both IDs set, `link` and `deploy` without --project use
+# them instead of .vercel/project.json, and `link --project` links that project.
+PROJECT_OVERRIDE_ENV="VERCEL_PROJECT_ID VERCEL_ORG_ID NOW_PROJECT_ID NOW_ORG_ID"
+DEV_PROJECT_ID=''   # set by resolve_dev_project from the API
+DEV_ORG_ID=''
 
 APPLY=0
 die() { echo "vercel-dev: REFUSED: $*" >&2; exit 2; }
 say() { echo "vercel-dev: $*"; }
 
-usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 64; }
+usage() { sed -n '2,/^set -euo/p' "$0" | sed -e '$d' -e 's/^# \{0,1\}//'; exit 64; }
 
 # shellcheck disable=SC2206
 VC_CMD=($VC)
@@ -68,8 +77,10 @@ guard() {
     esac
   done
   # The Vercel CLI prefers these over any link: they could point a deploy at production.
-  [ -z "${VERCEL_PROJECT_ID:-}" ] || die "VERCEL_PROJECT_ID is set in the environment; unset it"
-  [ -z "${VERCEL_ORG_ID:-}" ] || die "VERCEL_ORG_ID is set in the environment; unset it"
+  local name
+  for name in $PROJECT_OVERRIDE_ENV; do
+    [ -z "${!name:-}" ] || die "$name is set in the environment; unset it (the Vercel CLI would use it instead of the dev link)"
+  done
   if printf '%s\n' "$DEV_ENV" | grep -Eq '//(registry\.|studio\.|app\.)?(ekza|omoba)\.io'; then die "DEV_ENV names a production host"; fi
 }
 
@@ -106,18 +117,72 @@ EOF
   say "DNS (owner, Name.com zone omoba.io): host app.dev, type CNAME, answer cname.vercel-dns.com, TTL 300"
 }
 
+# Sets DEV_PROJECT_ID/DEV_ORG_ID to what the API answers for $DEV_PROJECT in the
+# scope. The link and the deployment are both checked against this id.
+resolve_dev_project() {
+  local json ids
+  json=$(vc_read api "/v9/projects/$DEV_PROJECT" -X GET --scope "$VERCEL_SCOPE") ||
+    die "cannot read $DEV_PROJECT from the Vercel API; nothing was deployed"
+  ids=$(printf '%s' "$json" | node -e '
+    let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+      const [prod, name] = process.argv.slice(1);
+      let p; try { p = JSON.parse(s); } catch { console.error("the API answer is not JSON"); process.exit(1); }
+      if (typeof p.id !== "string" || !/^prj_[A-Za-z0-9]+$/.test(p.id)) { console.error("the API answer has no project id"); process.exit(1); }
+      if (p.id === prod) { console.error(name + " resolves to the PRODUCTION project id " + prod); process.exit(1); }
+      if (p.name !== name) { console.error("the API names project " + p.id + " " + JSON.stringify(p.name) + ", not " + name); process.exit(1); }
+      console.log(p.id + " " + (typeof p.accountId === "string" ? p.accountId : ""));
+    })' "$PROD_PROJECT_ID" "$DEV_PROJECT") || die "$DEV_PROJECT did not resolve to a dev project; nothing was deployed"
+  DEV_PROJECT_ID=${ids%% *}
+  DEV_ORG_ID=${ids#* }
+  say "$DEV_PROJECT is $DEV_PROJECT_ID${DEV_ORG_ID:+ in $DEV_ORG_ID}"
+}
+
 assert_dev_link() {
   local dir=$1
   node -e '
-    const p = require(process.argv[1] + "/.vercel/project.json");
-    if (p.projectId === process.argv[2]) { console.error("linked to the PRODUCTION project omoba-app"); process.exit(1); }
-    if (p.projectName !== undefined && p.projectName !== process.argv[3]) { console.error("linked to " + p.projectName + ", not " + process.argv[3]); process.exit(1); }
-  ' "$dir" "$PROD_PROJECT_ID" "$DEV_PROJECT" || die "the export is not linked to $DEV_PROJECT; nothing was deployed"
+    const [dir, prod, name, id, org] = process.argv.slice(1);
+    let p; try { p = JSON.parse(require("fs").readFileSync(dir + "/.vercel/project.json", "utf8")); }
+    catch { console.error("no .vercel/project.json in the export: the link did not record " + name); process.exit(1); }
+    if (p.projectId === prod) { console.error("linked to the PRODUCTION project omoba-app"); process.exit(1); }
+    if (p.projectId !== id) { console.error("linked to " + p.projectId + ", not " + name + " (" + id + ")"); process.exit(1); }
+    if (p.projectName !== undefined && p.projectName !== name) { console.error("linked to " + p.projectName + ", not " + name); process.exit(1); }
+    if (org && p.orgId !== org) { console.error("linked in " + p.orgId + ", not " + org); process.exit(1); }
+  ' "$dir" "$PROD_PROJECT_ID" "$DEV_PROJECT" "$DEV_PROJECT_ID" "$DEV_ORG_ID" || die "the export is not linked to $DEV_PROJECT; nothing was deployed"
+}
+
+# $1 is the stdout of `vercel deploy`: a URL, or JSON ({id,url} or {deployment:{id,url}})
+# when the CLI runs non-interactively. The deployment must belong to the dev project.
+assert_deployment() {
+  local out=$1 ref json
+  ref=$(printf '%s' "$out" | node -e '
+    let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+      let ref;
+      try { const j = JSON.parse(s); const d = j.deployment ?? j; ref = d.id ?? d.url; } catch {}
+      if (!ref) ref = (s.match(/https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.vercel\.app\b/g) ?? []).at(-1);
+      ref = String(ref ?? "").replace(/^https:\/\//, "");
+      if (!/^(dpl_[A-Za-z0-9]+|[a-z0-9-]+(\.[a-z0-9-]+)+)$/.test(ref)) process.exit(1);
+      console.log(ref);
+    })') || die "cannot tell which deployment the CLI made; confirm by hand that it belongs to $DEV_PROJECT ($DEV_PROJECT_ID), not omoba-app"
+  json=$(vc_read api "/v13/deployments/$ref" -X GET --scope "$VERCEL_SCOPE") ||
+    die "cannot read deployment $ref; confirm by hand that it belongs to $DEV_PROJECT ($DEV_PROJECT_ID), not omoba-app"
+  printf '%s' "$json" | node -e '
+    let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+      const [id, name] = process.argv.slice(1);
+      let d; try { d = JSON.parse(s); } catch { console.error("the API answer is not JSON"); process.exit(1); }
+      if (d.projectId !== id) { console.error("deployment " + (d.id ?? "?") + " belongs to project " + d.projectId + ", not " + name + " (" + id + ")"); process.exit(1); }
+      console.log("vercel-dev: deployment " + d.id + " belongs to " + name + " (" + id + ")");
+    })' "$DEV_PROJECT_ID" "$DEV_PROJECT" ||
+    die "deployment $ref is NOT on $DEV_PROJECT. If its project is omoba-app ($PROD_PROJECT_ID), app.omoba.io may now serve dev code: roll omoba-app back to its previous production deployment now (dashboard: omoba-app > Deployments > Instant Rollback)"
 }
 
 deploy() {
   [ ! -e "$REPO/.vercel" ] || die "$REPO/.vercel exists: a Vercel link in the checkout; remove it (deploys link only a temp export)"
   say "deploy $DEV_REF of $REPO to $DEV_PROJECT"
+  if [ "$APPLY" = 1 ]; then
+    resolve_dev_project
+  else
+    echo "+ $(quote "${VC_CMD[@]}" api "/v9/projects/$DEV_PROJECT" -X GET --scope "$VERCEL_SCOPE")   # its id: never the production id; the link and the deployment must match it"
+  fi
   run git -C "$REPO" fetch -q origin dev
   local sha work
   if [ "$APPLY" = 1 ]; then
@@ -149,8 +214,22 @@ EOF
     fi
   fi
   vc link --yes --project "$DEV_PROJECT" --scope "$VERCEL_SCOPE" --cwd "$work"
-  if [ "$APPLY" = 1 ]; then assert_dev_link "$work"; fi
-  vc deploy --prod --yes --cwd "$work" --scope "$VERCEL_SCOPE" -m contour=dev -m gitRef=dev -m "gitSha=$sha"
+  # --project as well as the link: an explicit project wins over VERCEL_*/NOW_*
+  # project IDs in the CLI (they are refused and unset here anyway).
+  local deploy_args=(deploy --prod --yes --project "$DEV_PROJECT" --cwd "$work" --scope "$VERCEL_SCOPE" -m contour=dev -m gitRef=dev -m "gitSha=$sha")
+  if [ "$APPLY" = 1 ]; then
+    assert_dev_link "$work"
+    echo "+ $(quote "${VC_CMD[@]}" "${deploy_args[@]}")"
+    local out status=0
+    out=$("${VC_CMD[@]}" "${deploy_args[@]}") || status=$?
+    [ -z "$out" ] || printf '%s\n' "$out"
+    [ "$status" = 0 ] || die "vercel deploy failed (exit $status)"
+    assert_deployment "$out"
+  else
+    echo "# <export>/.vercel/project.json must name that id"
+    vc "${deploy_args[@]}"
+    echo "+ $(quote "${VC_CMD[@]}" api "/v13/deployments/<deployment id>" -X GET --scope "$VERCEL_SCOPE")   # projectId must be the id of $DEV_PROJECT"
+  fi
   [ ! -e "$REPO/.vercel" ] || die "$REPO/.vercel appeared during the deploy; investigate before the next run"
   say "export kept at $work (remove it after checking the deploy)"
 }
@@ -197,6 +276,8 @@ while [ $# -gt 0 ]; do
 done
 [ -n "${CMD:-}" ] || usage
 guard
+# The guard leaves at most empty values; drop them so no CLI call ever sees one.
+unset VERCEL_PROJECT_ID VERCEL_ORG_ID NOW_PROJECT_ID NOW_ORG_ID
 if [ "$CMD" = plan ]; then APPLY=0; fi
 [ "$APPLY" = 1 ] || say "dry run: nothing is executed (add --apply)"
 case "$CMD" in

@@ -46,6 +46,9 @@ Run `npm test`, `npm run typecheck`, `npm run build` for frontend verification.
 `npm test` includes the contour rules (`tests/contour.test.mjs`) and the dev Vercel
 helper against a fake CLI (`tests/vercel-dev.test.mjs`). `npm run test:contour` checks
 a production build and, after a dev build, the dev contour; see `docs/vercel.md#contours`.
+`VERCEL_CLI=<…/node_modules/vercel/dist/vc.js> npm run test:vercel-cli` runs the same
+helper through the real pinned Vercel CLI against a loopback fake of the Vercel API
+(fake token, throwaway HOME; no request leaves the machine). Rerun it when the CLI pin moves.
 `npm start` runs the standalone build and serves its copied static output. Use an
 explicit loopback HTTP override only on this test environment. The game UI tests
 remain `cargo test -p client --lib career`; native key/proof and URL tests live in
