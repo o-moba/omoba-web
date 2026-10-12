@@ -79,6 +79,8 @@ npm run build                               # back to a production build before 
 
 `https://app.dev.omoba.io` is a separate Vercel project, `omoba-app-dev`, in the same team (`wotoris-projects-c784733b`). Its Production target serves the `dev` branch and talks only to the dev Registry and dev Studio. Those two run on the dedicated dev VPS (SSH alias `vds-dev`), not on Vercel and not on the production VPS; see `ekza-registry` `deploy/dev`.
 
+Status (2026-10-13): `omoba-app-dev` exists (Next.js, Node 24.x, Standard Protection, not Git-connected) with the six variables below on Production and Preview, and serves a `deploy` of `dev` (c598845) on `app.dev.omoba.io` (verified, `misconfigured=false`; the `app.dev` CNAME already existed) and `omoba-app-dev.vercel.app`. `check --apply` passes.
+
 Environment, on both the **Production** and **Preview** targets of `omoba-app-dev` (non-sensitive; this app has no secrets). Preview gets the same values so that any build in this project, including a branch preview, is the dev contour:
 
 ```text
