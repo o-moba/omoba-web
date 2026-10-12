@@ -67,9 +67,10 @@ Upstream errors map to stable codes; Registry messages are not forwarded:
 
 | Variable | Default | Notes |
 |---|---|---|
-| `OMOBA_REGISTRY_URL` | `https://registry.ekza.io` | Any other origin requires `OMOBA_ALLOW_INSECURE_LOCAL=1` and a loopback host. Misconfiguration renders Market unavailable. |
-| `OMOBA_STUDIO_URL` | `https://studio.ekza.io` | Same rule. Used for draft links and to verify the approval link. A rejected value falls back to the default for links. |
-| `OMOBA_PORTAL_ORIGIN` | `http://127.0.0.1:3010` | Existing. Exact origin for CSRF checks and the Secure/`__Host-` decision. |
+| `OMOBA_CONTOUR` | `production` | `production` or `dev`, nothing else. Selects the only Registry and Studio origins below. See [Contours](vercel.md#contours). |
+| `OMOBA_REGISTRY_URL` | the contour's: `https://registry.ekza.io` (production), `https://registry.dev.ekza.io` (dev) | Any other origin requires `OMOBA_ALLOW_INSECURE_LOCAL=1` and a loopback host. The other contour's origin is always refused. Misconfiguration renders Market unavailable. |
+| `OMOBA_STUDIO_URL` | the contour's: `https://studio.ekza.io` (production), `https://studio.dev.ekza.io` (dev) | Same rule. Used for draft links and to verify the approval link. In production a rejected value links the production Studio, as before; under dev, or for a dev-contour value under production, the Studio links are hidden. A link never crosses contours. |
+| `OMOBA_PORTAL_ORIGIN` | `http://127.0.0.1:3010` | Existing. Exact origin for CSRF checks and the Secure/`__Host-` decision. In dev it must be `https://app.dev.omoba.io` (loopback only with `OMOBA_ALLOW_INSECURE_LOCAL=1`). |
 
 ## Local run
 
@@ -85,6 +86,16 @@ npm run dev
 
 Open `http://127.0.0.1:3010/market`.
 
+Against the hosted dev contour (`registry.dev.ekza.io`, `studio.dev.ekza.io`); the local portal origin needs the loopback flag there too:
+
+```sh
+OMOBA_CONTOUR=dev \
+OMOBA_ACCOUNT_MODE=disabled \
+OMOBA_PORTAL_ORIGIN=http://127.0.0.1:3010 \
+OMOBA_ALLOW_INSECURE_LOCAL=1 \
+npm run dev
+```
+
 ## Verification
 
 ```sh
@@ -93,6 +104,7 @@ npm run typecheck
 npm run build
 npm run test:market # tests/market.e2e.mjs; needs the build
 npm run test:https-cookies # tests/https-cookies.e2e.mjs; needs the build
+npm run test:contour # tests/contour.e2e.mjs; needs the build, see vercel.md#contours
 ```
 
 `tests/market.e2e.mjs` starts the built app on loopback port 3018 (`MARKET_TEST_PORT`) in guest mode, with a fake Registry, a fake Studio approval page and a trap Account API. It runs in real Chrome. It checks the BFF CSRF, origin, allowlist and query rules; SSR listing, Wildspark grouping, placeholder fallback, licence and attribution; that hostile items are skipped; device sign-in through the Studio page; the HttpOnly SameSite=Lax cookie and that no credential reaches a response body or JS storage; Get free → Owned, a withdrawn item, reload, remove (204) with its notice, a refused remove (409 `claim_not_removable`) that keeps the item Owned with the Studio link, a scope error that clears the link cookie, an expired link found on a claim and on first paint (both clear the cookie); a poll failure that ends the sign-in and a 503 then a 429 during approval that are retried until the player is signed in; sign-out that calls `DELETE /v1/account/session` with the link token, and sign-out while that call fails (cookies cleared, Studio hint shown); a forged sign-out that reaches nothing; en/ru/zh; the outage state; and the phone layout. It also asserts zero Account API calls. Evidence and screenshots go to `.agent/tasks/MARKET-20261011/`.

@@ -41,9 +41,16 @@ this repository. Do not expose the database or raw Account API publicly.
 - `OMOBA_ACCOUNT_API_URL`: internal Account API origin; server-side only.
 - `OMOBA_ACCOUNT_MODE=disabled`: explicit public guest prototype; no account upstream requests. Defaults to `enabled` for local development.
 - `OMOBA_ALLOW_INSECURE_LOCAL=1`: loopback development/testing only.
+- `OMOBA_CONTOUR`: `production` (default, also when unset) or `dev`; nothing else. It
+  fixes the only hosted Registry, Studio, portal and website origins. A value from the
+  other contour fails the build, the server start and the request (fail closed, never a
+  fallback to production). See [Contours](docs/vercel.md#contours).
 - `OMOBA_REGISTRY_URL`, `OMOBA_STUDIO_URL`: Ekza Registry and Studio origins for the
-  market. Defaults `https://registry.ekza.io` and `https://studio.ekza.io`; other
-  values only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1`.
+  market. Default to the contour's origins (`https://registry.ekza.io` and
+  `https://studio.ekza.io` in production); other values only on loopback with
+  `OMOBA_ALLOW_INSECURE_LOCAL=1`.
+- `OMOBA_SITE_URL`: the OMOBA website for "About the game" links. Defaults to
+  `https://omoba.io` (production) or `https://dev.omoba.io` (dev).
 - `OMOBA_TRUST_LOOPBACK_PROXY=1`: only behind an ingress that **overwrites**
   `X-Real-IP`, with both Node and Rust listeners inaccessible except through that
   trusted ingress. Enable the same option on the API. Otherwise forwarded headers

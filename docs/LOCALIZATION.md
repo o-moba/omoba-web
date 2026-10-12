@@ -9,8 +9,13 @@ A browser's supported language takes priority over the country fallback.
 The visible language selector writes a one-year, SameSite=Lax preference cookie.
 On `omoba.io` and its subdomains its domain is `.omoba.io`, allowing a choice on
 one website to follow the visitor to the other. Localhost and preview deployments
-use host-only cookies. HTTPS cookies include Secure. This cookie contains only a
-language code; account/session cookies retain their existing security behavior.
+use host-only cookies. The dev contour (`OMOBA_CONTOUR=dev`, and any `dev.omoba.io` or
+`*.dev.omoba.io` host) writes a host-only `omoba_locale_dev` cookie instead and never
+`Domain=.omoba.io`, so a choice on dev cannot change production's, and production's
+shared cookie, which a dev host also receives, cannot shadow it. The server there reads
+`omoba_locale_dev` first and production's `omoba_locale` only as a read-only starting
+point. HTTPS cookies include Secure. This cookie contains only a language code;
+account/session cookies retain their existing security behavior.
 
 Client components use `useLocale()` or `<LanguageSelector />` from
 `src/components/locale-provider.tsx`. Existing account words live in
