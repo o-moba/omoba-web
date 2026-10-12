@@ -92,12 +92,17 @@ setup() {
     echo "+ $(quote "${VC_CMD[@]}" project inspect "$DEV_PROJECT" --scope "$VERCEL_SCOPE") || \\"
     vc project create "$DEV_PROJECT" --scope "$VERCEL_SCOPE"
   fi
-  vc project update "$DEV_PROJECT" --framework nextjs --node-version 24.x --build-command "npm run build" --install-command "npm ci" --scope "$VERCEL_SCOPE"
+  # --yes: without it the CLI (63.1.2, non-interactive or agent shell) only answers
+  # "confirmation_required" and changes nothing.
+  vc project update "$DEV_PROJECT" --framework nextjs --node-version 24.x --build-command "npm run build" --install-command "npm ci" --yes --scope "$VERCEL_SCOPE"
   local kv target
   # Preview too: any build in this project, even a branch preview, is the dev contour.
   for target in production preview; do
     while IFS= read -r kv; do
-      vc env add "${kv%%=*}" "$target" --value "${kv#*=}" --no-sensitive --force --yes --project "$DEV_PROJECT" --scope "$VERCEL_SCOPE"
+      # The CLI (63.1.2) reads a non-TTY stdin as the value even with --value. Fed
+      # from this loop's heredoc it stored the remaining lines as the first key's
+      # value and the other keys were never written. Give it the same value on stdin.
+      vc env add "${kv%%=*}" "$target" --value "${kv#*=}" --no-sensitive --force --yes --project "$DEV_PROJECT" --scope "$VERCEL_SCOPE" < <(printf '%s' "${kv#*=}")
     done <<EOF
 $DEV_ENV
 EOF

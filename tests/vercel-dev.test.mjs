@@ -25,6 +25,7 @@ function rig({
   const { root, repo } = devOrigin('vercel-dev-test-');
   const log = join(root, 'calls.log');
   const leaks = join(root, 'leaked-env.log');
+  const stdins = join(root, 'env-stdin.log');
   const fake = join(root, 'vercel');
   writeFileSync(fake, `#!/usr/bin/env bash
 printf '%s\\n' "$*" >> ${JSON.stringify(log)}
@@ -32,6 +33,8 @@ printf '%s\\n' "$*" >> ${JSON.stringify(log)}
 env | grep -E '^(VERCEL|NOW)_(PROJECT|ORG)_ID=' >> ${JSON.stringify(leaks)}
 case "$1 $2" in
   "project inspect") exit 1;;
+  # Like the real CLI: a non-TTY stdin is read as the value, even with --value.
+  "env add") printf '%s %s %s\\n' "$3" "$4" "$(cat)" >> ${JSON.stringify(stdins)};;
   "api /v9/projects/"*/domains) echo '{"domains":${domains}}';;
   "api /v9/projects/"*/env) echo '{"envs":[]}';;
   "api /v9/projects/"*) echo '${apiProject}';;
@@ -48,7 +51,8 @@ exit 0
   const env = { PATH: process.env.PATH, HOME: process.env.HOME, TMPDIR: root, VC: fake, REPO: repo, GATE: '0' };
   const calls = () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n').filter(Boolean) : []);
   const leaked = () => (existsSync(leaks) ? readFileSync(leaks, 'utf8').trim() : '');
-  return { root, repo, env, calls, leaked, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+  const envStdin = () => (existsSync(stdins) ? readFileSync(stdins, 'utf8').trim().split('\n').filter(Boolean) : []);
+  return { root, repo, env, calls, leaked, envStdin, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 
 const run = (env, ...args) => spawnSync('bash', [SCRIPT, ...args], { encoding: 'utf8', env });
@@ -109,7 +113,7 @@ test('setup writes only to omoba-app-dev and never moves a domain', () => {
     const calls = r.calls();
     assert.equal(calls[0], 'project inspect omoba-app-dev --scope wotoris-projects-c784733b');
     assert.equal(calls[1], 'project create omoba-app-dev --scope wotoris-projects-c784733b');
-    assert.match(calls[2], /^project update omoba-app-dev --framework nextjs --node-version 24\.x /);
+    assert.match(calls[2], /^project update omoba-app-dev --framework nextjs --node-version 24\.x .* --yes --scope wotoris-projects-c784733b$/);
     const envAdds = calls.filter((c) => c.startsWith('env add '));
     assert.equal(envAdds.length, 12);
     for (const target of ['production', 'preview'])
@@ -117,7 +121,10 @@ test('setup writes only to omoba-app-dev and never moves a domain', () => {
         'OMOBA_REGISTRY_URL https://registry.dev.ekza.io', 'OMOBA_STUDIO_URL https://studio.dev.ekza.io', 'OMOBA_SITE_URL https://dev.omoba.io']) {
         const [key, value] = kv.split(' ');
         assert.ok(envAdds.includes(`env add ${key} ${target} --value ${value} --no-sensitive --force --yes --project omoba-app-dev --scope wotoris-projects-c784733b`), kv + target);
+        // What the CLI reads on stdin is exactly the value, never the rest of the list.
+        assert.ok(r.envStdin().includes(`${key} ${target} ${value}`), 'stdin of ' + kv + target);
       }
+    assert.equal(r.envStdin().length, 12);
     assert.ok(!calls.some((c) => /OMOBA_ALLOW_INSECURE_LOCAL|OMOBA_TRUST_LOOPBACK_PROXY|OMOBA_ACCOUNT_API_URL/.test(c)));
     assert.ok(calls.includes('api /v9/projects/omoba-app-dev/domains -X GET --scope wotoris-projects-c784733b'));
     assert.equal(calls.at(-1), 'domains add app.dev.omoba.io omoba-app-dev --scope wotoris-projects-c784733b');
