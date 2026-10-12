@@ -210,9 +210,9 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Изучи → подготовь → создай черновик.",
     "zh": "探索 → 准备 → 创建草稿。"
   },
-  "Download a brief to keep your design tied to this game revision. Static handheld models start in Studio and reach the market and the game once OMOBA approves them; Wildspark sets are submitted for the wildspark.handheld.set request. Exact-slot approval and equipping are still to come. Avatar appearance is separate from class kits.": {
-    "ru": "Скачай задание, чтобы сохранить связь дизайна с этой версией игры. Статические модели оружия создаются в Studio и попадают в маркет и в игру после одобрения OMOBA; наборы Wildspark отправляются по запросу wildspark.handheld.set. Одобрение и экипировка для конкретного слота ещё в разработке. Внешность аватара не зависит от набора класса.",
-    "zh": "下载设计说明，确保作品对应当前游戏版本。静态手持模型在 Studio 中制作，经 OMOBA 审核通过后会出现在市场和游戏中；Wildspark 套装需按 wildspark.handheld.set 需求提交。指定槽位的审批及装备功能尚在开发中。角色外观与职业套组相互独立。"
+  "Download a brief to keep your design tied to this game revision. Static handheld models start in Studio and reach the market and the game once OMOBA approves them; Wildspark sets are submitted for the wildspark.handheld.set request. Requests for other classes' guns, projectiles and traps are still to come. Avatar appearance is separate from class kits.": {
+    "ru": "Скачай задание, чтобы сохранить связь дизайна с этой версией игры. Статические модели оружия создаются в Studio и попадают в маркет и в игру после одобрения OMOBA; наборы Wildspark отправляются по запросу wildspark.handheld.set. Запросы на оружие других классов, снаряды и ловушки ещё в разработке. Внешность аватара не зависит от набора класса.",
+    "zh": "下载设计说明，确保作品对应当前游戏版本。静态手持模型在 Studio 中制作，经 OMOBA 审核通过后会出现在市场和游戏中；Wildspark 套装需按 wildspark.handheld.set 需求提交。其他职业的武器、投射物和陷阱需求尚在开发中。角色外观与职业套组相互独立。"
   },
   "01 / DISCOVER": {
     "ru": "01 / ИССЛЕДУЙ",

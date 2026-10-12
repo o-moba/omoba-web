@@ -379,7 +379,7 @@ export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL, stud
         >
           <span className="creator-phase">{t("FIRST ITERATION")}</span>
           <p>
-            <strong>{t("Explore → prepare → create a draft.")}</strong>{" "}{t("Download a brief to keep your design tied to this game revision. Static handheld models start in Studio and reach the market and the game once OMOBA approves them; Wildspark sets are submitted for the wildspark.handheld.set request. Exact-slot approval and equipping are still to come. Avatar appearance is separate from class kits.")}</p>
+            <strong>{t("Explore → prepare → create a draft.")}</strong>{" "}{t("Download a brief to keep your design tied to this game revision. Static handheld models start in Studio and reach the market and the game once OMOBA approves them; Wildspark sets are submitted for the wildspark.handheld.set request. Requests for other classes' guns, projectiles and traps are still to come. Avatar appearance is separate from class kits.")}</p>
         </section>
         <section id="creator-library" className="creator-library">
           <div className="creator-library-heading">
