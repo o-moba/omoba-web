@@ -5,7 +5,7 @@ export const EKZA_LINK_SCOPE: "library-claim";
 export const MAX_LINK_SECONDS: number;
 export const LINK_TOKEN: RegExp;
 export function ekzaConfig(env?: Record<string, string | undefined>): { registry: string; studio: string };
-export function studioOrigin(env?: Record<string, string | undefined>): string;
+export function studioOrigin(env?: Record<string, string | undefined>): string | null;
 export function ekzaCookieNames(secure: boolean): { link: string; device: string; csrf: string };
 export type EkzaRoute =
   | { action: "csrf" | "library" | "start" | "poll" | "sign-out" }

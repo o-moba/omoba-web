@@ -121,7 +121,7 @@ function ItemCard({
   busy: boolean;
   error: string | undefined;
   notice: string | undefined;
-  studioLibraryUrl: string;
+  studioLibraryUrl: string | null;
   onSignIn: () => void;
   onClaim: (item: MarketItem) => void;
   onRemove: (item: MarketItem) => void;
@@ -137,11 +137,11 @@ function ItemCard({
           <button className="market-text-button" disabled={busy} onClick={() => onRemove(item)}>
             {t("Remove from library")}
           </button>
-        ) : (
+        ) : studioLibraryUrl ? (
           <a className="creator-studio-link market-manage" href={studioLibraryUrl} target="_blank" rel="noreferrer">
             {t("Manage in Ekza Studio ↗")}
           </a>
-        )}
+        ) : null}
       </>
     );
   else if (panel.state === "connected")
@@ -299,8 +299,9 @@ export default function Market({
   market: MarketState;
   initialSession: EkzaSession;
   wildsparkPreviews: Preview[];
-  studioDraftUrl: string;
-  studioLibraryUrl: string;
+  /** Null when the contour's Studio is not configured: the link is hidden. */
+  studioDraftUrl: string | null;
+  studioLibraryUrl: string | null;
   siteUrl?: string;
 }) {
   const { locale, t } = useLocale();
@@ -506,9 +507,11 @@ export default function Market({
                   <p>{t("One set carries both of Wildspark’s guns, the repeater and the launcher. In the game, Wildspark’s Q switches between them.")}</p>
                 </div>
                 <div className="market-cta">
-                  <a className="creator-primary" href={studioDraftUrl} target="_blank" rel="noreferrer">
-                    {t("Make one in Ekza Studio ↗")}
-                  </a>
+                  {studioDraftUrl ? (
+                    <a className="creator-primary" href={studioDraftUrl} target="_blank" rel="noreferrer">
+                      {t("Make one in Ekza Studio ↗")}
+                    </a>
+                  ) : null}
                   <Link className="creator-secondary" href={WILDSPARK_BRIEF}>{t("Read the Wildspark brief")}</Link>
                 </div>
               </div>

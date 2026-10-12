@@ -603,6 +603,10 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Гостевой прототип",
     "zh": "访客原型"
   },
+  "Development environment: test data, not the live OMOBA site": {
+    "ru": "Тестовая среда: тестовые данные, не рабочий сайт OMOBA",
+    "zh": "开发环境：测试数据，并非正式 OMOBA 网站"
+  },
   "MATCH REPORT": {
     "ru": "ОТЧЁТ О МАТЧЕ",
     "zh": "比赛报告"

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
 import { allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
+import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,8 @@ function fail(code: string, status: number) { return NextResponse.json({ code },
 async function handle(request: NextRequest, context: { params: Promise<{path:string[]}> }) {
   let config: ReturnType<typeof portalConfig>;
   try { config = portalConfig(); } catch { return fail('configuration_unavailable', 503); }
+  // A request under the other contour's host never reaches this contour's Account API.
+  if (contourHostProblem(contourName(), requestHostname(request.headers.get('host')))) return fail('configuration_unavailable', 503);
   const path = (await context.params).path.join('/');
   if (!config.accountEnabled) return fail(
     (path === 'csrf' && request.method === 'GET') || allowedPath(path, request.method) ? 'account_service_disabled' : 'not_found',
