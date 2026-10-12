@@ -9,6 +9,7 @@ import type {
   CatalogIcon,
 } from "@/lib/asset-catalog-types";
 import { contributionBrief } from "@/lib/asset-catalog.mjs";
+import { DEFAULT_STUDIO_URL, isWildsparkHandheld, studioDraftUrl } from "@/lib/market.mjs";
 import { Brand } from "@/components/brand";
 import { LanguageSelector, useLocale } from "@/components/locale-provider";
 import { creatorText } from "@/lib/creator-translations";
@@ -54,12 +55,14 @@ function RequirementCard({
   classId,
   skillId,
   selected,
+  studioUrl,
 }: {
   requirement: AssetRequirement;
   catalog: AssetCatalog;
   classId: string;
   skillId?: string;
   selected: boolean;
+  studioUrl: string;
 }) {
   const { locale, t } = useLocale();
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
@@ -166,10 +169,13 @@ function RequirementCard({
           {r.status === "supported" ? (
             <a
               className="creator-studio-link"
-              href="https://studio.ekza.io/studio?view=new"
+              href={studioDraftUrl(studioUrl, r.id)}
               target="_blank"
               rel="noreferrer"
             >{t("Start a Studio draft ↗")}</a>
+          ) : null}
+          {isWildsparkHandheld(r.id) ? (
+            <Link className="creator-studio-link" href="/market#wildspark">{t("Community sets in the market ↗")}</Link>
           ) : null}
         </div>
         {downloadError ? (
@@ -227,7 +233,7 @@ function RequirementCard({
     </article>
   );
 }
-export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL }: { catalog: AssetCatalog; siteUrl?:string }) {
+export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL, studioUrl=DEFAULT_STUDIO_URL }: { catalog: AssetCatalog; siteUrl?:string; studioUrl?:string }) {
   const { locale, t } = useLocale();
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
   const params = useSearchParams();
@@ -319,6 +325,7 @@ export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL }: { 
         </a>
         <nav aria-label={t("Creator navigation")}>
           <Link href="/workshop" prefetch={false}>{t("Build a class")}</Link>
+          <Link href="/market">{t("Market")}</Link>
           <a href={siteUrl}>{t("About the game ↗")}</a>
           <Link href="/me" prefetch={false}>{t("Player portal")}</Link>
           <a href="#creator-workflow">{t("How to contribute")}</a>
@@ -372,7 +379,7 @@ export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL }: { 
         >
           <span className="creator-phase">{t("FIRST ITERATION")}</span>
           <p>
-            <strong>{t("Explore → prepare → create a draft.")}</strong>{" "}{t("Download a brief to keep your design tied to this game revision. Static handheld models can start in Studio; exact-slot submissions, public galleries, exact-slot approval and equipping are still to come. Avatar appearance is separate from class kits.")}</p>
+            <strong>{t("Explore → prepare → create a draft.")}</strong>{" "}{t("Download a brief to keep your design tied to this game revision. Static handheld models start in Studio and reach the market and the game once OMOBA approves them; Wildspark sets are submitted for the wildspark.handheld.set request. Requests for other classes' guns, projectiles and traps are still to come. Avatar appearance is separate from class kits.")}</p>
         </section>
         <section id="creator-library" className="creator-library">
           <div className="creator-library-heading">
@@ -526,6 +533,7 @@ export default function CreatorCatalog({ catalog, siteUrl=DEFAULT_SITE_URL }: { 
                           classId={selectedClass.id}
                           skillId={skillId || undefined}
                           selected={r.id === requirementId}
+                          studioUrl={studioUrl}
                         />
                       ))}
                     </div>

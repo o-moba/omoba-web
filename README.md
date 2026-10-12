@@ -41,6 +41,9 @@ this repository. Do not expose the database or raw Account API publicly.
 - `OMOBA_ACCOUNT_API_URL`: internal Account API origin; server-side only.
 - `OMOBA_ACCOUNT_MODE=disabled`: explicit public guest prototype; no account upstream requests. Defaults to `enabled` for local development.
 - `OMOBA_ALLOW_INSECURE_LOCAL=1`: loopback development/testing only.
+- `OMOBA_REGISTRY_URL`, `OMOBA_STUDIO_URL`: Ekza Registry and Studio origins for the
+  market. Defaults `https://registry.ekza.io` and `https://studio.ekza.io`; other
+  values only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1`.
 - `OMOBA_TRUST_LOOPBACK_PROXY=1`: only behind an ingress that **overwrites**
   `X-Real-IP`, with both Node and Rust listeners inaccessible except through that
   trusted ingress. Enable the same option on the API. Otherwise forwarded headers
@@ -49,11 +52,16 @@ this repository. Do not expose the database or raw Account API publicly.
 The browser receives HttpOnly session/preauth cookies. Pair secrets and API bearer
 values never enter localStorage, public environment variables or rendered JSON.
 Mutations require same-origin CSRF proof; private reads and HTML are dynamic/no-store.
+On HTTPS every cookie is `__Host-` prefixed and Secure. Deletions repeat those
+attributes (`expireCookie` in `src/lib/security.mjs`): a browser ignores a `__Host-`
+Set-Cookie without Secure, so a bare delete would leave the cookie in place.
 
 ## Verification
 
 - `npm test`: BFF path, origin and cookie-token security rules.
 - `npm run typecheck` and `npm run build`.
+- `npm run test:https-cookies`: after the build, every cookie write and deletion of
+  both BFFs on an HTTPS portal origin, by header and in real Chrome.
 - `npm run test:e2e`: real Chrome + running local BFF/API/PostgreSQL, after the
   synthetic identity fixture described in [testing](docs/TESTING.md).
 - `npm run test:load`: dedicated synthetic local benchmark only; see testing.
@@ -91,6 +99,18 @@ sessions must be reauthorized for the expanded device/recovery scopes. See
 ## Creator library
 
 The public `/creators` route browses the game-owned asset snapshot without an account. See [Creator catalogue v1](docs/creator-catalog.md) for the import bridge, read-only SDK, contribution briefs and rollout limits. Run `npm run catalog:check` to verify the snapshot and `npm run test:creators` for the focused desktop flow.
+
+## Market
+
+`/market` lists free community weapons and avatars approved for OMOBA in the Ekza
+Registry, with Wildspark repeater + launcher sets featured first. "Sign in with Ekza"
+links the player's Ekza library (scope `library-claim`); "Get free" adds an item to
+that library, which the game reads for "My Ekza library"; "Remove from library" takes
+back only what the market claimed. The Registry link token stays in an HttpOnly cookie
+behind the separate `/api/ekza/*` BFF, and sign-out also ends that link in the
+Registry (best effort; the cookies are cleared either way). It does not use
+the Account API, so it works in guest mode. See [Market](docs/market.md);
+`npm run test:market` runs the browser flow against a fake Registry.
 
 ## Class Workshop
 

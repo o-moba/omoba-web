@@ -132,7 +132,7 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   const loginHref=portalLoginHref(path==='/login'?returnTo:path+(loginParams.size?'?'+loginParams.toString():''));
   const connected=useCallback(()=>{void reload();router.push(returnTo);},[reload,router,returnTo]);
   useEffect(()=>{if(!account)return;const focus=()=>void reload();window.addEventListener('focus',focus);const timer=setInterval(focus,5000);return()=>{window.removeEventListener('focus',focus);clearInterval(timer);};},[Boolean(account),reload]);
-  const nav=[['/me',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/creators',t('Creators'),'✧'],['/workshop',t('Workshop'),'◈'],['/supporter',t('Supporter'),'✦'],['/devices',t('Devices'),'▣'],['/settings',w.settings,'⚙']];
+  const nav=[['/me',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/creators',t('Creators'),'✧'],['/market',t('Market'),'◆'],['/workshop',t('Workshop'),'◈'],['/supporter',t('Supporter'),'✦'],['/devices',t('Devices'),'▣'],['/settings',w.settings,'⚙']];
   let content:React.ReactNode;
   if (accountDisabled)
     content = (
@@ -153,6 +153,9 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
           </Link>
           <Link className="button" href="/creators">
             {t("Asset library")}
+          </Link>
+          <Link className="button" href="/market">
+            {t("Market")}
           </Link>
         </div>
         <figure className="portal-welcome-art">

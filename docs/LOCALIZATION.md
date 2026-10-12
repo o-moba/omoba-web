@@ -15,7 +15,9 @@ language code; account/session cookies retain their existing security behavior.
 Client components use `useLocale()` or `<LanguageSelector />` from
 `src/components/locale-provider.tsx`. Existing account words live in
 `src/lib/i18n.ts`; creator/catalogue/workshop source translations live in
-`src/lib/creator-translations.ts`. Add Russian and Chinese entries together.
+`src/lib/creator-translations.ts`; market copy lives in `src/lib/market-translations.ts`.
+Add Russian and Chinese entries together. Registry item names, creators and licences
+are shown as published.
 Translate display strings at render time so an existing notice follows a new
 language choice. Canonical IDs, export schema fields and user-authored names
 must remain unchanged.

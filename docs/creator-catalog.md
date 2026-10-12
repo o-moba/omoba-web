@@ -2,7 +2,7 @@
 
 `/creators` is a public, English-language asset library. It reads a reviewed local game export, independently of the Account API and database. Class kits remain separate from avatar appearance. The initial catalogue has 17 classes, 68 skills, QWER placements, basic attacks, and authored presentation requirements. The page shows skill icons, licensed default model thumbnails and downloads, engine references, contribution readiness, and precise usage relationships.
 
-This iteration supports discovery and preparation. A downloaded JSON brief pins the game source, catalogue revision, requirement ID, class, profile, baseline, and creative brief. For supported static handheld requirements, the page links to the existing `https://studio.ekza.io/studio?view=new` route. Creators must carry the brief manually alongside their design; the link does not pass a hidden requirement ID or claim to submit, approve, publish, or equip a specific slot. Existing Studio cosmetic workflows are separate from future exact-slot approval and equipping.
+This iteration supports discovery and preparation. A downloaded JSON brief pins the game source, catalogue revision, requirement ID, class, profile, baseline, and creative brief. For supported static handheld requirements, the page links to the existing `https://studio.ekza.io/studio?view=new` route (origin from `OMOBA_STUDIO_URL`, see [Market](market.md)). Creators must carry the brief manually alongside their design; the link does not claim to submit, approve, publish, or equip a specific slot. The Wildspark repeater and launcher are the exception: both link to `…/studio?view=new&kind=weapon&project=omoba&requirement=wildspark.handheld.set`, because the two Q guns are contributed as one set asset, and to the community sets in `/market#wildspark`. Their game-authored briefs describe that set (the `WildsparkSetRepeater` / `WildsparkSetLauncher` node convention and the game's `docs/wildspark-skin-sets.md`). A Studio item reaches the market and the game only after OMOBA approves it; approval is per item, and exact-slot approval and equipping for other requirements are still future work.
 
 ## Refresh the snapshot
 
@@ -54,12 +54,16 @@ The [Class Workshop](class-workshop.md) implements private class composition, ce
 
 ## Next iterations
 
-1. Add explicit requirement ID, catalogue revision, profile version and license consent to Registry submissions. Preserve immutable original submissions and validate GLBs against the matching profile.
-2. Show public variants and moderated review state. Keep generic cosmetic approval distinct from exact requirement approval and compatibility.
-3. Define approved sets, class/skill bindings, rollback and fallback behavior in the game. Add runtime validation and visual regression evidence for attachment transforms, scale, VFX and motion.
+1. Registry submissions can now name a project requirement (`requirementId`, Registry C5; seeded for `wildspark.handheld.set` only). Still to add: catalogue revision, profile version and license consent on submissions, immutable original submissions and GLB validation against the matching profile.
+2. Approved free items are public in [`/market`](market.md). Still to add: moderated review state, and keeping generic cosmetic approval distinct from exact requirement approval and compatibility.
+3. The game binds one set, Wildspark's repeater + launcher, by node names, with the class-default pair as fallback. Still to define: other class/skill bindings and rollback, plus runtime validation and visual regression evidence for attachment transforms, scale, VFX and motion.
 4. Add interactive 3D previews only after agreeing on a renderer/profile contract; these model reference thumbnails currently do not reproduce combat rendering.
 5. Release the public portal route and then configure the marketing destination. Deployment, backend schemas and runtime equipping are outside this patch.
 
+## Wildspark set snapshot
+
+The shipped snapshot is revision `sha256-e53b09cccd7d534943af4f2ecb70156e65972ba9f0503d3f22da55c31221951c`, exported from a clean `omoba-bevy` checkout at `70d15bd9648cc0d342aef7fb2d139a0c1501191e` (branch `feat/wildspark-set-skins`) with the 0.44 thumbnails reused byte for byte. Compared with the 0.44.0 snapshot only the briefs of `wildspark.handheld.repeater` and `wildspark.handheld.launcher` changed: both now describe the one-GLB set under the Studio requirement `wildspark.handheld.set`. Gameplay revision and assets are unchanged (`standard-kits-7`). Re-export from the merged game commit before release; with unchanged inputs only `source.commit` and `revision` move.
+
 ## 0.44.0 snapshot
 
-The shipped snapshot follows game main commit `1952af24125dce8dc5be7926a56fced1a48f6b84`, including Wildspark PR #77. Wildspark’s default repeater is distinct from Riftshot’s repeater; rocket-mode attacks reference the actual bundled rocket GLB. The corresponding workshop uses `standard-kits-7`. Older class-build documents are rejected by revision validation, preserving their saved bytes for download. New static weapon previews retain content-addressed provenance.
+The 0.44.0 snapshot followed game main commit `1952af24125dce8dc5be7926a56fced1a48f6b84`, including Wildspark PR #77. Wildspark’s default repeater is distinct from Riftshot’s repeater; rocket-mode attacks reference the actual bundled rocket GLB. The corresponding workshop uses `standard-kits-7`. Older class-build documents are rejected by revision validation, preserving their saved bytes for download. New static weapon previews retain content-addressed provenance.

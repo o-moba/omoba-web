@@ -5288,7 +5288,7 @@
         "sourcePath": "client/assets/weapons/wild-launcher.glb",
         "url": "/asset-catalog/files/f89e32ad001c94fb0178f9740ddfe9c177f28847818153703c2ae9c007ecacf0.glb"
       },
-      "brief": "The second gun in the class-default Q switch. Individual static handheld submission is supported. Mode-specific cosmetic set approval and equipment are future work; this is not a third Q weapon.",
+      "brief": "The second gun in the class-default Q switch, shown in rockets mode and while W or R draws it. The launcher and the repeater are contributed together as one Wildspark set GLB under the Studio requirement wildspark.handheld.set; this gun is its WildsparkSetLauncher variant, and its WildsparkSlide recoils from the rest pose. Authoring guide: docs/wildspark-skin-sets.md in github.com/o-moba/omoba-bevy. A standalone static handheld is still accepted but stays selected in both modes. This is not a third Q weapon.",
       "classIds": [
         "wildspark"
       ],
@@ -5328,7 +5328,7 @@
         "sourcePath": "client/assets/weapons/wildspark-repeater.glb",
         "url": "/asset-catalog/files/09edd94f6296e15ce0b19e80c06970e987c06827707aad9bec13e42ecc9df29e.glb"
       },
-      "brief": "Wildspark class-default repeater with engine-controlled rotor animation. Static handheld submissions are supported; custom moving-part animation and coordinated two-gun sets require a future profile. Explicit item selection stays selected in both modes.",
+      "brief": "Wildspark class-default repeater with engine-controlled rotor animation. The repeater and the launcher are contributed together as one Wildspark set GLB under the Studio requirement wildspark.handheld.set: WildsparkSetRepeater and WildsparkSetLauncher nodes, launcher at scale 0 in the file. The game shows the variant for the current weapon mode and moves only its mechanism from the rest pose: WildsparkRotor in repeater mode. Authoring guide: docs/wildspark-skin-sets.md in github.com/o-moba/omoba-bevy. Custom moving-part animation requires a future profile. Any other explicit item stays selected in both modes; an item that is not installed yet shows the class-default pair.",
       "classIds": [
         "wildspark"
       ],
@@ -6968,9 +6968,9 @@
     }
   ],
   "source": {
-    "commit": "1952af24125dce8dc5be7926a56fced1a48f6b84",
+    "commit": "70d15bd9648cc0d342aef7fb2d139a0c1501191e",
     "gameplayRevision": "standard-kits-7",
-    "inputsSha256": "4d0ae33ac69f0c4b5e62324fa5cb115e69930977c26882c0905dda6a6cfe6d78"
+    "inputsSha256": "b666e4244962220f408071d0d8d53c5d5afb68579e3095a1037a3f825588b1ea"
   },
-  "revision": "sha256-cf9988b3f2b4d1557a9882c155a87014e62c43221f2e29caa90255d8b0a943d8"
+  "revision": "sha256-e53b09cccd7d534943af4f2ecb70156e65972ba9f0503d3f22da55c31221951c"
 }
