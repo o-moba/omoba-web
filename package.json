@@ -22,12 +22,15 @@
     "test:market": "node tests/market.e2e.mjs",
     "test:https-cookies": "node tests/https-cookies.e2e.mjs",
     "test:contour": "node tests/contour.e2e.mjs",
-    "test:vercel-cli": "node tests/vercel-cli.e2e.mjs"
+    "test:vercel-cli": "node tests/vercel-cli.e2e.mjs",
+    "test:market-preview": "node tests/market-preview.e2e.mjs"
   },
   "dependencies": {
+    "@ekza/avatar-renderer": "git+https://github.com/ekza-space/ekza-avatar-renderer.git#f650dd9dae170fcdc3da165fb3a9d92324b73522",
     "next": "16.3.8",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

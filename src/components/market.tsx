@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import MarketPreviewDialog from "./market-preview-dialog";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Brand } from "@/components/brand";
 import { LanguageSelector, useLocale } from "@/components/locale-provider";
@@ -113,6 +114,7 @@ function ItemCard({
   onSignIn,
   onClaim,
   onRemove,
+  onPreview,
 }: {
   item: MarketItem;
   previews: Preview[];
@@ -125,6 +127,7 @@ function ItemCard({
   onSignIn: () => void;
   onClaim: (item: MarketItem) => void;
   onRemove: (item: MarketItem) => void;
+  onPreview: (item: MarketItem) => void;
 }) {
   const { t } = useLocale();
   let action: React.ReactNode;
@@ -159,6 +162,7 @@ function ItemCard({
     <article className="creator-asset market-card" aria-label={item.name} id={"asset-" + item.assetId}>
       <div className="creator-preview">
         <ItemPreview item={item} previews={previews} />
+        <button className="market-open-3d" onClick={() => onPreview(item)} aria-label={t("View {name} in 3D").replace("{name}", item.name)}>{t("View in 3D")} ↗</button>
         <span className="creator-status">{item.kind === "avatar" ? t("Avatar") : t("Weapon")}</span>
         {item.wildspark ? <span className="market-badge">{t("Wildspark set")}</span> : null}
       </div>
@@ -305,6 +309,7 @@ export default function Market({
   siteUrl?: string;
 }) {
   const { locale, t } = useLocale();
+  const [previewItem, setPreviewItem] = useState<MarketItem | null>(null);
   const [panel, setPanel] = useState<Panel>(initialSession);
   const [panelBusy, setPanelBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -453,11 +458,13 @@ export default function Market({
       onSignIn={() => void signIn()}
       onClaim={(i) => void change(i, "POST")}
       onRemove={(i) => void change(i, "DELETE")}
+      onPreview={setPreviewItem}
     />
   );
   const groups = market.state === "ready" ? marketGroups(market.items) : null;
   return (
     <div className="creator-page market-page" lang={locale === "zh" ? "zh-CN" : locale}>
+      {previewItem && <MarketPreviewDialog item={previewItem} onClose={() => setPreviewItem(null)} />}
       <a className="creator-skip" href="#market-content">{t("Skip to market")}</a>
       <header className="creator-header">
         <Link href="/market" className="creator-brand" aria-label={t("OMOBA market")}>

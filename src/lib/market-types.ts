@@ -11,6 +11,8 @@ export type MarketItem = {
   license: { text: string; attribution: string };
   /** Registry-hosted preview, or null when absent or not trusted. */
   thumbnailUrl: string | null;
+  /** Exact approved GLB, validated against the configured Registry and SHA. */
+  modelUrl: string;
   /** C5 requirement binding of the approved OMOBA release. */
   requirementId: string | null;
   wildspark: boolean;
