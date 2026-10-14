@@ -65,6 +65,7 @@ test('one hostile or unsupported item is skipped without dropping the market', (
   assert.equal(skipped, hostile.length + 1, 'duplicate IDs are skipped too');
   assert.equal(items.length, 1);
   assert.equal(items[0].thumbnailUrl, null, 'foreign previews are dropped, not rendered');
+  assert.equal(items[0].modelUrl, good.renditions[0].downloadUrl, '3D uses the exact validated approved rendition');
   const local = parseMarket(catalogue([item('d', { thumbnailUrl: REGISTRY + '/v1/studio/assets/' + sha('f') + '/rendition-thumbnail?x=1' })]), REGISTRY);
   assert.equal(local.items[0].thumbnailUrl, null);
   // Registry files must sit under the configured origin, not the default one.

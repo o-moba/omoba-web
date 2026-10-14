@@ -103,7 +103,8 @@ function item(value, registryOrigin) {
     rendition.sizeBytes > 256 * 1024 * 1024
   )
     skip("rendition size");
-  if (!registryFile(rendition.downloadUrl, registryOrigin, rendition.sha256, ["rendition"]))
+  const modelUrl = registryFile(rendition.downloadUrl, registryOrigin, rendition.sha256, ["rendition"]);
+  if (!modelUrl)
     skip("rendition URL is not a Registry file");
   if (!object(value.license) || !object(value.creator)) skip("license or creator");
   return {
@@ -119,6 +120,7 @@ function item(value, registryOrigin) {
     },
     // A foreign or malformed preview is dropped, not rendered.
     thumbnailUrl: registryFile(value.thumbnailUrl, registryOrigin, null, ["rendition-thumbnail"]),
+    modelUrl,
     requirementId,
     wildspark: kind === "weapon" && requirementId === WILDSPARK_SET_REQUIREMENT,
     revisionId,
