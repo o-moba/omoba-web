@@ -60,9 +60,17 @@ The [Class Workshop](class-workshop.md) implements private class composition, ce
 4. Add interactive 3D previews only after agreeing on a renderer/profile contract; these model reference thumbnails currently do not reproduce combat rendering.
 5. Release the public portal route and then configure the marketing destination. Deployment, backend schemas and runtime equipping are outside this patch.
 
-## Wildspark set snapshot
+## Dawnweaver dev integration snapshot
 
-The shipped snapshot is revision `sha256-e53b09cccd7d534943af4f2ecb70156e65972ba9f0503d3f22da55c31221951c`, exported from a clean `omoba-bevy` checkout at `70d15bd9648cc0d342aef7fb2d139a0c1501191e` (branch `feat/wildspark-set-skins`) with the 0.44 thumbnails reused byte for byte. Compared with the 0.44.0 snapshot only the briefs of `wildspark.handheld.repeater` and `wildspark.handheld.launcher` changed: both now describe the one-GLB set under the Studio requirement `wildspark.handheld.set`. Gameplay revision and assets are unchanged (`standard-kits-7`). Re-export from the merged game commit before release; with unchanged inputs only `source.commit` and `revision` move.
+The current dev catalogue is `sha256-41f7286321af14c7ae0e527dff2e8ee93469c9fa01a4c8b944879afefc7c5563`, exported from the combined game commit `4c93caa737b7f51239f3b3f95b6e2dfff78dd06d`. It uses `standard-kits-8` alongside workshop snapshot `sha256-c1df475057420f442344941124dc8983f3a18dd4bc37980fdd821bd08e7c1b2c`. The workshop records `dcee2ba19d1c4d4a5799d14e3f48a47ecb0648ab` as the latest commit affecting its tracked inputs; its exact input digest is `fddbb5918af417ed6c7a3873cc124f5387094ed3d9e8be371d931d8b6cd0a63d`.
+
+This refresh includes Dawnweaver's centre-weighted Horizon Ray description, the self-shield and automatic field detonation descriptions, and the charge/release motion references. All seven existing model preview hashes and all content-addressed model/image files remain unchanged. Russian and Chinese descriptions follow the updated game text. The existing workshop test now checks that the two snapshots use the same gameplay revision before browser rendering.
+
+Class builds saved with `standard-kits-7` remain incompatible and retain their original bytes for download; this refresh does not silently upgrade them. New default recipes and Combat Test exports use `standard-kits-8`. Deploy the matching game/API and portal together; this source update does not deploy either service.
+
+## Previous Wildspark set snapshot
+
+The previous snapshot was revision `sha256-e53b09cccd7d534943af4f2ecb70156e65972ba9f0503d3f22da55c31221951c`, exported from a clean `omoba-bevy` checkout at `70d15bd9648cc0d342aef7fb2d139a0c1501191e` (branch `feat/wildspark-set-skins`) with the 0.44 thumbnails reused byte for byte. Compared with the 0.44.0 snapshot only the briefs of `wildspark.handheld.repeater` and `wildspark.handheld.launcher` changed: both now describe the one-GLB set under the Studio requirement `wildspark.handheld.set`. Gameplay revision and assets are unchanged (`standard-kits-7`). Re-export from the merged game commit before release; with unchanged inputs only `source.commit` and `revision` move.
 
 ## 0.44.0 snapshot
 
