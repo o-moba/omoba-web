@@ -2,7 +2,7 @@ import { CONTOURS, contourName } from './contour.mjs';
 
 export const DEFAULT_SITE_URL = CONTOURS.production.site;
 
-const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/workshop', '/friends', '/players', '/devices', '/supporter', '/settings', '/download', '/creators', '/market', '/sponsor']);
+const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/workshop', '/friends', '/players', '/devices', '/supporter', '/supporters', '/settings', '/download', '/creators', '/market', '/sponsor']);
 
 /** Only known local pages may be used after game-confirmed browser sign-in. */
 export function portalReturnTo(value) {

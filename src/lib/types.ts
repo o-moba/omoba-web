@@ -1,4 +1,7 @@
-export type Profile = { profile_id:string; nickname:string; rating?:number; rated_matches?:number; matches_played?:number; wins?:number; losses?:number; progression_xp?:string; level?:string };
+export type HeroRecognition = { months_supported:number; hero_active:boolean; hero_until:number|null };
+export type SupporterRecognition = { months_supported:number; visible:boolean; public_profile_enabled:boolean };
+export type SupportersDirectory = { supporters:(HeroRecognition & {profile_id:string; nickname:string})[]; next_cursor:string|null; data_as_of:string };
+export type Profile = { profile_id:string; nickname:string; rating?:number; rated_matches?:number; matches_played?:number; wins?:number; losses?:number; progression_xp?:string; level?:string; supporter?:HeroRecognition };
 export type Settings = { public_profile_enabled:boolean; public_stats_enabled:boolean; discoverable:boolean; locale:'ru'|'en'; timezone:string; version:string };
 export type Account = { profile:Profile; settings:Settings; rules:{newcomer_matches:number}; session:{session_id:string} };
 export type Stats = { kills:number; deaths:number; assists:number; damage_to_heroes:number; damage_to_structures:number; damage_to_creeps:number; damage_taken:number; minion_last_hits:number; jungle_last_hits:number; structures_destroyed:number; final_level:number };

@@ -36,7 +36,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     request.headers.get('x-csrf-token'), jar.get(names.csrf)?.value)) return fail('csrf_rejected',403);
   if (request.nextUrl.search.length > 2048) return fail('invalid_query',400);
   let body: Record<string,unknown> | undefined;
-  let rawClassBuildBody: string | undefined;
+  let rawStrictBody: string | undefined;
   if (request.method === 'POST' || request.method === 'PATCH') {
     if (!request.headers.get('content-type')?.startsWith('application/json')) return fail('json_required',400);
     if (Number(request.headers.get('content-length') || 0) > MAX_BODY) return fail('body_too_large',413);
@@ -52,7 +52,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (!body || Array.isArray(body) || typeof body !== 'object') return fail('invalid_json',400);
     // Preserve duplicate fields and numeric spellings for the authoritative
     // Rust parser; normalizing here would silently accept an invalid document.
-    if (/^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawClassBuildBody=raw;
+    if (path === 'me/supporter/recognition' || /^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawStrictBody=raw;
   }
   const token = jar.get(names.session)?.value;
   const headers: Record<string,string> = {'Content-Type':'application/json'};
@@ -84,7 +84,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
   }
   try {
     const upstream=await fetch(config.api+'/v1/'+target+request.nextUrl.search, {
-      method:request.method, headers, body:rawClassBuildBody ?? (body ? JSON.stringify(body):undefined),
+      method:request.method, headers, body:rawStrictBody ?? (body ? JSON.stringify(body):undefined),
       cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000),
     });
     const content=await upstream.text();
