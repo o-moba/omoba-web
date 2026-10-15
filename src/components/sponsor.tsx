@@ -39,7 +39,7 @@ const errors: Record<string, string> = {
   idempotency_conflict: 'This submission changed while being sent. Refresh before submitting again.',
   placement_not_found: 'This request no longer exists. Refresh your requests.',
   placement_decided: 'This request has already been decided. Refresh your requests.',
-  invalid_request: 'Check the title, credit and rights confirmation before submitting.',
+  invalid_request: 'Check the title, credit, description and rights confirmation before submitting.',
   csrf_rejected: 'This page is out of date. Reload it and try again.',
   rate_limited: 'Too many requests. Please wait a moment and try again.',
   placements_unsupported: 'Sculpture placement is not enabled on this server yet.',
@@ -68,6 +68,8 @@ export default function Sponsor({ initialData, initialSession, uploadUrl, siteUr
   const [slotId, setSlotId] = useState('opposite-dragon');
   const [title, setTitle] = useState(first?.name.slice(0, 80) ?? '');
   const [credit, setCredit] = useState(initialCredit(first));
+  const [description, setDescription] = useState('');
+  const descriptionLength = Array.from(description).length;
   const [rights, setRights] = useState(false);
   // The same exact payload keeps its key across a network failure or lost response.
   const submission = useRef<PlacementRequest | null>(null);
@@ -152,20 +154,20 @@ export default function Sponsor({ initialData, initialSession, uploadUrl, siteUr
   function choose(value: string) {
     const next = models.find(item => item.id === value);
     setModelId(value); setTitle(next?.name.slice(0, 80) ?? '');
-    setCredit(initialCredit(next));
+    setCredit(initialCredit(next)); setDescription('');
     setRights(false); submission.current = null;
   }
   async function create() {
-    if (!model || !slot || !rights || !connected) return;
+    if (!model || !slot || !rights || !connected || descriptionLength > 1000) return;
     await act(async () => {
-      const fields = { project: 'omoba' as const, slotId: slot.id, assetId: model.id, revisionId: model.revisionId, renditionSha256: model.sha256, title: title.trim(), credit: credit.trim(), rightsAccepted: true as const };
+      const fields = { project: 'omoba' as const, slotId: slot.id, assetId: model.id, revisionId: model.revisionId, renditionSha256: model.sha256, title: title.trim(), credit: credit.trim(), description, rightsAccepted: true as const };
       const previous = submission.current;
       const { idempotencyKey: _previousKey, ...oldFields } = previous ?? {};
       const payload: PlacementRequest = { ...fields, idempotencyKey: previous && JSON.stringify(oldFields) === JSON.stringify(fields) ? previous.idempotencyKey : crypto.randomUUID() };
       submission.current = payload;
       const result = await sponsor<OwnPlacement>('placements', 'POST', payload);
       setSession(current => ({ state: 'connected', items: [result, ...(current.state === 'connected' ? current.items.filter(item => item.id !== result.id) : [])] }));
-      setRights(false); submission.current = null; setNotice('Request submitted. An administrator will review the exact model, title and credit. Your day starts only after approval.');
+      setRights(false); submission.current = null; setNotice('Request submitted. An administrator will review the exact model, title, credit and description. Your day starts only after approval.');
     });
   }
   async function cancel(id: string) {
@@ -214,20 +216,24 @@ export default function Sponsor({ initialData, initialSession, uploadUrl, siteUr
         <section className="sponsor-panel"><span className="creator-overline">{t('02 · SCULPTURE')}</span>
           <label>{t('Approved model')}<select value={modelId} onChange={event => choose(event.target.value)} disabled={busy || !models.length}><option value="">{t('Select a sculpture')}</option>{models.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
           {model ? <><div className="sponsor-model-poster">{model.thumbnailUrl ? <img src={model.thumbnailUrl} alt={model.name} width={640} height={480} /> : <span aria-hidden="true">✦</span>}<button type="button" onClick={() => setPreview(model)}>{t('View in 3D')}</button></div><p className="market-small">{model.creator} · {model.license.text}<br />{model.license.attribution}</p></> : <p className="sponsor-notice">{t('No approved sculpture selected. Upload yours in Studio and request OMOBA approval first.')}</p>}
+          <p className="market-small">{t('GLB up to 8 MiB. The pilot supports one looping rotation animation up to 30 seconds (LINEAR or STEP). Textures, skeletal rigs and morph animations are not supported yet.')}</p>
           {uploadUrl && <a className="sponsor-upload" href={uploadUrl} target="_blank" rel="noreferrer">{t('Create a sculpture in Ekza Studio ↗')}</a>}
         </section>
         <section className="sponsor-panel sponsor-submit"><span className="creator-overline">{t('03 · REVIEW')}</span>
           <label>{t('Placement title')}<input value={title} maxLength={80} required disabled={busy} onChange={event => setTitle(event.target.value)} /></label>
           <label>{t('Credit')}<input value={credit} maxLength={120} required disabled={busy} onChange={event => setCredit(event.target.value)} /></label>
-          <label className="sponsor-rights"><input type="checkbox" checked={rights} disabled={busy} onChange={event => setRights(event.target.checked)} required /><span>{t('I have the rights to display this model and its credit. The model and text contain no obscene, hateful or misleading content.')}</span></label>
+          <div className="sponsor-description-field"><label htmlFor="sculpture-description">{t('Description (optional)')}</label><textarea id="sculpture-description" value={description} rows={6} disabled={busy} aria-describedby="sculpture-description-help sculpture-description-count" onChange={event => { setDescription(event.target.value); setRights(false); }} /></div>
+          <p id="sculpture-description-help" className="market-small">{t('Players can click your sculpture to read this text. Plain text only; links are not clickable. The description is reviewed with your model.')}</p>
+          <p id="sculpture-description-count" className={descriptionLength > 1000 ? 'sponsor-notice sponsor-error' : 'market-small'} aria-live="polite">{descriptionLength} / 1000 · {t('characters')}{descriptionLength > 1000 && <> — {t('Shorten the description before submitting.')}</>}</p>
+          <label className="sponsor-rights"><input type="checkbox" checked={rights} disabled={busy} onChange={event => setRights(event.target.checked)} required /><span>{t('I have the rights to display this model and its text. The model and text contain no obscene, hateful or misleading content.')}</span></label>
           <p className="market-small">{t('A human administrator reviews this exact version and text. Approval of the model alone does not activate a placement. Requests can be declined or removed.')}</p>
           {hasLive && <p className="sponsor-notice">{t('You already have a pending or active sculpture. Cancel it or wait for it to finish.')}</p>}
-          <button className="market-get" disabled={busy || !connected || !model || !slot?.enabled || !rights || !title.trim() || !credit.trim() || hasLive}>{t('Submit free placement')}</button>
+          <button className="market-get" disabled={busy || !connected || !model || !slot?.enabled || !rights || !title.trim() || !credit.trim() || descriptionLength > 1000 || hasLive}>{t('Submit free placement')}</button>
           {!connected && <p className="market-small">{t('Connect with Ekza above before submitting.')}</p>}
         </section>
       </form>}
       {session.state === 'connected' && <section className="sponsor-history"><h2>{t('Your placements')}</h2>{session.items.length === 0 ? <p>{t('No requests yet. Your submissions and review decisions will appear here.')}</p> : session.items.map(item => <article className="sponsor-request" key={item.id}>
-        <div><span className={'sponsor-status sponsor-status-' + item.status}>{t(statusText[item.status])}</span><h3>{item.title}</h3><p>{item.credit}</p>{item.startsAt && item.expiresAt ? <p className="market-small">{date(item.startsAt)} — {date(item.expiresAt)}</p> : <p className="market-small">{t('Your 24 hours have not started.')}</p>}
+        <div><span className={'sponsor-status sponsor-status-' + item.status}>{t(statusText[item.status])}</span><h3>{item.title}</h3><p>{item.credit}</p>{item.description && <p className="sponsor-description">{item.description}</p>}{item.startsAt && item.expiresAt ? <p className="market-small">{date(item.startsAt)} — {date(item.expiresAt)}</p> : <p className="market-small">{t('Your 24 hours have not started.')}</p>}
           {item.reason && <p className="sponsor-notice">{t('Review note:')} {item.reason}</p>}
         </div>{['pending', 'active'].includes(item.status) && <button disabled={busy} onClick={() => void cancel(item.id)}>{t('Cancel placement')}</button>}
       </article>)}</section>}

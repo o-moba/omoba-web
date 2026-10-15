@@ -1,5 +1,11 @@
-/** Product copy only; submitted model names, titles and credits stay as authored. */
+/** Product copy only; submitted model names, titles, credits and descriptions stay as authored. */
 export const sponsorTranslations: Record<string, { ru: string; zh: string }> = {
+  'Description (optional)': { ru: 'Описание (необязательно)', zh: '描述（可选）' },
+  'Players can click your sculpture to read this text. Plain text only; links are not clickable. The description is reviewed with your model.': { ru: 'Игроки смогут нажать на скульптуру и прочитать этот текст. Только обычный текст, ссылки неактивны. Описание проходит модерацию вместе с моделью.', zh: '玩家可以点击雕塑阅读这段文字。仅限纯文本，链接不可点击。描述与模型一同审核。' },
+  'characters': { ru: 'символов', zh: '字符' },
+  'Shorten the description before submitting.': { ru: 'Сократите описание перед отправкой.', zh: '请缩短描述后再提交。' },
+  'GLB up to 8 MiB. The pilot supports one looping rotation animation up to 30 seconds (LINEAR or STEP). Textures, skeletal rigs and morph animations are not supported yet.': { ru: 'GLB до 8 МиБ. В пилоте поддерживается одна зацикленная анимация вращений до 30 секунд (LINEAR или STEP). Текстуры, скелетная и морф-анимация пока не поддерживаются.', zh: 'GLB 最大 8 MiB。试运行支持一个最长 30 秒的循环旋转动画（LINEAR 或 STEP）。暂不支持纹理、骨骼绑定和变形动画。' },
+
   'Community sculptures': { ru: 'Скульптуры сообщества', zh: '社区雕塑' },
   'COMMUNITY SCULPTURES · FREE PILOT': { ru: 'СКУЛЬПТУРЫ СООБЩЕСТВА · БЕСПЛАТНЫЙ ПИЛОТ', zh: '社区雕塑 · 免费试运行' },
   'Leave a little luck on the map': { ru: 'Добавьте на карту немного удачи', zh: '为地图带来一点好运' },
@@ -42,7 +48,7 @@ export const sponsorTranslations: Record<string, { ru: string; zh: string }> = {
   'Create a sculpture in Ekza Studio ↗': { ru: 'Создать скульптуру в Ekza Studio ↗', zh: '在 Ekza Studio 创建雕塑 ↗' },
   'Placement title': { ru: 'Название размещения', zh: '展示标题' },
   'Credit': { ru: 'Авторство', zh: '署名' },
-  'I have the rights to display this model and its credit. The model and text contain no obscene, hateful or misleading content.': { ru: 'У меня есть права на показ этой модели с указанным авторством. Модель и текст не содержат непристойного, ненавистнического или вводящего в заблуждение контента.', zh: '我有权展示此模型及署名。模型和文本不含淫秽、仇恨或误导性内容。' },
+  'I have the rights to display this model and its text. The model and text contain no obscene, hateful or misleading content.': { ru: 'У меня есть права на показ этой модели и текста. Модель и текст не содержат непристойного, ненавистнического или вводящего в заблуждение контента.', zh: '我有权展示此模型及文本。模型和文本不含淫秽、仇恨或误导性内容。' },
   'A human administrator reviews this exact version and text. Approval of the model alone does not activate a placement. Requests can be declined or removed.': { ru: 'Администратор проверит именно эту версию и текст. Одобрение модели само по себе не включает размещение. Заявку могут отклонить, а размещение — убрать.', zh: '管理员将审核此确切版本和文本。模型获批并不自动启用展示。申请可能被拒绝，展示可能被移除。' },
   'Submit free placement': { ru: 'Подать бесплатную заявку', zh: '提交免费展示申请' },
   'Connect with Ekza above before submitting.': { ru: 'Перед отправкой подключите Ekza выше.', zh: '提交前请在上方连接 Ekza。' },
@@ -71,10 +77,10 @@ export const sponsorTranslations: Record<string, { ru: string; zh: string }> = {
   'This submission changed while being sent. Refresh before submitting again.': { ru: 'Заявка изменилась во время отправки. Обновите страницу перед повтором.', zh: '申请在发送时发生变化。请刷新后再提交。' },
   'This request no longer exists. Refresh your requests.': { ru: 'Эта заявка больше не существует. Обновите список.', zh: '此申请已不存在。请刷新列表。' },
   'This request has already been decided. Refresh your requests.': { ru: 'По этой заявке уже принято решение. Обновите список.', zh: '此申请已有处理结果。请刷新列表。' },
-  'Check the title, credit and rights confirmation before submitting.': { ru: 'Проверьте название, авторство и подтверждение прав перед отправкой.', zh: '提交前请检查标题、署名和权利确认。' },
+  'Check the title, credit, description and rights confirmation before submitting.': { ru: 'Проверьте название, авторство, описание и подтверждение прав перед отправкой.', zh: '提交前请检查标题、署名、描述和权利确认。' },
   'Sculpture placement is not enabled on this server yet.': { ru: 'На этом сервере размещение скульптур ещё не подключено.', zh: '此服务器尚未启用雕塑展示。' },
   'The sculpture service is unavailable. Refresh or try again later.': { ru: 'Сервис скульптур недоступен. Обновите страницу или попробуйте позже.', zh: '雕塑服务暂不可用。请刷新或稍后重试。' },
   'Signed out here. To disconnect the remaining link, open Account → Connected games in Ekza Studio.': { ru: 'Здесь выполнен выход. Оставшуюся связь можно отключить в Ekza Studio: Account → Connected games.', zh: '已在此退出。请在 Ekza Studio 的 Account → Connected games 断开剩余连接。' },
-  'Request submitted. An administrator will review the exact model, title and credit. Your day starts only after approval.': { ru: 'Заявка отправлена. Администратор проверит точную модель, название и авторство. Сутки начнутся только после одобрения.', zh: '申请已提交。管理员将审核确切模型、标题和署名。批准后才开始计时。' },
+  'Request submitted. An administrator will review the exact model, title, credit and description. Your day starts only after approval.': { ru: 'Заявка отправлена. Администратор проверит точную модель, название, авторство и описание. Сутки начнутся только после одобрения.', zh: '申请已提交。管理员将审核确切模型、标题、署名和描述。批准后才开始计时。' },
   'Placement cancelled. It will no longer be advertised to game clients.': { ru: 'Размещение отменено. Игра больше не будет получать его как активное.', zh: '展示已取消。游戏客户端将不再收到其有效展示信息。' },
 };

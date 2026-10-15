@@ -67,7 +67,7 @@ const registry = createServer(async (req, res) => {
     if (req.url === '/v1/account/placements' && req.method === 'POST') {
       const value = await body(req); state.creates.push(value);
       if (!state.placement) state.placement = { id: randomUUID(), project: 'omoba', slotId: value.slotId, assetId: value.assetId, revisionId: value.revisionId,
-        renditionSha256: value.renditionSha256, renditionBytes: model.length, renditionUrl: `${registryOrigin}/v1/studio/assets/${sha}/rendition`, title: value.title, credit: value.credit,
+        renditionSha256: value.renditionSha256, renditionBytes: model.length, renditionUrl: `${registryOrigin}/v1/studio/assets/${sha}/rendition`, title: value.title, credit: value.credit, description: value.description,
         startsAt: null, expiresAt: null, status: 'pending', paymentMode: 'free', createdAt: new Date().toISOString(), reason: '' };
       if (state.lostResponse) { state.lostResponse = false; error(res, 'unavailable', 503); return; }
       json(res, state.placement); return;
@@ -82,14 +82,14 @@ const port = Number(process.env.SPONSOR_TEST_PORT || 3034), origin = 'http://127
 const server = spawn(process.execPath, ['scripts/start.mjs'], { env: { ...process.env, PORT: String(port), OMOBA_CONTOUR: process.env.OMOBA_CONTOUR || 'production', OMOBA_ACCOUNT_MODE: 'disabled',
   OMOBA_PORTAL_ORIGIN: origin, OMOBA_ALLOW_INSECURE_LOCAL: '1', OMOBA_REGISTRY_URL: registryOrigin, OMOBA_STUDIO_URL: registryOrigin }, stdio: ['ignore', 'pipe', 'pipe'] });
 let log = ''; server.stdout.on('data', chunk => log += chunk); server.stderr.on('data', chunk => log += chunk);
-let browser;
+let browser, page;
 const checks = [];
 try {
   for (let i = 0; i < 100; i++) { if (server.exitCode !== null) throw new Error(log); try { if ((await fetch(origin + '/sponsor')).ok) break; } catch {} if (i === 99) throw new Error('Server startup timeout: ' + log); await new Promise(resolve => setTimeout(resolve, 200)); }
   browser = await chromium.launch({ channel: 'chrome', headless: true });
-  const context = await browser.newContext({ viewport: { width: 1280, height: 960 }, locale: 'en' });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'en' });
   await context.addCookies([{ name: 'omoba-ekza-link', value: MARKET_TOKEN, url: origin, httpOnly: true }]);
-  const page = await context.newPage(), errors = [];
+  page = await context.newPage(); const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('response', async response => { if (response.url().startsWith(origin + '/api/sponsor/') && response.status() >= 400) console.log('BFF', response.status(), response.url().split('/api/sponsor/')[1], await response.text()); });
   await page.goto(origin + '/sponsor');
@@ -133,18 +133,36 @@ try {
   assert.equal((await context.request.post(origin + '/api/sponsor/placements', { data: {}, headers: { Origin: 'https://evil.example', 'X-CSRF-Token': csrf } })).status(), 403);
   assert.equal((await context.request.post(origin + '/api/sponsor/placements', { data: { paid: true }, headers: { Origin: origin, 'X-CSRF-Token': csrf } })).status(), 400);
   assert.equal((await context.request.post(origin + '/api/sponsor/payments', { data: { transactionHash: 'fake' }, headers: { Origin: origin, 'X-CSRF-Token': csrf } })).status(), 404);
+  assert.equal((await context.request.post(origin + '/api/sponsor/placements', { data: { description: 'x'.repeat(9000) }, headers: { Origin: origin, 'X-CSRF-Token': csrf } })).status(), 400);
   assert.equal((await context.request.get(origin + '/api/sponsor/placements?account=other')).status(), 400);
   assert.equal(state.requests.length, before);
   checks.push('CSRF, unknown body fields, fake payment route and queries rejected before Registry');
   await page.getByLabel('Placement title', { exact: true }).fill('A lucky day');
   await page.getByLabel('Credit', { exact: true }).fill('Community test artist');
+  const descriptionPrefix = '  <script>window.descriptionInjected=true</script>\nhttps://example.test/artist\n';
+  const description = descriptionPrefix + '🐈'.repeat(1000 - Array.from(descriptionPrefix).length);
+  await page.getByLabel('Description (optional)', { exact: true }).fill('x'.repeat(1001));
   await page.getByRole('checkbox').check();
+  assert.equal(await page.getByRole('button', { name: 'Submit free placement', exact: true }).isDisabled(), true);
+  await page.getByText('Shorten the description before submitting.', { exact: false }).waitFor();
+  assert.equal((await page.getByLabel('Description (optional)', { exact: true }).inputValue()).length, 1001, 'Do not silently truncate reviewed text');
+  await page.getByLabel('Description (optional)', { exact: true }).fill(description);
+  assert.equal(await page.getByRole('checkbox').isChecked(), false, 'Editing the description asks the author to attest the current text');
+  await page.getByRole('checkbox').check();
+  await page.getByLabel('Description (optional)', { exact: true }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: output + '/description-form.png' });
   await page.getByRole('button', { name: 'Submit free placement', exact: true }).click();
   await page.getByRole('alert').filter({ hasText: 'The sculpture service is unavailable' }).waitFor();
   await page.getByRole('button', { name: 'Submit free placement', exact: true }).click();
   await page.getByText('Waiting for review', { exact: true }).waitFor();
   assert.equal(state.creates.length, 2);
   assert.deepEqual(state.creates[0], state.creates[1]);
+  assert.equal(state.creates[0].description, description);
+  assert.ok(Buffer.byteLength(JSON.stringify(state.creates[0])) > 4096, 'Valid maximum Unicode text exercises the increased bounded BFF body budget');
+  assert.equal(await page.locator('.sponsor-request .sponsor-description').textContent(), description);
+  assert.equal(await page.evaluate(() => window.descriptionInjected), undefined);
+  assert.equal(await page.locator('a[href="https://example.test/artist"]').count(), 0);
+  checks.push('Optional description preserves 1000 Unicode scalars and LF through form/BFF/status, renders HTML literally, and rejects excess without truncation');
   assert.equal(state.creates[0].rightsAccepted, true);
   assert.equal(state.creates[0].assetId, ASSET);
   assert.equal(await page.getByRole('button', { name: 'Submit free placement', exact: true }).isDisabled(), true);
@@ -182,8 +200,12 @@ try {
   checks.push('Sign-out revokes only placement link; wrong returned market scope is rejected');
   assert.deepEqual(errors, []);
   assert.equal(await page.locator('a[href^="solana:"],a[href^="bitcoin:"],a[href^="ethereum:"]').count(), 0);
-  await writeFile(output + '/verification.json', JSON.stringify({ checks, modelSha256: sha, modelBytes: model.length, fixture: process.env.OMOBA_SCULPTURE_MODEL ? 'Provided local sculpture GLB' : 'Generated triangle GLB', viewport: '1280x960', locale: 'en', errors }, null, 2));
+  await writeFile(output + '/verification.json', JSON.stringify({ checks, modelSha256: sha, modelBytes: model.length, fixture: process.env.OMOBA_SCULPTURE_MODEL ? 'Provided local sculpture GLB' : 'Generated triangle GLB', viewport: '1280x720', locale: 'en', errors }, null, 2));
   console.log(checks.join('\n'));
+} catch (error) {
+  await page?.screenshot({ path: output + '/failure.png', fullPage: true }).catch(() => {});
+  if (page) await writeFile(output + '/failure.html', await page.content().catch(() => ''));
+  throw error;
 } finally {
   await browser?.close(); server.kill('SIGTERM'); registry.closeAllConnections(); await new Promise(resolve => registry.close(resolve));
   await writeFile(output + '/server.log', log);

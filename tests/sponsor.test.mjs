@@ -25,13 +25,27 @@ const catalogItem = () => ({ id: assetId, assetKind: 'map_prop', name: 'Lucky ca
 const catalog = items => ({ schema: 'ekza.asset.catalog.v2', items });
 
 test('creation is an exact free request contract, never a payment or arbitrary map command', () => {
-  assert.deepEqual(parsePlacementRequest(request()), request());
+  assert.deepEqual(parsePlacementRequest(request()), { ...request(), description: '' });
   for (const field of ['paid', 'paymentMode', 'transactionHash', 'renditionUrl', 'startsAt', 'expiresAt', 'transform', 'approved', 'amount'])
     assert.throws(() => parsePlacementRequest({ ...request(), [field]: true }));
   for (const patch of [{ slotId: 'dragon' }, { project: 'other' }, { assetId: 'ekza:weapon:' + uuid('a') }, { renditionSha256: 'A'.repeat(64) },
     { rightsAccepted: false }, { rightsAccepted: 'true' }, { idempotencyKey: 'reuse-me' }, { title: 'x'.repeat(81) }, { credit: 'x'.repeat(121) }, { credit: '' }, { title: 'bad\nline' }])
     assert.throws(() => parsePlacementRequest({ ...request(), ...patch }));
   const missing = request(); delete missing.rightsAccepted; assert.throws(() => parsePlacementRequest(missing));
+});
+
+test('description preserves reviewed Unicode scalars and LF without trimming or executable markup', () => {
+  for (const description of ['', '  First line\n第二行 🐈 <b>literal</b> https://example.test  ', '🐈'.repeat(1000), 'e\u0301']) {
+    assert.equal(parsePlacementRequest({ ...request(), description }).description, description);
+    assert.equal(parsePlacement({ ...placement(), description }, registry).description, description);
+    assert.equal(parsePlacement({ ...own(), description }, registry, true).description, description);
+  }
+  assert.equal(parsePlacementRequest(request()).description, '');
+  assert.equal(parsePlacement(placement(), registry).description, '');
+  for (const description of [null, undefined, 3, {}, [], 'x'.repeat(1001), '🐈'.repeat(1001), '\u0000', '\t', '\r', '\u001f', '\u007f', '\u0085', '\u009f', '\ud800', '\udfff']) {
+    assert.throws(() => parsePlacementRequest({ ...request(), description }));
+    assert.throws(() => parsePlacement({ ...placement(), description }, registry));
+  }
 });
 
 test('dedicated placement routes and cookies do not inherit market scope or credentials', () => {

@@ -121,3 +121,22 @@ feature PRs. Screenshots and raw results are saved under
 
 This change does not deploy the feature, enable paid providers, or certify a
 physical mobile/TestFlight build.
+
+## Sculpture information card
+
+Authors can add an optional description on `/sponsor`. Players click or tap the
+approved sculpture to read its title, credit and description in the game. The
+description is part of the immutable moderation and idempotency payload, not
+mutable catalog copy. Changing it requires a new request and review.
+
+The limit is 1,000 Unicode scalar values, with LF line breaks preserved. Omitted
+text defaults to empty; explicit null, invalid controls and unpaired surrogates
+are rejected. Plain text renders literally, without HTML, Markdown or active
+links. The bounded BFF request limit is 8 KiB to fit supplementary Unicode text.
+The form does not silently truncate an overlong description.
+
+The v1 upload profile remains GLB up to 8 MiB, with at most one optional looping
+rotation-only animation up to 30 seconds (LINEAR/STEP). It does not accept
+textures, skeletal rigs, morphs or translation/scale animation. The common
+preview SDK plays the embedded clip; opening a game information card does not
+pause its animation.

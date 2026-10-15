@@ -6,7 +6,7 @@
 .sponsor-panel { min-width: 0; border: 1px solid var(--omoba-line); padding: 24px; border-radius: 8px; background: var(--omoba-surface); }
 .sponsor-panel > .creator-overline { display: block; margin-bottom: 24px; }
 .sponsor-panel label { display: flex; flex-direction: column; gap: 9px; font-size: 13px; line-height: 1.6; margin-bottom: 18px; }
-.sponsor-panel input:not([type=checkbox]), .sponsor-panel select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--omoba-line); background: var(--omoba-void); color: var(--creator-white); padding: 10px; border-radius: 4px; font: inherit; }
+.sponsor-panel input:not([type=checkbox]), .sponsor-panel select, .sponsor-panel textarea { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--omoba-line); background: var(--omoba-void); color: var(--creator-white); padding: 10px; border-radius: 4px; font: inherit; }
 .sponsor-panel .sponsor-rights { flex-direction: row; align-items: flex-start; margin-top: 24px; }
 .sponsor-rights input { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 3px; accent-color: var(--creator-accent); }
 .sponsor-notice { border-left: 2px solid var(--creator-accent); padding: 12px 16px; background: color-mix(in srgb, var(--creator-accent) 5%, transparent); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
@@ -30,3 +30,9 @@
 .sponsor-footer { border-top: 1px solid var(--omoba-line); padding-top: 24px; display: flex; justify-content: space-between; font-size: 13px; }
 @media (max-width: 1050px) { .sponsor-plan { grid-template-columns: repeat(2, minmax(0, 1fr)); }.sponsor-submit { grid-column: 1/-1; } }
 @media (max-width: 640px) { .sponsor-plan { grid-template-columns: minmax(0, 1fr); }.sponsor-panel { padding: 18px; }.sponsor-request { align-items: flex-start; flex-direction: column; }.sponsor-section-heading h2 { font-size: 28px; } }
+
+.sponsor-panel textarea { resize: vertical; min-height: 130px; }
+.sponsor-description { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.sponsor-description-field { margin-bottom: 18px; }
+.sponsor-description-field label { margin-bottom: 9px; }

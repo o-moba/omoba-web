@@ -7,7 +7,7 @@ export type Sculpture = PreviewAsset & {
 export type Placement = {
   id: string; slotId: string; assetId: string; revisionId: string;
   renditionSha256: string; renditionBytes: number; renditionUrl: string;
-  title: string; credit: string; startsAt: string | null; expiresAt: string | null;
+  title: string; credit: string; description: string; startsAt: string | null; expiresAt: string | null;
 };
 export type OwnPlacement = Placement & {
   project: 'omoba'; status: 'pending' | 'active' | 'expired' | 'rejected' | 'cancelled' | 'revoked';
@@ -15,7 +15,7 @@ export type OwnPlacement = Placement & {
 };
 export type PlacementRequest = {
   project: 'omoba'; slotId: string; assetId: string; revisionId: string;
-  renditionSha256: string; title: string; credit: string;
+  renditionSha256: string; title: string; credit: string; description: string;
   rightsAccepted: true; idempotencyKey: string;
 };
 export type Slot = { id: string; name: string; durationSeconds: 86400; enabled: boolean; current: Placement | null };

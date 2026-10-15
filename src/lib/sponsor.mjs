@@ -16,6 +16,12 @@ function text(value, limit, empty = false, multiline = false) {
   check(typeof value === 'string' && value.length <= limit && (empty || value.trim()) && !controls.test(value));
   return value.trim();
 }
+// Keep reviewed text byte-for-byte: LF is the only permitted control character.
+function placementDescription(value) {
+  check(typeof value === 'string' && Array.from(value).length <= 1000 &&
+    !/[\u0000-\u0009\u000b-\u001f\u007f-\u009f\ud800-\udfff]/u.test(value));
+  return value;
+}
 function timestamp(value) {
   check(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)$/.test(value) && Number.isFinite(Date.parse(value)));
   return value;
@@ -64,7 +70,8 @@ export function parsePlacement(value, registry, own = false) {
   if (startsAt !== null) check(Date.parse(expiresAt) - Date.parse(startsAt) === 86400000);
   const result = { id: value.id, slotId: value.slotId, assetId: value.assetId, revisionId: value.revisionId,
     renditionSha256: value.renditionSha256, renditionBytes: value.renditionBytes, renditionUrl,
-    title: text(value.title, 80), credit: text(value.credit, 120), startsAt, expiresAt };
+    title: text(value.title, 80), credit: text(value.credit, 120),
+    description: placementDescription(Object.hasOwn(value, 'description') ? value.description : ''), startsAt, expiresAt };
   if (own) {
     check(value.project === 'omoba' && value.paymentMode === 'free' && STATUSES.has(value.status));
     if (value.status === 'active') check(startsAt !== null);
@@ -92,10 +99,11 @@ export function parseSlots(value, registry) {
 /** Explicit body allowlist: no payment flag, transaction hash, URL, times or transforms. */
 export function parsePlacementRequest(value) {
   const fields = ['project', 'slotId', 'assetId', 'revisionId', 'renditionSha256', 'title', 'credit', 'rightsAccepted', 'idempotencyKey'];
-  check(object(value) && Object.keys(value).length === fields.length && Object.keys(value).every(key => fields.includes(key)));
+  check(object(value) && fields.every(key => Object.hasOwn(value, key)) && Object.keys(value).every(key => fields.includes(key) || key === 'description'));
   check(value.project === 'omoba' && value.slotId === 'opposite-dragon' && validAsset(value.assetId) && UUID.test(value.revisionId) && HASH.test(value.renditionSha256) && UUID.test(value.idempotencyKey) && value.rightsAccepted === true);
   return { project: 'omoba', slotId: value.slotId, assetId: value.assetId, revisionId: value.revisionId,
-    renditionSha256: value.renditionSha256, title: text(value.title, 80), credit: text(value.credit, 120), rightsAccepted: true, idempotencyKey: value.idempotencyKey };
+    renditionSha256: value.renditionSha256, title: text(value.title, 80), credit: text(value.credit, 120),
+    description: placementDescription(Object.hasOwn(value, 'description') ? value.description : ''), rightsAccepted: true, idempotencyKey: value.idempotencyKey };
 }
 export function sponsorCookieNames(secure) {
   const prefix = secure ? '__Host-' : '';

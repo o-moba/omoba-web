@@ -17,7 +17,7 @@ const fail = (code: string, status: number) => reply({ code }, status);
 /** Bounded JSON before parsing; no arbitrary request body is forwarded upstream. */
 async function body(request: NextRequest) {
   if (!/^application\/json(?:;|$)/i.test(request.headers.get('content-type') ?? '')) throw new Error('body');
-  if (Number(request.headers.get('content-length') ?? 0) > 4096) throw new Error('body');
+  if (Number(request.headers.get('content-length') ?? 0) > 8192) throw new Error('body');
   const reader = request.body?.getReader();
   if (!reader) throw new Error('body');
   const chunks: Uint8Array[] = [];
@@ -26,7 +26,7 @@ async function body(request: NextRequest) {
     const next = await reader.read();
     if (next.done) break;
     bytes += next.value.byteLength;
-    if (bytes > 4096) { await reader.cancel(); throw new Error('body'); }
+    if (bytes > 8192) { await reader.cancel(); throw new Error('body'); }
     chunks.push(next.value);
   }
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
