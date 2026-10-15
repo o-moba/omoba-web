@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AssetPreview, PREVIEW_LIGHTING_PRESETS, type PreviewShading } from "@ekza/avatar-renderer/preview";
 import { useLocale } from "./locale-provider";
-import type { MarketItem } from "@/lib/market-types";
+import type { PreviewAsset } from "@/lib/market-types";
 
 // Game conventions belong to the consumer, not the shared Ekza renderer.
 const WILDSPARK_VARIANTS = [
@@ -10,7 +10,7 @@ const WILDSPARK_VARIANTS = [
   { id: "launcher", nodeName: "WildsparkSetLauncher", scale: 1 },
 ] as const;
 
-export default function MarketModel({ item }: { item: MarketItem }) {
+export default function MarketModel({ item }: { item: PreviewAsset }) {
   const { t } = useLocale();
   const [variant, setVariant] = useState("repeater");
   const [lighting, setLighting] = useState<keyof typeof PREVIEW_LIGHTING_PRESETS>("studio");
@@ -22,15 +22,15 @@ export default function MarketModel({ item }: { item: MarketItem }) {
   const fallback = <div className="market-model-fallback">
     {item.thumbnailUrl && <img src={item.thumbnailUrl} alt="" />}
     <p role={state === "failed" ? "alert" : "status"}>
-      {t(state === "failed" ? "3D preview unavailable. You can still view the cover and get this item." : "Loading 3D model…")}
+      {t(state === "failed" ? (item.kind === 'map_prop' ? "3D preview unavailable. Try again before submitting your sculpture." : "3D preview unavailable. You can still view the cover and get this item.") : "Loading 3D model…")}
     </p>
   </div>;
   return <>
     <div className="market-model-stage">
       <AssetPreview key={attempt} url={item.modelUrl} kind={item.kind === "avatar" ? "avatar" : "item"}
         integrity={{ sha256: item.sha256, sizeBytes: item.sizeBytes }}
-        maxBytes={item.kind === "weapon" ? 8 * 1024 * 1024 : 64 * 1024 * 1024}
-        embeddedOnly variants={item.wildspark ? WILDSPARK_VARIANTS : undefined}
+        maxBytes={item.kind === "avatar" ? 64 * 1024 * 1024 : 8 * 1024 * 1024}
+        embeddedOnly playAnimations={item.kind === 'map_prop' ? true : undefined} variants={item.wildspark ? WILDSPARK_VARIANTS : undefined}
         variant={item.wildspark ? variant : undefined} lighting={PREVIEW_LIGHTING_PRESETS[lighting]}
         shading={shading} exposure={exposure} toneMapping="aces" autoRotate={rotate}
         ariaLabel={t("3D preview of {name}").replace("{name}", item.name)}
