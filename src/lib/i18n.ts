@@ -195,6 +195,7 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
   "You will appear after your first verified paid month.": {"ru": "Вы появитесь в списке после первого подтверждённого оплаченного месяца.", "zh": "首次付费月份验证通过后，你将出现在名单中。"},
   "Meet the supporters": {"ru": "Кто поддержал проект", "zh": "查看支持者"},
   "Solana supports one 30-day period at a time. You choose whether to support again after it ends.": {"ru": "Через Solana оплачивается один период в 30 дней. После его окончания вы сами решаете, поддержать ли игру снова.", "zh": "Solana 每次支持一个 30 天周期，到期后由你决定是否再次支持。"},
+  "Community sculptures": { ru: "Скульптуры сообщества", zh: "社区雕塑" },
   "Market": {
     "ru": "Маркет",
     "zh": "市场"

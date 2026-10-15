@@ -1,4 +1,9 @@
 export type MarketKind = "weapon" | "avatar";
+/** Shared renderer input; placing a map prop does not make it a market claim. */
+export type PreviewAsset = {
+  kind: MarketKind | 'map_prop'; name: string; thumbnailUrl: string | null;
+  modelUrl: string; sha256: string; sizeBytes: number; wildspark?: boolean;
+};
 export type MarketItem = {
   /** Registry catalogue ID, `ekza:<kind>:<uuid>`. */
   id: string;

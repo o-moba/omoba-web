@@ -2,10 +2,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { portalTranslations, type Locale } from '@/lib/i18n';
 import { creatorTranslations } from '@/lib/creator-translations';
+import { sponsorTranslations } from '@/lib/sponsor-translations';
 import { marketTranslations } from '@/lib/market-translations';
 import { localeCookie } from '@/lib/locale.mjs';
 
-const translations = { ...portalTranslations, ...creatorTranslations, ...marketTranslations };
+const translations = { ...portalTranslations, ...creatorTranslations, ...marketTranslations, ...sponsorTranslations };
 type LocaleContextValue = { locale: Locale; setLocale: (value: Locale) => void; t: (source: string) => string };
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 

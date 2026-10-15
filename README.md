@@ -128,6 +128,14 @@ Registry (best effort; the cookies are cleared either way). It does not use
 the Account API, so it works in guest mode. See [Market](docs/market.md);
 `npm run test:market` runs the browser flow against a fake Registry.
 
+## Community sculptures
+
+`/sponsor` offers a free, moderated 24-hour decoration at a curated map location.
+It uses approved `map_prop` models, the shared 3D viewer and a separate
+`map-placement` Ekza permission. Administrators review and activate requests in
+Studio. Crypto checkout is not enabled. See [Community sculptures](docs/community-sculptures.md);
+`npm run test:sponsor` exercises the browser/BFF against local service fixtures.
+
 ## Class Workshop
 
 `/workshop` composes local combat-test recipes, saves browser drafts, and supports private saves under the central OMOBA account. See [Class Workshop](docs/class-workshop.md) for game import, account and Ekza boundaries, snapshot refresh and the reproducible synthetic local demo.
