@@ -23,6 +23,7 @@ const raw = await readFile("public/workshop/catalog.json", "utf8"),
 test("game-owned workshop has12cores48skills and each native preset validates", async () => {
   assert.equal(catalog.cores.length, 12);
   assert.equal(catalog.skills.length, 48);
+  assert.equal(catalog.gameplayRevision, assets.source.gameplayRevision);
   for (const c of catalog.cores)
     assert.deepEqual(buildIssues(defaultBuild(catalog, c.id), catalog), []);
   await readWorkshopSnapshot("public/workshop/catalog.json");

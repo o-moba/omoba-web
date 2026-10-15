@@ -1154,17 +1154,17 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Направленный луч света обездвиживает первых двух задетых врагов.",
     "zh": "瞄准发射光束，束缚命中的前两名敌人。"
   },
-  "A returning light shields allies on both journeys.": {
-    "ru": "Возвращающийся свет даёт союзникам щит на пути туда и обратно.",
-    "zh": "往返的光芒在两个方向上为队友提供护盾。"
+  "A returning light shields you and the allies it passes, out and back.": {
+    "ru": "Возвращающийся свет даёт щит тебе и союзникам на своём пути туда и обратно.",
+    "zh": "往返的光芒为你和两个方向上经过的队友提供护盾。"
   },
-  "Place a slowing field; cast again to detonate it.": {
-    "ru": "Создай замедляющее поле; повторное применение взрывает его.",
-    "zh": "放置减速力场，再次施放将其引爆。"
+  "Place a slowing field; cast again, or wait, to detonate it.": {
+    "ru": "Создай замедляющее поле; примени умение снова или дождись его автоматического взрыва.",
+    "zh": "放置减速力场，再次施放或等待其自动引爆。"
   },
-  "A warned beam detonates Radiance marks and applies them again.": {
-    "ru": "Луч с предупреждением взрывает метки Radiance и накладывает их снова.",
-    "zh": "带预警的光束引爆 Radiance 印记，并再次施加印记。"
+  "A warned beam that burns hardest along its centre; detonates Radiance marks and applies them again.": {
+    "ru": "Луч с предупреждением наносит наибольший урон по центру, взрывает метки Radiance и накладывает их снова.",
+    "zh": "带预警的光束在中心造成最高伤害，引爆 Radiance 印记并再次施加印记。"
   },
   "Toggle rapid repeater fire and longer-range rockets that spend Mana.": {
     "ru": "Переключай скоростной пулемёт и дальнобойные ракеты, расходующие ману.",
@@ -2157,6 +2157,14 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
   "Spell Finish": {
     "ru": "Завершение заклинания",
     "zh": "施法收势"
+  },
+  "Ray Release": {
+    "ru": "Высвобождение луча",
+    "zh": "光束释放"
+  },
+  "Spell Charge": {
+    "ru": "Накопление заклинания",
+    "zh": "施法蓄力"
   },
   "Spell Prepare": {
     "ru": "Подготовка заклинания",
