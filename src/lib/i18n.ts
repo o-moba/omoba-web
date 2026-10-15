@@ -163,6 +163,7 @@ export const dictionaries = { ru, en, zh };
 export type Locale = keyof typeof dictionaries;
 export type Words = typeof ru;
 const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
+  "Community sculptures": { ru: "Скульптуры сообщества", zh: "社区雕塑" },
   "Market": {
     "ru": "Маркет",
     "zh": "市场"

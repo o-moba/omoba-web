@@ -2,12 +2,12 @@
 import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useLocale } from "./locale-provider";
-import type { MarketItem } from "@/lib/market-types";
+import type { PreviewAsset } from "@/lib/market-types";
 
 // Neither Three.js nor model bytes load until someone opens a preview.
 const MarketModel = dynamic(() => import("./market-model"), { ssr: false });
 
-export default function MarketPreviewDialog({ item, onClose }: { item: MarketItem; onClose: () => void }) {
+export default function MarketPreviewDialog({ item, onClose }: { item: PreviewAsset; onClose: () => void }) {
   const { t } = useLocale();
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {

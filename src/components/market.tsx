@@ -471,6 +471,7 @@ export default function Market({
           <Brand section={t("Market")} />
         </Link>
         <nav aria-label={t("Market navigation")}>
+          <Link href="/sponsor">{t("Community sculptures")}</Link>
           <Link href="/creators">{t("Asset library")}</Link>
           <Link href="/workshop" prefetch={false}>{t("Build a class")}</Link>
           <Link href="/me" prefetch={false}>{t("Player portal")}</Link>
