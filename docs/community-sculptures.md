@@ -110,7 +110,7 @@ triangle fixture:
 OMOBA_SCULPTURE_MODEL=/absolute/path/to/lucky-cat.glb npm run test:sponsor
 ```
 
-The sponsor browser test uses one English 1280×960 viewport and controlled local
+The sponsor browser test uses one English 1280×720 viewport and controlled local
 Registry/Studio responses. It checks dedicated consent/cookies, CSRF/allowlists,
 exact model preview, lost-response idempotency, status transitions, cancellation,
 plain-text review feedback, and sign-out/scope isolation. Its administrator
@@ -118,6 +118,24 @@ changes are fixtures, not evidence that a deployed administrator approved a
 model. Registry/database and game acceptance are recorded in their separate
 feature PRs. Screenshots and raw results are saved under
 `.agent/tasks/community-sculptures/raw/` and are not published assets.
+
+For a connected local placement check, start the Registry's disposable fixture
+with `--serve-port 8773 --studio-web-url http://127.0.0.1:5203`, then run:
+
+```sh
+SPONSOR_CONNECTED_FIXTURE=1 \
+SPONSOR_CONNECTED_STUDIO_ROOT=/path/to/ekza-registry/web \
+node tests/sponsor-connected.e2e.mjs
+```
+
+This reuses the existing Web/Studio builds and one English 1280×720 browser
+profile. It follows the contribution link to Studio's Map sculpture form, then
+uses the preseeded approved GLB for real browser consent, Web BFF submission,
+PostgreSQL pending state, Studio browser inspection/approval, and an exact public
+manifest/download hash check. It leaves that same placement active so a separate
+game check can consume its ID/hash/text. Login identities and object storage are
+local fixtures. It does not upload a new GLB or run its publication workers, and
+does not verify hosted authentication, hosted storage or deployment.
 
 This change does not deploy the feature, enable paid providers, or certify a
 physical mobile/TestFlight build.
