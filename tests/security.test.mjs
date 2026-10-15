@@ -41,6 +41,16 @@ test('device and Supporter routes remain a narrow browser allowlist',()=>{
   assert.equal(allowedPath('me/recovery-codes','GET'),false);
   assert.equal(allowedPath('me/devices/'+'a'.repeat(63),'DELETE'),false);
 });
+
+test('public recognition exposes only its directory read and authenticated preference patch', () => {
+  assert.equal(allowedPath('supporters', 'GET'), true);
+  assert.equal(allowedPath('me/supporter/recognition', 'PATCH'), true);
+  for (const method of ['POST', 'PATCH', 'DELETE']) assert.equal(allowedPath('supporters', method), false);
+  for (const method of ['GET', 'POST', 'DELETE']) assert.equal(allowedPath('me/supporter/recognition', method), false);
+  for (const path of ['supporters/admin', 'supporters/' + 'a'.repeat(64), 'me/supporter/months', 'me/supporter/recognition/grant']) {
+    for (const method of ['GET', 'PATCH', 'POST', 'DELETE']) assert.equal(allowedPath(path, method), false);
+  }
+});
 test('cookie expiry keeps the attributes a __Host- cookie was set with',()=>{
   // Next's own serializer: a browser ignores a __Host- Set-Cookie without Secure.
   for (const secure of [true,false]) {

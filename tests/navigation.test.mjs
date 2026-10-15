@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { portalReturnTo, portalLoginHref, publicSiteUrl } from '../src/lib/navigation.mjs';
 
 test('sign-in preserves history filters, report IDs and workshop destinations', () => {
-  for (const path of ['/me/matches?days=all&class=Ranger', '/matches/browser-fixture-123', '/workshop', '/me/stats']) {
+  for (const path of ['/me/matches?days=all&class=Ranger', '/matches/browser-fixture-123', '/workshop', '/me/stats', '/supporters']) {
     assert.equal(portalReturnTo(path), path);
     assert.equal(new URL(portalLoginHref(path), 'https://app.omoba.io').searchParams.get('returnTo'), path);
   }

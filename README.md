@@ -103,6 +103,15 @@ sessions must be reauthorized for the expanded device/recovery scopes. See
 [Supporter operations](../omoba-bevy/docs/supporter.md) and
 `tests/supporter.e2e.mjs` for the disposable real API/database browser fixture.
 
+## Monthly Hero and public supporters
+
+`/supporters` publicly acknowledges opted-in supporters with their paid month
+count and links to the existing privacy-aware game profiles. `/supporter` provides
+monthly Hero cosmetic access and the public recognition preference. Payment
+providers remain disabled until configured, and hosted guest mode explicitly
+shows that the directory is unavailable. See [Hero support](docs/hero-supporter.md)
+for the API contract, migration prerequisite and focused verification.
+
 ## Creator library
 
 The public `/creators` route browses the game-owned asset snapshot without an account. See [Creator catalogue v1](docs/creator-catalog.md) for the import bridge, read-only SDK, contribution briefs and rollout limits. Run `npm run catalog:check` to verify the snapshot and `npm run test:creators` for the focused desktop flow.
