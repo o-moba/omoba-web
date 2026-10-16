@@ -41,6 +41,16 @@ this repository. Do not expose the database or raw Account API publicly.
 - `OMOBA_ACCOUNT_API_URL`: internal Account API origin; server-side only.
 - `OMOBA_ACCOUNT_MODE=disabled`: explicit public guest prototype; no account upstream requests. Defaults to `enabled` for local development.
 - `OMOBA_ALLOW_INSECURE_LOCAL=1`: loopback development/testing only.
+- `OMOBA_CONTOUR`: `production` (default, also when unset) or `dev`; nothing else. It
+  fixes the only hosted Registry, Studio, portal and website origins. A value from the
+  other contour fails the build, the server start and the request (fail closed, never a
+  fallback to production). See [Contours](docs/vercel.md#contours).
+- `OMOBA_REGISTRY_URL`, `OMOBA_STUDIO_URL`: Ekza Registry and Studio origins for the
+  market. Default to the contour's origins (`https://registry.ekza.io` and
+  `https://studio.ekza.io` in production); other values only on loopback with
+  `OMOBA_ALLOW_INSECURE_LOCAL=1`.
+- `OMOBA_SITE_URL`: the OMOBA website for "About the game" links. Defaults to
+  `https://omoba.io` (production) or `https://dev.omoba.io` (dev).
 - `OMOBA_TRUST_LOOPBACK_PROXY=1`: only behind an ingress that **overwrites**
   `X-Real-IP`, with both Node and Rust listeners inaccessible except through that
   trusted ingress. Enable the same option on the API. Otherwise forwarded headers
@@ -49,11 +59,16 @@ this repository. Do not expose the database or raw Account API publicly.
 The browser receives HttpOnly session/preauth cookies. Pair secrets and API bearer
 values never enter localStorage, public environment variables or rendered JSON.
 Mutations require same-origin CSRF proof; private reads and HTML are dynamic/no-store.
+On HTTPS every cookie is `__Host-` prefixed and Secure. Deletions repeat those
+attributes (`expireCookie` in `src/lib/security.mjs`): a browser ignores a `__Host-`
+Set-Cookie without Secure, so a bare delete would leave the cookie in place.
 
 ## Verification
 
 - `npm test`: BFF path, origin and cookie-token security rules.
 - `npm run typecheck` and `npm run build`.
+- `npm run test:https-cookies`: after the build, every cookie write and deletion of
+  both BFFs on an HTTPS portal origin, by header and in real Chrome.
 - `npm run test:e2e`: real Chrome + running local BFF/API/PostgreSQL, after the
   synthetic identity fixture described in [testing](docs/TESTING.md).
 - `npm run test:load`: dedicated synthetic local benchmark only; see testing.
@@ -88,9 +103,38 @@ sessions must be reauthorized for the expanded device/recovery scopes. See
 [Supporter operations](../omoba-bevy/docs/supporter.md) and
 `tests/supporter.e2e.mjs` for the disposable real API/database browser fixture.
 
+## Monthly Hero and public supporters
+
+`/supporters` publicly acknowledges opted-in supporters with their paid month
+count and links to the existing privacy-aware game profiles. `/supporter` provides
+monthly Hero cosmetic access and the public recognition preference. Payment
+providers remain disabled until configured, and hosted guest mode explicitly
+shows that the directory is unavailable. See [Hero support](docs/hero-supporter.md)
+for the API contract, migration prerequisite and focused verification.
+
 ## Creator library
 
 The public `/creators` route browses the game-owned asset snapshot without an account. See [Creator catalogue v1](docs/creator-catalog.md) for the import bridge, read-only SDK, contribution briefs and rollout limits. Run `npm run catalog:check` to verify the snapshot and `npm run test:creators` for the focused desktop flow.
+
+## Market
+
+`/market` lists free community weapons and avatars approved for OMOBA in the Ekza
+Registry, with Wildspark repeater + launcher sets featured first. "Sign in with Ekza"
+links the player's Ekza library (scope `library-claim`); "Get free" adds an item to
+that library, which the game reads for "My Ekza library"; "Remove from library" takes
+back only what the market claimed. The Registry link token stays in an HttpOnly cookie
+behind the separate `/api/ekza/*` BFF, and sign-out also ends that link in the
+Registry (best effort; the cookies are cleared either way). It does not use
+the Account API, so it works in guest mode. See [Market](docs/market.md);
+`npm run test:market` runs the browser flow against a fake Registry.
+
+## Community sculptures
+
+`/sponsor` offers a free, moderated 24-hour decoration at a curated map location.
+It uses approved `map_prop` models, the shared 3D viewer and a separate
+`map-placement` Ekza permission. Administrators review and activate requests in
+Studio. Crypto checkout is not enabled. See [Community sculptures](docs/community-sculptures.md);
+`npm run test:sponsor` exercises the browser/BFF against local service fixtures.
 
 ## Class Workshop
 

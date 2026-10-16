@@ -29,5 +29,5 @@ export function derivedAssetRequirements(
 ): AssetRequirement[];
 export function safeLibraryVerificationUrl(
   value: unknown,
-  context?: { prototype?: boolean; loopback?: boolean },
+  context?: { studio?: string | null; prototype?: boolean; loopback?: boolean },
 ): string | null;

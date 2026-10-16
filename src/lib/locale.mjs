@@ -1,4 +1,11 @@
+import { isDevContourHost } from './contour.mjs';
+
+// The request host helper lives with the contour rules; kept here for callers.
+export { requestHostname } from './contour.mjs';
+
 export const LOCALE_COOKIE = 'omoba_locale';
+/** The dev contour keeps its own host-only preference (see localeCookieName). */
+export const DEV_LOCALE_COOKIE = 'omoba_locale_dev';
 export const SUPPORTED_LOCALES = ['en', 'ru', 'zh'];
 
 /** @param {unknown} value @returns {'en'|'ru'|'zh'|null} */
@@ -27,8 +34,45 @@ export function resolveLocale({ cookie, acceptLanguage, country } = {}) {
   return 'en';
 }
 
-/** @param {'en'|'ru'|'zh'} locale @param {string} hostname @param {string} protocol */
-export function localeCookie(locale, hostname, protocol = 'https:') {
-  const domain = hostname === 'omoba.io' || hostname.endsWith('.omoba.io') ? '; Domain=.omoba.io' : '';
-  return `${LOCALE_COOKIE}=${locale}; Path=/; Max-Age=31536000; SameSite=Lax${domain}${protocol === 'https:' ? '; Secure' : ''}`;
+/**
+ * A dev deployment, or any dev-contour host (`dev.omoba.io`, `*.dev.omoba.io`),
+ * never touches the production language preference. Either is enough.
+ * @param {string} hostname @param {'production'|'dev'} [contour]
+ */
+export function isDevLocaleScope(hostname, contour = 'production') {
+  return contour === 'dev' || isDevContourHost(hostname);
+}
+
+/**
+ * Production hosts share one `omoba_locale` across `.omoba.io`. The dev contour
+ * writes its own host-only cookie under another name: it can neither change
+ * production's preference nor be shadowed by it (both reach a dev host, because
+ * production's cookie has `Domain=.omoba.io`).
+ * @param {string} hostname @param {'production'|'dev'} [contour]
+ */
+export function localeCookieName(hostname, contour = 'production') {
+  return isDevLocaleScope(hostname, contour) ? DEV_LOCALE_COOKIE : LOCALE_COOKIE;
+}
+
+/**
+ * @param {'en'|'ru'|'zh'} locale @param {string} hostname @param {string} protocol
+ * @param {'production'|'dev'} [contour]
+ */
+export function localeCookie(locale, hostname, protocol = 'https:', contour = 'production') {
+  const shared = !isDevLocaleScope(hostname, contour) && (hostname === 'omoba.io' || hostname.endsWith('.omoba.io'));
+  const domain = shared ? '; Domain=.omoba.io' : '';
+  return `${localeCookieName(hostname, contour)}=${locale}; Path=/; Max-Age=31536000; SameSite=Lax${domain}${protocol === 'https:' ? '; Secure' : ''}`;
+}
+
+/**
+ * The stored manual choice for a request: in the dev contour its own cookie,
+ * then production's shared preference (read only) as a starting point.
+ * @param {(name: string) => string | undefined} read @param {string | null | undefined} hostname
+ * @param {'production'|'dev'} [contour]
+ */
+export function storedLocale(read, hostname, contour = 'production') {
+  const name = localeCookieName(hostname || '', contour);
+  const own = read(name);
+  if (own || name === LOCALE_COOKIE) return own;
+  return read(LOCALE_COOKIE);
 }

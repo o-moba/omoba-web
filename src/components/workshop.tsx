@@ -62,6 +62,7 @@ export default function Workshop({
   initiallyUnavailable,
   accountDisabled = false,
   siteUrl = DEFAULT_SITE_URL,
+  studioUrl,
 }: {
   catalog: WorkshopCatalog;
   assets: AssetCatalog;
@@ -69,6 +70,8 @@ export default function Workshop({
   initiallyUnavailable: boolean;
   accountDisabled?: boolean;
   siteUrl?: string;
+  /** Studio of the active contour; null hides hosted approval links. */
+  studioUrl: string | null;
 }) {
   const { locale, t } = useLocale();
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
@@ -389,6 +392,7 @@ export default function Workshop({
   }
   const verificationUrl = library?.verificationUrl
     ? safeLibraryVerificationUrl(library.verificationUrl, {
+        studio: studioUrl,
         prototype: library.prototype === true,
         loopback:
           hydrated &&
@@ -407,6 +411,7 @@ export default function Workshop({
         <nav aria-label={t("Workshop navigation")}>
           <a href={siteUrl}>{t("OMOBA website ↗")}</a>
           <Link href="/creators">{t("Asset library")}</Link>
+          <Link href="/market">{t("Market")}</Link>
           <Link href="/me" prefetch={false}>{t("Player portal")}</Link>
           <a href="#workshop-account">
             {account ? t("My account") : t("Browser draft")}

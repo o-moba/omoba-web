@@ -163,6 +163,43 @@ export const dictionaries = { ru, en, zh };
 export type Locale = keyof typeof dictionaries;
 export type Words = typeof ru;
 const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
+  "Hero": {"ru": "Hero", "zh": "英雄"},
+  "Hero active": {"ru": "Hero активен", "zh": "英雄资格已生效"},
+  "Months supported": {"ru": "Месяцев поддержки", "zh": "支持月数"},
+  "Hero until": {"ru": "Hero до", "zh": "英雄资格有效期至"},
+  "POWERED BY PLAYERS": {"ru": "БЛАГОДАРЯ ИГРОКАМ", "zh": "由玩家支持"},
+  "Supporters": {"ru": "Поддержавшие проект", "zh": "支持者"},
+  "Thank you for keeping an open game growing.": {"ru": "Спасибо, что помогаете открытой игре расти.", "zh": "感谢你帮助开放游戏不断成长。"},
+  "Every paid month counts. Recognition stays after Hero expires.": {"ru": "Каждый оплаченный месяц учитывается. Благодарность остаётся и после окончания Hero.", "zh": "每个已付费月份都会被记录。英雄资格到期后，支持记录仍会保留。"},
+  "Support the game": {"ru": "Поддержать игру", "zh": "支持游戏"},
+  "Our community": {"ru": "Наше сообщество", "zh": "我们的社区"},
+  "Only players who choose public recognition appear here. Profile statistics follow each player’s privacy settings.": {"ru": "Здесь только игроки, выбравшие публичную благодарность. Доступ к статистике зависит от настроек каждого игрока.", "zh": "这里只展示选择公开支持记录的玩家。个人统计遵循每位玩家的隐私设置。"},
+  "The supporter directory is unavailable in this guest prototype. Accounts and payments are not enabled here.": {"ru": "Список поддержавших недоступен в этом гостевом прототипе. Аккаунты и оплата здесь ещё не включены.", "zh": "此访客原型暂不提供支持者名单。账号和支付功能尚未启用。"},
+  "The supporter directory could not be loaded. Please try again.": {"ru": "Не удалось загрузить список поддержавших. Попробуйте ещё раз.", "zh": "无法加载支持者名单，请重试。"},
+  "Loading supporters…": {"ru": "Загружаем список поддержавших…", "zh": "正在加载支持者…"},
+  "No supporters on this page. Return to the previous page.": {"ru": "На этой странице пока никого нет. Вернитесь на предыдущую.", "zh": "此页暂无支持者，请返回上一页。"},
+  "No public supporters yet. Recognition is always optional.": {"ru": "Публичных записей пока нет. Благодарность по имени всегда добровольна.", "zh": "暂无公开支持者。公开支持记录始终由玩家自愿选择。"},
+  "View game profile": {"ru": "Открыть игровой профиль", "zh": "查看游戏资料"},
+  "Supporter pages": {"ru": "Страницы поддержавших", "zh": "支持者分页"},
+  "MONTHLY SUPPORT · HERO": {"ru": "ЕЖЕМЕСЯЧНАЯ ПОДДЕРЖКА · HERO", "zh": "每月支持 · 英雄"},
+  "Support OMOBA voluntarily. Each paid month brings a cosmetic Hero aura.": {"ru": "Поддерживайте OMOBA добровольно. Каждый оплаченный месяц даёт косметическую ауру Hero.", "zh": "自愿支持 OMOBA，每个付费月份均可获得英雄外观光环。"},
+  "Hero preview": {"ru": "Примерка Hero", "zh": "英雄效果预览"},
+  "Hero follows your account on phone and PC. It changes your appearance only: stats, rating and matchmaking stay equal for everyone.": {"ru": "Hero доступен на телефоне и ПК с одним аккаунтом. Меняется только внешний вид: характеристики, рейтинг и подбор игроков равны для всех.", "zh": "英雄资格随账号在手机与电脑间共享，仅改变外观：属性、评分和匹配规则对所有玩家相同。"},
+  "Aura hidden. Your Hero access remains active.": {"ru": "Аура скрыта. Доступ Hero остаётся активным.", "zh": "光环已隐藏，英雄资格仍然有效。"},
+  "Public recognition": {"ru": "Публичная благодарность", "zh": "公开支持记录"},
+  "One month is one verified paid period. Expired months remain counted; refunded periods do not.": {"ru": "Один месяц — один подтверждённый оплаченный период. Истёкшие периоды учитываются, возвращённые платежи — нет.", "zh": "一个月代表一个已验证的付费周期。已到期周期仍计入总数，已退款周期不计入。"},
+  "Show my name and supported months in the public directory": {"ru": "Показывать мой ник и месяцы поддержки в публичном списке", "zh": "在公开名单中显示我的昵称和支持月数"},
+  "Recognition preference saved.": {"ru": "Настройка публичной благодарности сохранена.", "zh": "公开支持记录设置已保存。"},
+  "This is optional. Your profile must also be public; statistics keep their own privacy setting.": {"ru": "Это добровольно. Профиль также должен быть публичным; доступ к статистике настраивается отдельно.", "zh": "此选项完全自愿。个人资料也需设为公开；统计数据仍使用独立的隐私设置。"},
+  "Your profile is private, so you are not listed. You can review profile visibility in Settings.": {"ru": "Ваш профиль закрыт, поэтому вас нет в списке. Публичность профиля можно изменить в настройках.", "zh": "你的个人资料未公开，因此不会出现在名单中。可在设置中调整资料可见性。"},
+  "You will appear after your first verified paid month.": {"ru": "Вы появитесь в списке после первого подтверждённого оплаченного месяца.", "zh": "首次付费月份验证通过后，你将出现在名单中。"},
+  "Meet the supporters": {"ru": "Кто поддержал проект", "zh": "查看支持者"},
+  "Solana supports one 30-day period at a time. You choose whether to support again after it ends.": {"ru": "Через Solana оплачивается один период в 30 дней. После его окончания вы сами решаете, поддержать ли игру снова.", "zh": "Solana 每次支持一个 30 天周期，到期后由你决定是否再次支持。"},
+  "Community sculptures": { ru: "Скульптуры сообщества", zh: "社区雕塑" },
+  "Market": {
+    "ru": "Маркет",
+    "zh": "市场"
+  },
   "One account. Every device.": {
     "ru": "Один аккаунт. Все устройства.",
     "zh": "一个账号，所有设备。"
@@ -598,6 +635,10 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
   "Guest prototype": {
     "ru": "Гостевой прототип",
     "zh": "访客原型"
+  },
+  "Development environment: test data, not the live OMOBA site": {
+    "ru": "Тестовая среда: тестовые данные, не рабочий сайт OMOBA",
+    "zh": "开发环境：测试数据，并非正式 OMOBA 网站"
   },
   "MATCH REPORT": {
     "ru": "ОТЧЁТ О МАТЧЕ",

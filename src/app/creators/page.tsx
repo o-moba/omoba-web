@@ -1,12 +1,13 @@
 import { getLocale } from "@/lib/locale-server";
 import { creatorText } from "@/lib/creator-translations";
-import { publicSiteUrl } from "@/lib/navigation.mjs";
+import { contourSiteUrl } from "@/lib/navigation.mjs";
 import type { Metadata } from "next";
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { Suspense } from "react";
 import { MAX_CATALOG_BYTES, parseAssetCatalog } from "@/lib/asset-catalog.mjs";
 import { verifyCatalogRevision } from "@/lib/asset-catalog-server.mjs";
+import { studioOrigin } from "@/lib/ekza-link.mjs";
 import CreatorCatalog from "@/components/creator-catalog";
 import "./creators.css";
 
@@ -34,7 +35,7 @@ export default async function CreatorsPage() {
         </main>
       }
     >
-      <CreatorCatalog siteUrl={publicSiteUrl(process.env.OMOBA_SITE_URL,process.env.NODE_ENV)} catalog={catalog} />
+      <CreatorCatalog siteUrl={contourSiteUrl()} studioUrl={studioOrigin()} catalog={catalog} />
     </Suspense>
   );
 }

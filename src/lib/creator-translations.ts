@@ -62,6 +62,10 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Создать черновик в Studio ↗",
     "zh": "在 Studio 中创建草稿 ↗"
   },
+  "Community sets in the market ↗": {
+    "ru": "Наборы сообщества в маркете ↗",
+    "zh": "市场中的社区套装 ↗"
+  },
   "The brief could not be prepared. Please try again.": {
     "ru": "Не удалось подготовить задание. Попробуйте ещё раз.",
     "zh": "无法生成设计说明，请重试。"
@@ -206,9 +210,9 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Изучи → подготовь → создай черновик.",
     "zh": "探索 → 准备 → 创建草稿。"
   },
-  "Download a brief to keep your design tied to this game revision. Static handheld models can start in Studio; exact-slot submissions, public galleries, exact-slot approval and equipping are still to come. Avatar appearance is separate from class kits.": {
-    "ru": "Скачай задание, чтобы сохранить связь дизайна с этой версией игры. Статические модели оружия можно создавать в Studio. Отправка в конкретный слот, публичные галереи, одобрение и экипировка ещё в разработке. Внешность аватара не зависит от набора класса.",
-    "zh": "下载设计说明，确保作品对应当前游戏版本。静态手持模型可在 Studio 中开始制作；指定槽位提交、公开画廊、槽位审批及装备功能尚在开发中。角色外观与职业套组相互独立。"
+  "Download a brief to keep your design tied to this game revision. Static handheld models start in Studio and reach the market and the game once OMOBA approves them; Wildspark sets are submitted for the wildspark.handheld.set request. Requests for other classes' guns, projectiles and traps are still to come. Avatar appearance is separate from class kits.": {
+    "ru": "Скачай задание, чтобы сохранить связь дизайна с этой версией игры. Статические модели оружия создаются в Studio и попадают в маркет и в игру после одобрения OMOBA; наборы Wildspark отправляются по запросу wildspark.handheld.set. Запросы на оружие других классов, снаряды и ловушки ещё в разработке. Внешность аватара не зависит от набора класса.",
+    "zh": "下载设计说明，确保作品对应当前游戏版本。静态手持模型在 Studio 中制作，经 OMOBA 审核通过后会出现在市场和游戏中；Wildspark 套装需按 wildspark.handheld.set 需求提交。其他职业的武器、投射物和陷阱需求尚在开发中。角色外观与职业套组相互独立。"
   },
   "01 / DISCOVER": {
     "ru": "01 / ИССЛЕДУЙ",
@@ -1150,17 +1154,17 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Направленный луч света обездвиживает первых двух задетых врагов.",
     "zh": "瞄准发射光束，束缚命中的前两名敌人。"
   },
-  "A returning light shields allies on both journeys.": {
-    "ru": "Возвращающийся свет даёт союзникам щит на пути туда и обратно.",
-    "zh": "往返的光芒在两个方向上为队友提供护盾。"
+  "A returning light shields you and the allies it passes, out and back.": {
+    "ru": "Возвращающийся свет даёт щит тебе и союзникам на своём пути туда и обратно.",
+    "zh": "往返的光芒为你和两个方向上经过的队友提供护盾。"
   },
-  "Place a slowing field; cast again to detonate it.": {
-    "ru": "Создай замедляющее поле; повторное применение взрывает его.",
-    "zh": "放置减速力场，再次施放将其引爆。"
+  "Place a slowing field; cast again, or wait, to detonate it.": {
+    "ru": "Создай замедляющее поле; примени умение снова или дождись его автоматического взрыва.",
+    "zh": "放置减速力场，再次施放或等待其自动引爆。"
   },
-  "A warned beam detonates Radiance marks and applies them again.": {
-    "ru": "Луч с предупреждением взрывает метки Radiance и накладывает их снова.",
-    "zh": "带预警的光束引爆 Radiance 印记，并再次施加印记。"
+  "A warned beam that burns hardest along its centre; detonates Radiance marks and applies them again.": {
+    "ru": "Луч с предупреждением наносит наибольший урон по центру, взрывает метки Radiance и накладывает их снова.",
+    "zh": "带预警的光束在中心造成最高伤害，引爆 Radiance 印记并再次施加印记。"
   },
   "Toggle rapid repeater fire and longer-range rockets that spend Mana.": {
     "ru": "Переключай скоростной пулемёт и дальнобойные ракеты, расходующие ману.",
@@ -1370,13 +1374,13 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Процедурный эффект движка. Используй арт умения и семантику движения как референс: заменяемого слота загрузки GLB нет.",
     "zh": "由引擎生成的程序效果。可参考技能美术和动作含义，但不存在可替换的 GLB 上传槽位。"
   },
-  "The second gun in the class-default Q switch. Individual static handheld submission is supported. Mode-specific cosmetic set approval and equipment are future work; this is not a third Q weapon.": {
-    "ru": "Второе оружие стандартного переключения Q класса. Поддерживается отправка отдельных статических моделей. Одобрение и экипировка наборов для разных режимов ещё в разработке; это не третье оружие Q.",
-    "zh": "职业默认 Q 切换中的第二把武器。支持单独提交静态手持模型。分模式外观套组审批与装备功能尚在开发中；这不是第三把 Q 武器。"
+  "The second gun in the class-default Q switch, shown in rockets mode and while W or R draws it. The launcher and the repeater are contributed together as one Wildspark set GLB under the Studio requirement wildspark.handheld.set; this gun is its WildsparkSetLauncher variant, and its WildsparkSlide recoils from the rest pose. Authoring guide: docs/wildspark-skin-sets.md in github.com/o-moba/omoba-bevy. A standalone static handheld is still accepted but stays selected in both modes. This is not a third Q weapon.": {
+    "ru": "Второе оружие стандартного переключения Q класса: видно в режиме ракет и когда его достают W или R. Ракетомёт и пулемёт отправляются вместе, одним GLB-набором Wildspark по требованию Studio wildspark.handheld.set; это оружие — его вариант WildsparkSetLauncher, а WildsparkSlide откатывается от исходной позы. Руководство: docs/wildspark-skin-sets.md в github.com/o-moba/omoba-bevy. Отдельная статическая модель по-прежнему принимается, но остаётся выбранной в обоих режимах. Это не третье оружие Q.",
+    "zh": "职业默认 Q 切换中的第二把武器，在火箭模式下以及 W 或 R 取出它时显示。火箭发射器和连发枪作为一个 Wildspark 套装 GLB 一起提交，对应 Studio 需求 wildspark.handheld.set；这把武器是其中的 WildsparkSetLauncher 变体，其 WildsparkSlide 会从静止姿态后坐。制作指南：github.com/o-moba/omoba-bevy 中的 docs/wildspark-skin-sets.md。单独的静态手持模型仍可提交，但会在两个模式中保持选中。这不是第三把 Q 武器。"
   },
-  "Wildspark class-default repeater with engine-controlled rotor animation. Static handheld submissions are supported; custom moving-part animation and coordinated two-gun sets require a future profile. Explicit item selection stays selected in both modes.": {
-    "ru": "Стандартный пулемёт Wildspark с анимацией ротора под управлением движка. Поддерживаются статические модели; свои подвижные детали и согласованные наборы из двух орудий потребуют нового профиля. Явно выбранный предмет сохраняется в обоих режимах.",
-    "zh": "Wildspark 默认连发枪，转子动画由引擎控制。支持静态手持模型提交；自定义活动部件动画和双枪配套需要未来的新规范。明确选择的物品会在两个模式中保持选中。"
+  "Wildspark class-default repeater with engine-controlled rotor animation. The repeater and the launcher are contributed together as one Wildspark set GLB under the Studio requirement wildspark.handheld.set: WildsparkSetRepeater and WildsparkSetLauncher nodes, launcher at scale 0 in the file. The game shows the variant for the current weapon mode and moves only its mechanism from the rest pose: WildsparkRotor in repeater mode. Authoring guide: docs/wildspark-skin-sets.md in github.com/o-moba/omoba-bevy. Custom moving-part animation requires a future profile. Any other explicit item stays selected in both modes; an item that is not installed yet shows the class-default pair.": {
+    "ru": "Стандартный пулемёт Wildspark с анимацией ротора под управлением движка. Пулемёт и ракетомёт отправляются вместе, одним GLB-набором Wildspark по требованию Studio wildspark.handheld.set: узлы WildsparkSetRepeater и WildsparkSetLauncher, ракетомёт в файле с масштабом 0. Игра показывает вариант для текущего режима оружия и двигает только его механизм от исходной позы: в режиме пулемёта — WildsparkRotor. Руководство: docs/wildspark-skin-sets.md в github.com/o-moba/omoba-bevy. Свои анимации подвижных деталей потребуют будущего профиля. Любой другой явно выбранный предмет остаётся выбранным в обоих режимах; пока предмет не установлен, показывается стандартная пара оружия класса.",
+    "zh": "Wildspark 默认连发枪，转子动画由引擎控制。连发枪和火箭发射器作为一个 Wildspark 套装 GLB 一起提交，对应 Studio 需求 wildspark.handheld.set：包含 WildsparkSetRepeater 和 WildsparkSetLauncher 节点，文件中火箭发射器的缩放为 0。游戏显示当前武器模式对应的变体，并只让该变体的机构从静止姿态开始运动：连发枪模式下为 WildsparkRotor。制作指南：github.com/o-moba/omoba-bevy 中的 docs/wildspark-skin-sets.md。自定义活动部件动画需要未来的新规范。其他明确选择的物品会在两个模式中保持选中；尚未安装的物品会显示职业默认的一对武器。"
   },
   "Rocket-mode basic attacks render the bundled rocket model. Custom projectile upload is not supported. Damage, trajectory and collision remain authoritative.": {
     "ru": "Базовые атаки в ракетном режиме используют встроенную модель ракеты. Загрузка своих снарядов не поддерживается. Урон, траектория и столкновения контролируются игрой.",
@@ -2153,6 +2157,14 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
   "Spell Finish": {
     "ru": "Завершение заклинания",
     "zh": "施法收势"
+  },
+  "Ray Release": {
+    "ru": "Высвобождение луча",
+    "zh": "光束释放"
+  },
+  "Spell Charge": {
+    "ru": "Накопление заклинания",
+    "zh": "施法蓄力"
   },
   "Spell Prepare": {
     "ru": "Подготовка заклинания",
