@@ -1,6 +1,7 @@
 export type Contour = "production" | "dev";
 export const CONTOUR_VARIABLE: "OMOBA_CONTOUR";
 export const DEFAULT_CONTOUR: "production";
+export const DEV_ACCOUNT_API_ORIGIN: "https://account.dev.omoba.io";
 export const CONTOURS: Readonly<Record<Contour, Readonly<{ registry: string; studio: string; portal: string; site: string }>>>;
 export function isLoopbackHost(hostname: string): boolean;
 export function isDevContourHost(hostname: unknown): boolean;
