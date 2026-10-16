@@ -6,6 +6,7 @@
 
 export const CONTOUR_VARIABLE = "OMOBA_CONTOUR";
 export const DEFAULT_CONTOUR = "production";
+export const DEV_ACCOUNT_API_ORIGIN = "https://account.dev.omoba.io";
 
 /** The only hosted origins each contour may talk to, serve from or link to. */
 export const CONTOURS = Object.freeze({

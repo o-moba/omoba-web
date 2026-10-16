@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
-import { allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
+import { accountIngressHeaders, allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
 import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
 
 export const runtime = 'nodejs';
@@ -55,7 +55,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (path === 'me/supporter/recognition' || /^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawStrictBody=raw;
   }
   const token = jar.get(names.session)?.value;
-  const headers: Record<string,string> = {'Content-Type':'application/json'};
+  const headers: Record<string,string> = {...accountIngressHeaders(), 'Content-Type':'application/json'};
   if (token) headers.Authorization='Bearer '+token;
   if(process.env.OMOBA_TRUST_LOOPBACK_PROXY==='1'){
     const ip=request.headers.get('x-real-ip');if(!ip||!isIP(ip))return fail('trusted_ingress_required',503);headers['X-Real-IP']=ip;
@@ -73,7 +73,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (path === 'auth/pairings') {
       if (pairing) {
         try { await fetch(config.api+'/v1/auth/pairings/cancel', {method:'POST',headers,
-          body:JSON.stringify(pairing),cache:'no-store',signal:AbortSignal.timeout(5000)}); }
+          body:JSON.stringify(pairing),cache:'no-store',redirect:'error',signal:AbortSignal.timeout(5000)}); }
         catch { return fail('account_service_unavailable',503); }
       }
       body={};

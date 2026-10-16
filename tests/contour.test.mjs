@@ -149,7 +149,7 @@ test('the portal origin follows its contour in every combination', () => {
   for (const contour of ['production', 'dev'])
     for (const candidate of CANDIDATES)
       for (const allowLocal of [false, true]) {
-        const env = { OMOBA_CONTOUR: contour, OMOBA_PORTAL_ORIGIN: candidate.value, ...(allowLocal ? { OMOBA_ALLOW_INSECURE_LOCAL: '1' } : {}) };
+        const env = { OMOBA_CONTOUR: contour, OMOBA_ACCOUNT_MODE: 'disabled', OMOBA_PORTAL_ORIGIN: candidate.value, ...(allowLocal ? { OMOBA_ALLOW_INSECURE_LOCAL: '1' } : {}) };
         const label = `${contour} OMOBA_PORTAL_ORIGIN=${candidate.value} local=${allowLocal}`;
         const expected = expectPortal(contour, candidate, allowLocal);
         if (typeof expected === 'string') assert.equal(portalConfig(env).origin, expected, label);
@@ -167,13 +167,13 @@ test('production keeps its portal rules', () => {
     assert.throws(() => portalConfig({ ...PROD_PROJECT, OMOBA_ACCOUNT_API_URL: api }), /Account API .* dev-contour origin/, api);
 });
 
-test('the dev portal has no hosted Account API', () => {
+test('the dev portal pins its hosted Account API and keeps local fixtures explicit', () => {
   assert.deepEqual(portalConfig(DEV_PROJECT), { origin: DEV.portal, api: 'http://127.0.0.1:40550', secure: true, accountEnabled: false });
   const { OMOBA_PORTAL_ORIGIN, ...unset } = DEV_PROJECT;
   assert.throws(() => portalConfig(unset), /HTTPS|app\.dev\.omoba\.io/);
   assert.throws(() => portalConfig({ OMOBA_CONTOUR: 'dev', OMOBA_PORTAL_ORIGIN: 'http://127.0.0.1:3010' }), /loopback only/);
   assert.equal(portalConfig({ OMOBA_CONTOUR: 'dev', OMOBA_ALLOW_INSECURE_LOCAL: '1', OMOBA_PORTAL_ORIGIN: 'http://127.0.0.1:3010' }).secure, false);
-  for (const [api, pattern] of [['https://api.omoba.io', /production origin/], ['https://api.dev.omoba.io', /must stay loopback/], ['https://accounts.example', /must stay loopback/]])
+  for (const [api, pattern] of [['https://api.omoba.io', /production origin/], ['https://api.dev.omoba.io', /Account API must be/], ['https://accounts.example', /Account API must be/]])
     assert.throws(() => portalConfig({ ...DEV_PROJECT, OMOBA_ACCOUNT_API_URL: api }), pattern, api);
   assert.equal(portalConfig({ ...DEV_PROJECT, OMOBA_ACCOUNT_API_URL: 'http://127.0.0.1:40551' }).api, 'http://127.0.0.1:40551');
 });

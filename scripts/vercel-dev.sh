@@ -31,15 +31,23 @@ DEV_REF=${DEV_REF:-origin/dev}
 GATE=${GATE:-1}
 NPM_CACHE=${NPM_CACHE:-/tmp/npm-cache-omoba-web-dev}
 REPO=${REPO:-$(cd "$(dirname "$0")/.." && pwd)}
+DEV_ACCOUNT_MODE=${DEV_ACCOUNT_MODE:-disabled}
+DEV_ACCOUNT_INGRESS_KEY_FILE=${DEV_ACCOUNT_INGRESS_KEY_FILE:-}
 
-# The dev project's environment (non-sensitive; no secrets exist for this app).
+# Non-sensitive values. The optional ingress credential is read separately from a private file.
 DEV_ENV="OMOBA_CONTOUR=dev
 OMOBA_PORTAL_ORIGIN=https://app.dev.omoba.io
-OMOBA_ACCOUNT_MODE=disabled
+OMOBA_ACCOUNT_MODE=$DEV_ACCOUNT_MODE
 OMOBA_REGISTRY_URL=https://registry.dev.ekza.io
 OMOBA_STUDIO_URL=https://studio.dev.ekza.io
 OMOBA_SITE_URL=https://dev.omoba.io"
-FORBIDDEN_ENV="OMOBA_ALLOW_INSECURE_LOCAL OMOBA_TRUST_LOOPBACK_PROXY OMOBA_ACCOUNT_API_URL"
+FORBIDDEN_ENV="OMOBA_ALLOW_INSECURE_LOCAL OMOBA_TRUST_LOOPBACK_PROXY"
+if [ "$DEV_ACCOUNT_MODE" = enabled ]; then
+  DEV_ENV="$DEV_ENV
+OMOBA_ACCOUNT_API_URL=https://account.dev.omoba.io"
+else
+  FORBIDDEN_ENV="$FORBIDDEN_ENV OMOBA_ACCOUNT_API_URL OMOBA_ACCOUNT_INGRESS_KEY"
+fi
 # The CLI reads a project from VERCEL_<X> or else NOW_<X> (@vercel/build-utils
 # getPlatformEnv). With both IDs set, `link` and `deploy` without --project use
 # them instead of .vercel/project.json, and `link --project` links that project.
@@ -63,6 +71,7 @@ vc() { run "${VC_CMD[@]}" "$@"; }
 vc_read() { echo "+ $(quote "${VC_CMD[@]}" "$@")" >&2; "${VC_CMD[@]}" "$@"; }
 
 guard() {
+  case "$DEV_ACCOUNT_MODE" in enabled|disabled) ;; *) die "DEV_ACCOUNT_MODE must be enabled or disabled";; esac
   case "$DEV_PROJECT" in
     omoba-app|landing-v2-omoba|landing-v2-ekza) die "DEV_PROJECT=$DEV_PROJECT is a production project";;
     *-dev) ;;
@@ -84,8 +93,23 @@ guard() {
   if printf '%s\n' "$DEV_ENV" | grep -Eq '//(registry\.|studio\.|app\.)?(ekza|omoba)\.io'; then die "DEV_ENV names a production host"; fi
 }
 
+read_ingress_key() {
+  [ -n "$DEV_ACCOUNT_INGRESS_KEY_FILE" ] || die "enabled account setup needs DEV_ACCOUNT_INGRESS_KEY_FILE"
+  DEV_INGRESS_KEY=$(node -e '
+    const fs=require("fs");
+    try {
+      const p=process.argv[1], st=fs.lstatSync(p);
+      if(!st.isFile() || st.isSymbolicLink() || (st.mode & 0o077)) throw new Error();
+      const value=fs.readFileSync(p,"utf8").trim();
+      if(!/^[a-f0-9]{64}$/.test(value)) throw new Error();
+      process.stdout.write(value);
+    } catch { console.error("Ingress key must be a private regular file (0600) containing 64 lowercase hex characters");process.exit(1); }
+  ' "$DEV_ACCOUNT_INGRESS_KEY_FILE") || die "invalid ingress key file"
+}
+
 setup() {
   say "setup $DEV_PROJECT in $VERCEL_SCOPE"
+  if [ "$DEV_ACCOUNT_MODE" = enabled ] && [ "$APPLY" = 1 ]; then read_ingress_key; fi
   if [ "$APPLY" = 1 ]; then
     vc_read project inspect "$DEV_PROJECT" --scope "$VERCEL_SCOPE" >/dev/null 2>&1 || vc project create "$DEV_PROJECT" --scope "$VERCEL_SCOPE"
   else
@@ -106,7 +130,21 @@ setup() {
     done <<EOF
 $DEV_ENV
 EOF
+    if [ "$DEV_ACCOUNT_MODE" = enabled ]; then
+      # Never use --value or echo the credential. The CLI consumes only stdin.
+      if [ "$APPLY" = 1 ]; then
+        local secret_out secret_status=0
+        echo "+ $(quote "${VC_CMD[@]}" env add OMOBA_ACCOUNT_INGRESS_KEY "$target" --sensitive --force --yes --project "$DEV_PROJECT" --scope "$VERCEL_SCOPE") < <private key stdin>"
+        secret_out=$("${VC_CMD[@]}" env add OMOBA_ACCOUNT_INGRESS_KEY "$target" --sensitive --force --yes --project "$DEV_PROJECT" --scope "$VERCEL_SCOPE" < <(printf '%s' "$DEV_INGRESS_KEY") 2>&1) || secret_status=$?
+        [ -z "$secret_out" ] || printf '%s\n' "${secret_out//$DEV_INGRESS_KEY/<redacted>}"
+        [ "$secret_status" = 0 ] || die "setting the sensitive ingress key failed"
+      else
+        vc env add OMOBA_ACCOUNT_INGRESS_KEY "$target" --sensitive --force --yes --project "$DEV_PROJECT" --scope "$VERCEL_SCOPE"
+        say "ingress key will be supplied through stdin from the private key file"
+      fi
+    fi
   done
+  unset DEV_INGRESS_KEY
   # Attach the domain only if missing; never --force (that would move it from another project).
   if [ "$APPLY" = 1 ]; then
     if vc_read api "/v9/projects/$DEV_PROJECT/domains" -X GET --scope "$VERCEL_SCOPE" |
@@ -213,6 +251,8 @@ deploy() {
         while IFS= read -r kv; do export "${kv?}"; done <<EOF
 $DEV_ENV
 EOF
+        # Build guard uses a synthetic value; the real credential is only on Vercel.
+        if [ "$DEV_ACCOUNT_MODE" = enabled ]; then export OMOBA_ACCOUNT_INGRESS_KEY=0000000000000000000000000000000000000000000000000000000000000000; fi
         npm run build
         rm -rf .next node_modules
       )
@@ -249,6 +289,9 @@ check() {
   fi
   vc_read api "/v6/domains/$DEV_DOMAIN/config?projectIdOrName=$DEV_PROJECT" -X GET --scope "$VERCEL_SCOPE" |
     node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const c=JSON.parse(s);console.log("domain misconfigured:",c.misconfigured);process.exit(c.misconfigured?1:0)})'
+  local expected_env="$DEV_ENV"
+  if [ "$DEV_ACCOUNT_MODE" = enabled ]; then expected_env="$expected_env
+OMOBA_ACCOUNT_INGRESS_KEY=<sensitive>"; fi
   vc_read api "/v9/projects/$DEV_PROJECT/env" -X GET --scope "$VERCEL_SCOPE" |
     node -e '
       let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
@@ -257,7 +300,7 @@ check() {
         const bad=keys.filter(k=>process.argv[2].split(" ").includes(k));
         console.log("env keys:",keys.join(" "));
         if (bad.length || want.some(k=>!keys.includes(k))) { console.error("env drift: forbidden",bad,"missing",want.filter(k=>!keys.includes(k))); process.exit(1); }
-      })' "$DEV_ENV" "$FORBIDDEN_ENV"
+      })' "$expected_env" "$FORBIDDEN_ENV"
   local base="https://$DEV_DOMAIN" html
   curl -sS -o /dev/null -w 'GET / -> %{http_code} %{redirect_url}\n' "$base/"
   curl -sSI "$base/market" | grep -i '^x-robots-tag: noindex, nofollow' || die "X-Robots-Tag missing on /market"

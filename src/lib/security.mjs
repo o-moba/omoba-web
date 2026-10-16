@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { CONTOURS, CONTOUR_VARIABLE, contourName, foreignOrigin, isLoopbackHost } from './contour.mjs';
+import { CONTOURS, CONTOUR_VARIABLE, DEV_ACCOUNT_API_ORIGIN, contourName, foreignOrigin, isLoopbackHost } from './contour.mjs';
 
 export function portalConfig(env = process.env) {
   const contour = contourName(env);
@@ -22,8 +22,8 @@ export function portalConfig(env = process.env) {
 /**
  * The portal origin and the Account API belong to the active contour. production
  * keeps its rules and only refuses dev-contour hosts; dev serves from exactly
- * https://app.dev.omoba.io (loopback is an explicit local test) and has no hosted
- * Account API. A cross-contour value throws: the caller fails closed.
+ * https://app.dev.omoba.io and reaches only the exact dev Account API.
+ * Loopback is reserved for disabled accounts or explicit local fixtures.
  * @param {'production'|'dev'} contour @param {URL} origin @param {URL} api
  * @param {Record<string, string | undefined>} env
  */
@@ -35,9 +35,22 @@ function contourPortal(contour, origin, api, env) {
   if (contour !== 'dev') return;
   if (origin.origin !== CONTOURS.dev.portal && !(isLoopbackHost(origin.hostname) && env.OMOBA_ALLOW_INSECURE_LOCAL === '1'))
     throw new Error('Portal origin must be ' + CONTOURS.dev.portal + ' when ' + CONTOUR_VARIABLE + '=dev (loopback only with OMOBA_ALLOW_INSECURE_LOCAL=1)');
-  // Any hosted Account API would be production's: the dev contour is guest-only.
-  if (!isLoopbackHost(api.hostname))
-    throw new Error('Account API must stay loopback when ' + CONTOUR_VARIABLE + '=dev (there is no hosted dev Account API)');
+  const enabled = (env.OMOBA_ACCOUNT_MODE || 'enabled') === 'enabled';
+  const localFixture = isLoopbackHost(api.hostname) && (!enabled || env.OMOBA_ALLOW_INSECURE_LOCAL === '1');
+  if (api.origin !== DEV_ACCOUNT_API_ORIGIN && !localFixture)
+    throw new Error('Account API must be ' + DEV_ACCOUNT_API_ORIGIN + ' when ' + CONTOUR_VARIABLE + '=dev (enabled loopback requires an explicit local fixture)');
+  if (enabled && api.origin === DEV_ACCOUNT_API_ORIGIN && !/^[a-f0-9]{64}$/.test(env.OMOBA_ACCOUNT_INGRESS_KEY || ''))
+    throw new Error('Hosted dev accounts require OMOBA_ACCOUNT_INGRESS_KEY (64 lowercase hex characters)');
+}
+
+/** Server-only Account API ingress credential. It never belongs in page props or cookies.
+ * @param {Record<string, string | undefined>} env
+ * @returns {Record<string, string>}
+ */
+export function accountIngressHeaders(env = process.env) {
+  const config = portalConfig(env);
+  if (contourName(env) !== 'dev' || !config.accountEnabled || config.api !== DEV_ACCOUNT_API_ORIGIN) return {};
+  return { 'X-Omoba-Portal-Key': String(env.OMOBA_ACCOUNT_INGRESS_KEY) };
 }
 
 export function safeEqual(a, b) {

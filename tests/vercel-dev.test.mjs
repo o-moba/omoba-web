@@ -34,7 +34,7 @@ env | grep -E '^(VERCEL|NOW)_(PROJECT|ORG)_ID=' >> ${JSON.stringify(leaks)}
 case "$1 $2" in
   "project inspect") exit 1;;
   # Like the real CLI: a non-TTY stdin is read as the value, even with --value.
-  "env add") printf '%s %s %s\\n' "$3" "$4" "$(cat)" >> ${JSON.stringify(stdins)};;
+  "env add") value=$(cat); printf '%s %s %s\\n' "$3" "$4" "$value" >> ${JSON.stringify(stdins)}; [ "$3" = OMOBA_ACCOUNT_INGRESS_KEY ] && printf '%s\\n' "$value";;
   "api /v9/projects/"*/domains) echo '{"domains":${domains}}';;
   "api /v9/projects/"*/env) echo '{"envs":[]}';;
   "api /v9/projects/"*) echo '${apiProject}';;
@@ -85,6 +85,7 @@ test('vercel-dev.sh refuses production identifiers, a non-dev ref and CLI overri
       [{ DEV_PROJECT: 'omoba-app-staging' }, /must end in -dev/],
       [{ DEV_REF: 'origin/main' }, /dev branch only/],
       [{ DEV_REF: 'main' }, /dev branch only/],
+      [{ DEV_ACCOUNT_MODE: 'bad' }, /DEV_ACCOUNT_MODE must be/],
       [{ VERCEL_PROJECT_ID: PROD_ID }, /VERCEL_PROJECT_ID is set/],
       [{ VERCEL_ORG_ID: 'team_x' }, /VERCEL_ORG_ID is set/],
       // The CLI falls back to the legacy NOW_* names (@vercel/build-utils getPlatformEnv).
@@ -242,4 +243,34 @@ test('deploy refuses a checkout link and an export linked to production', () => 
     assert.match(result.stderr, /not linked to omoba-app-dev; nothing was deployed/);
     assert.ok(!prod.calls().some((c) => c.startsWith('deploy')), 'deployed after a production link');
   } finally { prod.cleanup(); }
+});
+
+test('enabled account setup pins dev API and sends the ingress key only through secret stdin', () => {
+  const r = rig(), key = 'b'.repeat(64), keyFile = join(r.root, 'ingress.key');
+  try {
+    writeFileSync(keyFile, key + '\n', { mode: 0o600 });
+    const env = { ...r.env, DEV_ACCOUNT_MODE: 'enabled', DEV_ACCOUNT_INGRESS_KEY_FILE: keyFile };
+    const result = run(env, '--apply', 'setup');
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(!result.stdout.includes(key) && !result.stderr.includes(key));
+    assert.ok(r.calls().every(call => !call.includes(key)));
+    for (const target of ['production', 'preview']) {
+      assert.ok(r.calls().includes(`env add OMOBA_ACCOUNT_INGRESS_KEY ${target} --sensitive --force --yes --project omoba-app-dev --scope wotoris-projects-c784733b`));
+      assert.ok(r.envStdin().includes(`OMOBA_ACCOUNT_INGRESS_KEY ${target} ${key}`));
+      assert.ok(r.envStdin().includes(`OMOBA_ACCOUNT_API_URL ${target} https://account.dev.omoba.io`));
+      assert.ok(r.envStdin().includes(`OMOBA_ACCOUNT_MODE ${target} enabled`));
+    }
+  } finally { r.cleanup(); }
+});
+
+test('enabled account setup refuses missing or readable ingress files before touching Vercel', () => {
+  for (const kind of ['missing', 'public', 'invalid']) {
+    const r = rig(), keyFile = join(r.root, 'ingress.key');
+    try {
+      if (kind !== 'missing') writeFileSync(keyFile, kind === 'invalid' ? 'invalid' : 'b'.repeat(64), { mode: kind === 'public' ? 0o644 : 0o600 });
+      const result = run({ ...r.env, DEV_ACCOUNT_MODE: 'enabled', DEV_ACCOUNT_INGRESS_KEY_FILE: keyFile }, '--apply', 'setup');
+      assert.equal(result.status, 2);
+      assert.deepEqual(r.calls(), []);
+    } finally { r.cleanup(); }
+  }
 });

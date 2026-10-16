@@ -52,9 +52,10 @@ the server-provided expiry. Lifetime count and entitlement remain server-owned.
 
 ## Disabled services and deployment
 
-Hosted dev currently uses `OMOBA_ACCOUNT_MODE=disabled` and has no hosted Account
-API. `/supporters` renders a clear unavailable notice there without contacting an
-upstream, even with a stale session cookie. An unavailable service is never shown
+Hosted dev can use the dedicated Account API through the protected ingress in
+[the Vercel runbook](vercel.md#hosted-dev-accounts). With
+`OMOBA_ACCOUNT_MODE=disabled`, `/supporters` renders a clear unavailable notice
+without contacting an upstream, even with a stale session cookie. An unavailable service is never shown
 as an empty list or a successful payment. Local enabled mode supports integration
 with an isolated Account API/database. This feature changes no deployment,
 provider configuration, credentials, price or automatic renewal policy.
