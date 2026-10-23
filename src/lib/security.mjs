@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { CONTOURS, CONTOUR_VARIABLE, DEV_ACCOUNT_API_ORIGIN, contourName, foreignOrigin, isLoopbackHost } from './contour.mjs';
+import { marketFeatures } from './market-profile.mjs';
 
 export function portalConfig(env = process.env) {
   const contour = contourName(env);
@@ -59,7 +60,19 @@ export function safeEqual(a, b) {
   return aa.length===bb.length && timingSafeEqual(aa,bb);
 }
 
-export function allowedPath(path, method) {
+/**
+ * The browser may reach only these Account API routes. Ekza library routes need
+ * the `ekza` feature, Supporter routes `supporter`, VK ID routes `vkSignIn`; the
+ * default is the running server's market (fail closed in ru/cn).
+ * @param {string} path @param {string} method
+ * @param {{ekza: boolean, supporter: boolean, vkSignIn: boolean}} [features]
+ */
+export function allowedPath(path, method, features = marketFeatures(process.env)) {
+  if (/^me\/ekza-library(?:\/|$)/.test(path) && !features.ekza) return false;
+  if ((/^me\/supporter(?:\/|$)/.test(path) || path === 'supporters') && !features.supporter) return false;
+  if ((/^auth\/social(?:\/|$)/.test(path) || /^me\/social(?:\/|$)/.test(path)) && !features.vkSignIn) return false;
+  if (method === 'POST' && /^auth\/social\/(?:attach|ticket)$/.test(path)) return true;
+  if (method === 'DELETE' && path === 'me/social/vk') return true;
   if (method === 'GET' && /^(me\/class-builds(?:\/[0-9a-f]{64})?|me\/ekza-library)$/.test(path)) return true;
   if (method === 'POST' && /^(me\/class-builds|me\/ekza-library\/(connect|poll))$/.test(path)) return true;
   if (method === 'PATCH' && /^me\/class-builds\/[0-9a-f]{64}$/.test(path)) return true;
@@ -70,13 +83,36 @@ export function allowedPath(path, method) {
   return method === 'POST' && /^(me\/friend-actions|me\/devices\/(?:lookup|approve)|me\/recovery-codes|me\/supporter\/solana\/(?:checkout|confirm)|auth\/logout|auth\/pairings(?:\/(status|complete|cancel))?)$/.test(path);
 }
 
+/** An opaque Account API secret: 32 bytes as 64 lowercase hex characters. */
+export const OPAQUE_SECRET = /^[a-f0-9]{64}$/;
+
+/**
+ * The Account API body of a VK ID ticket route. The ticket comes only from the
+ * HttpOnly cookie: a browser body may carry nothing but the enrollment code for
+ * `attach` and nothing at all for `ticket`, so it can never name a ticket.
+ * @param {'auth/social/attach' | 'auth/social/ticket'} path
+ * @param {Record<string, unknown> | undefined} body the parsed browser body
+ * @param {string | undefined} ticket the social-ticket cookie
+ * @returns {{body: Record<string, string>} | {code: string, status: number}}
+ */
+export function socialTicketBody(path, body, ticket) {
+  const keys = Object.keys(body || {});
+  if (path === 'auth/social/attach') {
+    if (keys.length !== 1 || keys[0] !== 'code' || typeof body?.code !== 'string' || !/^[A-Z2-9]{8}$/.test(body.code))
+      return { code: 'invalid_request', status: 400 };
+  } else if (keys.length) return { code: 'invalid_request', status: 400 };
+  if (!ticket || !OPAQUE_SECRET.test(ticket)) return { code: 'social_ticket_expired', status: 404 };
+  return { body: path === 'auth/social/attach' ? { code: /** @type {string} */ (body?.code), social_ticket: ticket } : { social_ticket: ticket } };
+}
+
 export function mutationAllowed(origin, expected, token, cookie) {
   return origin === expected && /^[a-f0-9]{64}$/.test(token || '') && safeEqual(token, cookie);
 }
 
 export function cookieNames(secure) {
   const prefix = secure ? '__Host-' : '';
-  return { session: prefix+'omoba-session', pair: prefix+'omoba-pair', csrf: prefix+'omoba-csrf' };
+  // vk: the PKCE attempt of one VK ID sign-in; social: an unlinked VK ID ticket.
+  return { session: prefix+'omoba-session', pair: prefix+'omoba-pair', csrf: prefix+'omoba-csrf', vk: prefix+'omoba-vk', social: prefix+'omoba-social' };
 }
 
 /**

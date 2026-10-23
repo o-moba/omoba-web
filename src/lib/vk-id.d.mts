@@ -1,0 +1,31 @@
+export type VkMethod = 'vkid' | 'ok_ru' | 'mail_ru';
+export type CookieChanges = { set: [name: string, value: string, maxAge: number][]; clear: string[] };
+export type CookieNames = { vk: string; social: string; session: string; pair: string; csrf: string };
+type RouteFeatures = { ekza: boolean; supporter: boolean };
+export const VK_AUTHORIZE_URL: 'https://id.vk.ru/authorize';
+export const VK_SCOPE: 'vkid.personal_info';
+export const VK_METHODS: readonly VkMethod[];
+export const VK_CALLBACK_PATH: '/api/auth/vk/callback';
+export const VK_ATTEMPT_MAX_AGE: number;
+export const SOCIAL_TICKET_MAX_AGE: number;
+export const SESSION_MAX_AGE: number;
+export const SIGNIN_FAILURES: readonly string[];
+export function base64url(buffer: Buffer): string;
+export function pkceChallenge(verifier: string): string;
+export function isVerifier(value: unknown): boolean;
+export function newVkAttempt(random?: (size: number) => Buffer): { state: string; verifier: string };
+export function vkRedirectUri(origin: string): string;
+export function vkAuthorizeUrl(options: { clientId: string; redirectUri: string; state: string; verifier: string; method: string }): string;
+export function encodeVkCookie(attempt: { state: string; verifier: string; method: string; returnTo: string }): string;
+export function decodeVkCookie(raw: string | undefined, features: RouteFeatures): { state: string; verifier: string; method: VkMethod; returnTo: string } | null;
+export function vkFailureLocation(reason: string, returnTo: string): string;
+export function applyCookies(jar: { set(name: string, value: string, options: object): unknown }, changes: CookieChanges, secure: boolean): void;
+export function vkStart(options: {
+  clientId: string; origin: string; names: CookieNames; features: RouteFeatures;
+  method: string | null; returnTo: string | null; random?: (size: number) => Buffer;
+}): { location: string; cookies: CookieChanges } | { code: string; status: number };
+export function signinFailure(status: number, code: unknown): string;
+export function vkCallback(options: {
+  api: string; origin: string; names: CookieNames; features: RouteFeatures; query: URLSearchParams;
+  cookie: string | undefined; headers: Record<string, string>; fetch?: typeof fetch; now?: number; timeoutMs?: number;
+}): Promise<{ location: string; cookies: CookieChanges }>;

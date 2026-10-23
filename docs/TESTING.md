@@ -46,6 +46,9 @@ Run `npm test`, `npm run typecheck`, `npm run build` for frontend verification.
 `npm test` includes the contour rules (`tests/contour.test.mjs`) and the dev Vercel
 helper against a fake CLI (`tests/vercel-dev.test.mjs`). `npm run test:contour` checks
 a production build and, after a dev build, the dev contour; see `docs/vercel.md#contours`.
+`npm test` also covers the market rules and VK ID sign-in (`tests/market-profile.test.mjs`,
+`tests/vk-id.test.mjs`); `npm run test:market-profiles` checks a global or ru build against
+a loopback fake Account API, see `docs/markets.md#verification`.
 `VERCEL_CLI=<…/node_modules/vercel/dist/vc.js> npm run test:vercel-cli` runs the same
 helper through the real pinned Vercel CLI against a loopback fake of the Vercel API
 (fake token, throwaway HOME; no request leaves the machine). Rerun it when the CLI pin moves.

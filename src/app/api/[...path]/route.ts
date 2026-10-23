@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
-import { accountIngressHeaders, allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
+import { accountIngressHeaders, allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig, socialTicketBody } from '@/lib/security.mjs';
+import { marketFeatures } from '@/lib/market-profile.mjs';
 import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
 
 export const runtime = 'nodejs';
@@ -12,14 +13,16 @@ const noStore = { 'Cache-Control': 'private, no-store', 'Vary': 'Cookie' };
 function fail(code: string, status: number) { return NextResponse.json({ code }, { status, headers: noStore }); }
 
 async function handle(request: NextRequest, context: { params: Promise<{path:string[]}> }) {
-  let config: ReturnType<typeof portalConfig>;
-  try { config = portalConfig(); } catch { return fail('configuration_unavailable', 503); }
+  let config: ReturnType<typeof portalConfig>, features: ReturnType<typeof marketFeatures>;
+  try { config = portalConfig(); features = marketFeatures(); } catch { return fail('configuration_unavailable', 503); }
   // A request under the other contour's host never reaches this contour's Account API.
   if (contourHostProblem(contourName(), requestHostname(request.headers.get('host')))) return fail('configuration_unavailable', 503);
   const path = (await context.params).path.join('/');
+  // Routes of a feature this market does not serve (Ekza library, Supporter, VK ID) are 404.
+  const allowed = allowedPath(path, request.method, features);
   if (!config.accountEnabled) return fail(
-    (path === 'csrf' && request.method === 'GET') || allowedPath(path, request.method) ? 'account_service_disabled' : 'not_found',
-    (path === 'csrf' && request.method === 'GET') || allowedPath(path, request.method) ? 503 : 404,
+    (path === 'csrf' && request.method === 'GET') || allowed ? 'account_service_disabled' : 'not_found',
+    (path === 'csrf' && request.method === 'GET') || allowed ? 503 : 404,
   );
   const jar = await cookies();
   const names = cookieNames(config.secure);
@@ -31,7 +34,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     jar.set(names.csrf, token, {...options, maxAge:86400});
     return NextResponse.json({ token }, {headers:noStore});
   }
-  if (!allowedPath(path, request.method)) return fail('not_found',404);
+  if (!allowed) return fail('not_found',404);
   if (request.method !== 'GET' && !mutationAllowed(request.headers.get('origin'), config.origin,
     request.headers.get('x-csrf-token'), jar.get(names.csrf)?.value)) return fail('csrf_rejected',403);
   if (request.nextUrl.search.length > 2048) return fail('invalid_query',400);
@@ -82,6 +85,12 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
       body=pairing;
     }
   }
+  if (path === 'auth/social/attach' || path === 'auth/social/ticket') {
+    // The VK ID ticket is injected from its HttpOnly cookie, never taken from the browser body.
+    const social=socialTicketBody(path, body, jar.get(names.social)?.value);
+    if ('code' in social) return fail(social.code, social.status);
+    body=social.body;
+  }
   try {
     const upstream=await fetch(config.api+'/v1/'+target+request.nextUrl.search, {
       method:request.method, headers, body:rawStrictBody ?? (body ? JSON.stringify(body):undefined),
@@ -104,8 +113,9 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
       result={status:'connected'};
     }
     if(upstream.ok && path==='auth/pairings/cancel') clear(names.pair);
+    if(upstream.status===404 && path==='auth/social/ticket') clear(names.social);
     if(path==='auth/logout' && (upstream.ok||upstream.status===401)) {
-      clear(names.session, names.csrf, names.pair);
+      clear(names.session, names.csrf, names.pair, names.social, names.vk);
       if(upstream.status===401)return NextResponse.json({status:'revoked'},{headers:noStore});
     }
     const response=NextResponse.json(result,{status:upstream.status,headers:noStore});

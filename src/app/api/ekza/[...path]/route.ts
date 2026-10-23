@@ -5,6 +5,7 @@ import { cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/li
 import { EKZA_LINK_SCOPE, LINK_TOKEN, ekzaConfig, ekzaCookieNames, ekzaRoute, parseDeviceStart, parseLibrary, parsePoll, upstreamFailure } from '@/lib/ekza-link.mjs';
 import { MARKET_PROJECT } from '@/lib/market.mjs';
 import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
+import { marketFeatures } from '@/lib/market-profile.mjs';
 import { RegistryUnavailable, registryRequest, revokeLink } from '@/lib/market-server.mjs';
 
 // Ekza Library BFF for /market. Independent of the OMOBA Account API, so it also
@@ -15,8 +16,12 @@ export const dynamic = 'force-dynamic';
 const noStore = { 'Cache-Control': 'private, no-store', 'Vary': 'Cookie' };
 function reply(value: Record<string, unknown>, status = 200) { return NextResponse.json(value, { status, headers: noStore }); }
 function fail(code: string, status: number) { return reply({ code }, status); }
+function ekzaEnabled() { try { return marketFeatures().ekza; } catch { return false; } }
 
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  // Without the Ekza feature (ru, cn) this BFF does not exist: no cookie is read and
+  // no Registry is contacted. A misconfigured market answers the same way.
+  if (!ekzaEnabled()) return fail('not_found', 404);
   let portal: ReturnType<typeof portalConfig>, ekza: ReturnType<typeof ekzaConfig> | null = null;
   try { portal = portalConfig(); } catch { return fail('configuration_unavailable', 503); }
   // A request under the other contour's host never reaches this contour's Registry.

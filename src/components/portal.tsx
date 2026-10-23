@@ -1,10 +1,13 @@
 'use client';
 import { Brand } from '@/components/brand';
 import { NavIcon } from '@/components/nav-icon';
-import { DEFAULT_SITE_URL, portalReturnTo, portalLoginHref } from '@/lib/navigation.mjs';
+import { DEFAULT_SITE_URL, GUEST_LINKS, MOBILE_NAV, PORTAL_NAV, portalNav, portalReturnTo, portalLoginHref } from '@/lib/navigation.mjs';
 import Link from 'next/link';
 import { api, ApiFailure } from '@/lib/client-api';
 import DevicesView from './devices';
+import ConnectView from './connect';
+import { RegistrationView, VkSignInButtons, fill, useMethodLabel, useSigninFailure, type SocialTicket } from './social';
+import { useMarket } from './market-profile';
 import SupporterView from './supporter';
 import SupportersView from './supporters';
 import { HeroRecognitionBadge } from './hero-recognition';
@@ -40,8 +43,9 @@ function Metric({label,value,accent=false}:{label:string;value:React.ReactNode;a
 function ProfileMetrics({p,w}:{p:Profile;w:Words}) {const {locale}=useLocale(); const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale); return <div className="metrics"><Metric label={w.rating} value={number(p.rating)} accent/><Metric label={w.level} value={number(p.level)}/><Metric label={w.wins} value={number(p.wins)}/><Metric label={w.winRate} value={p.wins!=null&&p.losses!=null&&p.wins+p.losses>0?number(100*p.wins/(p.wins+p.losses))+'%':'—'}/></div>;}
 function Copy({value,w}:{value:string;w:Words}){const[done,setDone]=useState(false);return <button onClick={()=>navigator.clipboard.writeText(value).then(()=>setDone(true)).catch(()=>setDone(false))}>{done?w.copied:w.copy}</button>;}
 
-function Login({w,onConnected}:{w:Words;onConnected:()=>void}) {
+function Login({w,onConnected,returnTo}:{w:Words;onConnected:()=>void;returnTo:string}) {
   const { t, locale } = useLocale();
+  const { features } = useMarket();const failure=useSigninFailure()(useSearchParams().get('signin'));
   const[pair,setPair]=useState<{code:string;expires_at:string}|null>(null),[state,setState]=useState(''),[error,setError]=useState<unknown>(null),[busy,setBusy]=useState(false);
   useEffect(()=>{if(!pair)return;let live=true,active=false;const poll=async()=>{if(active)return;active=true;try {
     const result=await api<{state:string}>('auth/pairings/status','POST',{});if(!live)return;setState(result.state);
@@ -49,8 +53,12 @@ function Login({w,onConnected}:{w:Words;onConnected:()=>void}) {
     if(['expired','denied','cancelled'].includes(result.state))setPair(null);
   }catch(e){if(live)setError(e);}finally{active=false;}}; const timer=setInterval(poll,3000);return()=>{live=false;clearInterval(timer);};},[pair,onConnected]);
   async function start(){setBusy(true);setError(null);try{setPair(await api('auth/pairings','POST',{}));setState('pending');}catch(e){setError(e);}finally{setBusy(false);}}
-  return <Card className="login-card"><span className="eyebrow">{t("OMOBA ACCOUNT")}</span><h1>{w.login}</h1><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>
-    {pair?<><div className="pair-code" aria-label={pair.code}>{pair.code.slice(0,4)}—{pair.code.slice(4)}</div><p>{w.pairHelp}</p><p role="status" className="accent">{w.awaiting}</p><time className="muted">{new Date(pair.expires_at).toLocaleTimeString(locale)}</time><div><button onClick={async()=>{try{await api('auth/pairings/cancel','POST',{});setPair(null);setState('cancelled');}catch(e){setError(e);}}}>{w.cancel}</button></div></>:<><p role="status">{state==='denied'?w.denied:['expired','cancelled'].includes(state)?w.expired:''}</p><button className="primary" disabled={busy} onClick={start}>{w.createPair}</button></>}
+  // Markets with VK ID (ru): VK, OK and Mail.ru first; game pairing stays the secondary path.
+  const pairing=<>{pair?<><div className="pair-code" aria-label={pair.code}>{pair.code.slice(0,4)}—{pair.code.slice(4)}</div><p>{w.pairHelp}</p><p role="status" className="accent">{w.awaiting}</p><time className="muted">{new Date(pair.expires_at).toLocaleTimeString(locale)}</time><div><button onClick={async()=>{try{await api('auth/pairings/cancel','POST',{});setPair(null);setState('cancelled');}catch(e){setError(e);}}}>{w.cancel}</button></div></>:<><p role="status">{state==='denied'?w.denied:['expired','cancelled'].includes(state)?w.expired:''}</p><button className={features.vkSignIn?'':'primary'} disabled={busy} onClick={start}>{w.createPair}</button></>}</>;
+  return <Card className="login-card"><span className="eyebrow">{t("OMOBA ACCOUNT")}</span>{failure?<p role="alert" className="notice error" data-signin-failure>{failure}</p>:null}
+    {features.vkSignIn?<><h1>{t('Sign in to OMOBA')}</h1><p>{t('Use your VK, OK or Mail.ru account. The game confirms the first link to your profile.')}</p><VkSignInButtons returnTo={returnTo}/>
+      <div className="login-secondary" data-pairing><h2>{t('Or connect your game')}</h2><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}</div></>
+    :<><h1>{w.login}</h1><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}</>}
     <p className="muted separated">{w.newPlayer}</p><Link href="/download">{w.download} ↗</Link></Card>;
 }
 
@@ -106,38 +114,58 @@ function FriendsView({w}:{w:Words}){
 }
 
 function PlayersView({id,w,me}:{id?:string;w:Words;me?:string}){
-  const { t } = useLocale();
+  const { t } = useLocale();const { features } = useMarket();
   const[search,setSearch]=useState(''),[submitted,setSubmitted]=useState(''),[actionError,setActionError]=useState<unknown>(null),[sent,setSent]=useState(false);
   const {data,error,busy,refresh}=useData<{profile?:Profile;players?:Profile[];access?:string}>(id?'players/'+id:submitted?'players?query='+encodeURIComponent(submitted):null);
   return <><h1>{w.players}</h1>{!id?<Card><form className="search" onSubmit={e=>{e.preventDefault();setSubmitted(search.trim());}}><label>{w.searchHelp}<input value={search} onChange={e=>setSearch(e.target.value)} maxLength={80}/></label><button className="primary" disabled={search.trim().length<2}>{w.search}</button></form></Card>:null}<Status error={error||actionError} busy={busy} w={w} retry={refresh}/>
-    {data?.profile?<Card><span className="eyebrow">{data.access==='contact'?w.contacts:w.public}</span><h2>{data.profile.nickname}</h2>{data.profile.supporter && <HeroRecognitionBadge recognition={data.profile.supporter}/>}<p><Link href="/supporters">{t("Meet the supporters")}</Link></p>{data.profile.rating!=null?<ProfileMetrics p={data.profile} w={w}/>:<p className="muted">{w.limitedStats}</p>}{me&&me!==data.profile.profile_id?<button disabled={sent} onClick={async()=>{try{await api('me/friend-actions','POST',{target_profile_id:data.profile!.profile_id,action:'request'});setSent(true);}catch(e){setActionError(e);}}}>{sent?w.outgoing:w.addFriend}</button>:null}</Card>:null}
+    {data?.profile?<Card><span className="eyebrow">{data.access==='contact'?w.contacts:w.public}</span><h2>{data.profile.nickname}</h2>{features.supporter&&data.profile.supporter?<HeroRecognitionBadge recognition={data.profile.supporter}/>:null}{features.supporter?<p><Link href="/supporters">{t("Meet the supporters")}</Link></p>:null}{data.profile.rating!=null?<ProfileMetrics p={data.profile} w={w}/>:<p className="muted">{w.limitedStats}</p>}{me&&me!==data.profile.profile_id?<button disabled={sent} onClick={async()=>{try{await api('me/friend-actions','POST',{target_profile_id:data.profile!.profile_id,action:'request'});setSent(true);}catch(e){setActionError(e);}}}>{sent?w.outgoing:w.addFriend}</button>:null}</Card>:null}
     {data?.players?<Card>{data.players.length===0?<Empty text={w.empty}/>:data.players.map(p=><Link className="friend-row" href={'/players/'+p.profile_id} key={p.profile_id}><div className="avatar">{p.nickname.slice(0,1)}</div><strong>{p.nickname}</strong><span>↗</span></Link>)}</Card>:null}</>;
 }
 
+function SocialLink({account,w,update}:{account:Account;w:Words;update:()=>void}){
+  const { t, locale } = useLocale();const methodLabel=useMethodLabel();
+  const[error,setError]=useState<unknown>(null),[done,setDone]=useState(false),[busy,setBusy]=useState(false);
+  // Older Account APIs omit `social`: treated as no linked account.
+  const vk=(Array.isArray(account.social)?account.social:[]).find(entry=>entry.provider==='vk');
+  async function unlink(){if(!window.confirm(t('Unlink this VK account? You can still sign in through the game.')))return;setBusy(true);setError(null);try{await api('me/social/vk','DELETE');setDone(true);update();}catch(e){setError(e);}finally{setBusy(false);}}
+  return <Card><h2>VK ID</h2>{error instanceof ApiFailure&&error.code==='fresh_confirmation_required'?<p role="alert" className="notice">{t('Sign in again to confirm this action: it needs a sign-in within the last 10 minutes.')}</p>:<Status error={error} busy={busy} w={w} retry={()=>setError(null)}/>}
+    {done?<p role="status" className="notice">{t('VK account unlinked.')}</p>:null}
+    {vk?<div className="friend-row"><div className="grow"><strong>{methodLabel(vk.method)}</strong><small>{fill(t('Linked: {method} · {date}'),{method:methodLabel(vk.method),date:new Date(vk.linked_at).toLocaleDateString(locale,{timeZone:account.settings.timezone})})}</small></div><button disabled={busy} onClick={()=>void unlink()}>{t('Unlink VK')}</button></div>
+      :<p className="muted">{t('No VK account is linked. Link one in the game: Profile → “Sign in with VK”.')}</p>}</Card>;
+}
+
 function SettingsView({account,w,update}:{account:Account;w:Words;update:()=>void}){
-  const { t, locale } = useLocale();
+  const { t, locale } = useLocale();const { features } = useMarket();
   const[s,setS]=useState<Settings>(account.settings),[nickname,setNickname]=useState(account.profile.nickname),[error,setError]=useState<unknown>(null),[saved,setSaved]=useState(false),[busy,setBusy]=useState(false);
   const sessions=useData<Sessions>('me/sessions');useEffect(()=>setS(account.settings),[account.settings]);
   async function save(path:string,body:unknown){setBusy(true);setError(null);setSaved(false);try{await api(path,'PATCH',body);setSaved(true);update();}catch(e){setError(e);}finally{setBusy(false);}}
   return <><h1>{w.settings}</h1><Status error={error} busy={busy} w={w} retry={update}/>{saved?<p role="status" className="notice">{w.saved}</p>:null}<Card><form onSubmit={e=>{e.preventDefault();void save('me/profile',{nickname});}}><label>{w.nickname}<input value={nickname} onChange={e=>setNickname(e.target.value)} maxLength={45} pattern="[^#]{1,20}#[0-9]{4}" placeholder={t("Nickname#1234")} autoCapitalize="none" spellCheck={false}/><small>{w.handleHelp}</small></label><button disabled={busy}>{w.save}</button></form></Card>
     <Card><h2>{w.privacy}</h2><form onSubmit={e=>{e.preventDefault();void save('me/settings',{...s,expected_version:s.version,version:undefined});}}>{(['public_profile_enabled','public_stats_enabled','discoverable'] as const).map((key,i)=><label className="toggle" key={key}><input type="checkbox" checked={s[key]} disabled={i>0&&!s.public_profile_enabled} onChange={e=>setS({...s,[key]:e.target.checked,...(key==='public_profile_enabled'&&!e.target.checked?{public_stats_enabled:false,discoverable:false}:{})})}/>{[w.publicProfile,w.publicStats,w.discoverable][i]}</label>)}<p className="muted">{w.privacyHelp}</p><div className="filters"><label>{w.language}<LanguageSelector /></label><label>{w.timezone}<input value={s.timezone} onChange={e=>setS({...s,timezone:e.target.value})} list="timezones"/><datalist id="timezones">{['UTC','Europe/Moscow','Asia/Shanghai','Europe/Berlin','America/New_York'].map(v=><option key={v} value={v}/>)}</datalist></label></div><button disabled={busy} className="primary">{w.save}</button></form></Card>
-    <Card><h2>{w.sessions}</h2><p className="muted">{w.revokeHelp}</p><Status error={sessions.error} busy={sessions.busy} w={w} retry={sessions.refresh}/>{sessions.data?.sessions.map(session=><div className="friend-row" key={session.session_id}><div className="grow"><strong>{session.label}{session.current?' · '+w.currentSession:''}</strong><small>{new Date(session.last_seen).toLocaleString(locale,{timeZone:account.settings.timezone})}</small></div><button onClick={async()=>{try{await api('me/sessions/'+session.session_id,'DELETE');sessions.refresh();if(session.current)update();}catch(e){setError(e);}}}>{w.revoke}</button></div>)}</Card></>;
+    {features.vkSignIn?<SocialLink account={account} w={w} update={update}/>:null}<Card><h2>{w.sessions}</h2><p className="muted">{w.revokeHelp}</p><Status error={sessions.error} busy={sessions.busy} w={w} retry={sessions.refresh}/>{sessions.data?.sessions.map(session=><div className="friend-row" key={session.session_id}><div className="grow"><strong>{session.label}{session.current?' · '+w.currentSession:''}</strong><small>{new Date(session.last_seen).toLocaleString(locale,{timeZone:account.settings.timezone})}</small></div><button onClick={async()=>{try{await api('me/sessions/'+session.session_id,'DELETE');sessions.refresh();if(session.current)update();}catch(e){setError(e);}}}>{w.revoke}</button></div>)}</Card></>;
 }
 function Downloads({w}:{w:Words}){const {locale}=useLocale(); const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale); const{data,error,busy,refresh}=useData<{releases:Release[]}>('releases');return <><h1>{w.downloadsTitle}</h1><p>{w.downloadsHelp}</p><Status error={error} busy={busy} w={w} retry={refresh}/>{data?.releases.length===0?<Card><Empty text={w.noRelease}/></Card>:null}{data?.releases.map(r=><Card key={r.platform+r.architecture+r.version}><span className="eyebrow">{r.platform} · {r.architecture}</span><h2>{r.version}</h2><p>{r.instructions}</p><p className="muted">{r.test_status} · {number(r.size_bytes)} B</p><a className="button primary" href={r.url} rel="noreferrer">{w.download} ↗</a><details><summary>SHA-256</summary><p className="code">{r.sha256}</p></details></Card>)}</>;}
 
-export default function Portal({initialAccount,initiallyUnavailable,accountDisabled=false,siteUrl=DEFAULT_SITE_URL}:{initialAccount:Account|null;initiallyUnavailable:boolean;accountDisabled?:boolean;siteUrl?:string}){
+export default function Portal({initialAccount,initiallyUnavailable,accountDisabled=false,siteUrl=DEFAULT_SITE_URL,socialTicket:initialTicket=null}:{initialAccount:Account|null;initiallyUnavailable:boolean;accountDisabled?:boolean;siteUrl?:string;socialTicket?:SocialTicket|null}){
   const[account,setAccount]=useState(initialAccount),[unavailable,setUnavailable]=useState(initiallyUnavailable);
+  const[socialTicket,setSocialTicket]=useState(initialTicket),[signingOut,setSigningOut]=useState(false);
+  const { features } = useMarket();
   const { locale, t } = useLocale();
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
   const path=usePathname();const router=useRouter();const w=dictionaries[locale],tz=account?.settings.timezone||'UTC';
   const reload=useCallback(async()=>{try{setAccount(await api<Account>('me'));setUnavailable(false);}catch(e){if(e instanceof ApiFailure&&e.status===401){setAccount(null);setUnavailable(false);}else setUnavailable(true);}},[]);
-  const loginParams=useSearchParams();const returnTo=portalReturnTo(loginParams.get('returnTo'));
-  const loginHref=portalLoginHref(path==='/login'?returnTo:path+(loginParams.size?'?'+loginParams.toString():''));
+  const loginParams=useSearchParams();const returnTo=portalReturnTo(loginParams.get('returnTo'),features);
+  const loginHref=portalLoginHref(path==='/login'?returnTo:path+(loginParams.size?'?'+loginParams.toString():''),features);
+  // Sign-out also drops an unlinked VK ID ticket (the BFF clears both cookies).
+  const signOut=useCallback(async()=>{setSigningOut(true);try{await api('auth/logout','POST',{});setAccount(null);setSocialTicket(null);router.push('/me');}catch{setUnavailable(true);}finally{setSigningOut(false);}},[router]);
+  const signInLabel=features.vkSignIn?t('Sign in'):w.login;
   const connected=useCallback(()=>{void reload();router.push(returnTo);},[reload,router,returnTo]);
   useEffect(()=>{if(!account)return;const focus=()=>void reload();window.addEventListener('focus',focus);const timer=setInterval(focus,5000);return()=>{window.removeEventListener('focus',focus);clearInterval(timer);};},[Boolean(account),reload]);
-  const nav=[['/me',w.overview,'◇'],['/me/matches',w.matches,'≋'],['/me/stats',w.stats,'↗'],['/players',w.players,'⌕'],['/friends',w.friends,'♧'],['/creators',t('Creators'),'✧'],['/market',t('Market'),'◆'],['/sponsor',t('Community sculptures'),'✦'],['/workshop',t('Workshop'),'◈'],['/supporter',t('Hero'),'✦'],['/supporters',t('Supporters'),'✧'],['/devices',t('Devices'),'▣'],['/settings',w.settings,'⚙']];
+  const titles:Record<string,string>={'/me':w.overview,'/me/matches':w.matches,'/me/stats':w.stats,'/players':w.players,'/friends':w.friends,'/creators':t('Creators'),'/market':t('Market'),'/sponsor':t('Community sculptures'),'/workshop':t('Workshop'),'/supporter':t('Hero'),'/supporters':t('Supporters'),'/devices':t('Devices'),'/settings':w.settings};
+  // Only pages this market serves (no Ekza or Supporter pages in ru/cn).
+  const nav=portalNav(PORTAL_NAV,features).map(href=>[href,titles[href]] as const);
+  const guestLinks=portalNav(GUEST_LINKS,features);
   let content:React.ReactNode;
-  if (path === '/supporters') content = <SupportersView accountDisabled={accountDisabled}/>;
+  if (path === '/supporters' && features.supporter) content = <SupportersView accountDisabled={accountDisabled}/>;
   else if (accountDisabled)
     content = (
       <Card className="portal-welcome">
@@ -150,18 +178,16 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
             {t("Guest mode · browser drafts")}
           </p>
           <p>
-            {t("This site provides the asset library, class builder, browser drafts and JSON downloads. Sign-in, match history, account saves and Ekza connection are currently disabled.")}
+            {features.ekza
+              ? t("This site provides the asset library, class builder, browser drafts and JSON downloads. Sign-in, match history, account saves and Ekza connection are currently disabled.")
+              : t("This site provides the class builder, browser drafts and JSON downloads. Sign-in, match history and account saves are currently disabled.")}
           </p>
           <Link className="button primary" href="/workshop">
             {t("Open class workshop")} →
           </Link>
-          <Link className="button" href="/creators">
-            {t("Asset library")}
-          </Link>
-          <Link className="button" href="/sponsor">{t("Community sculptures")}</Link>
-          <Link className="button" href="/market">
-            {t("Market")}
-          </Link>
+          {guestLinks.includes("/creators") ? <Link className="button" href="/creators">{t("Asset library")}</Link> : null}
+          {guestLinks.includes("/sponsor") ? <Link className="button" href="/sponsor">{t("Community sculptures")}</Link> : null}
+          {guestLinks.includes("/market") ? <Link className="button" href="/market">{t("Market")}</Link> : null}
         </div>
         <figure className="portal-welcome-art">
           <img
@@ -178,19 +204,22 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
         </figure>
       </Card>
     );
-  else if(path==='/login')content=<Login w={w} onConnected={connected}/>;
+  else if(path==='/connect')content=<ConnectView signedIn={Boolean(account)} socialTicket={socialTicket}/>;
+  // A confirmed but unlinked VK ID: finish registration in the game (public pages stay as they are).
+  else if(!account&&socialTicket&&path!=='/download'&&!path.startsWith('/players/'))content=<RegistrationView ticket={socialTicket} busy={signingOut} onSignOut={()=>void signOut()}><Downloads w={w}/></RegistrationView>;
+  else if(path==='/login')content=<Login w={w} onConnected={connected} returnTo={returnTo}/>;
   else if(path==='/download')content=<Downloads w={w}/>;
   else if(path.startsWith('/players/'))content=<PlayersView id={path.split('/')[2]} w={w} me={account?.profile.profile_id}/>;
-  else if(!account)content=<><div className="hero"><span className="eyebrow">{t("OMOBA · PLAYER PORTAL")}</span><h1>{w.title}</h1><p>{w.intro}</p><Link className="button primary" href={loginHref}>{w.login} →</Link><Link className="button" href="/download">{w.download}</Link></div><div className="value-grid">{[[w.matches,w.historical],[w.stats,w.ratingHistory],[w.friends,w.friendCode]].map(([title,description])=><Card key={title}><h2>{title}</h2><p className="muted">{description}</p></Card>)}</div></>;
+  else if(!account)content=<><div className="hero"><span className="eyebrow">{t("OMOBA · PLAYER PORTAL")}</span><h1>{w.title}</h1><p>{w.intro}</p><Link className="button primary" href={loginHref}>{signInLabel} →</Link><Link className="button" href="/download">{w.download}</Link></div><div className="value-grid">{[[w.matches,w.historical],[w.stats,w.ratingHistory],[w.friends,w.friendCode]].map(([title,description])=><Card key={title}><h2>{title}</h2><p className="muted">{description}</p></Card>)}</div></>;
   else if(path==='/me/matches')content=<HistoryView w={w} tz={tz} locale={locale}/>;
   else if(path.startsWith('/matches/'))content=<MatchView id={path.split('/')[2]} me={account.profile.profile_id} w={w} tz={tz} locale={locale}/>;
   else if(path==='/me/stats')content=<StatsView w={w} tz={tz} locale={locale}/>;
   else if(path==='/friends')content=<FriendsView w={w}/>;
   else if(path==='/players')content=<PlayersView w={w} me={account.profile.profile_id}/>;
-  else if(path==='/supporter')content=<SupporterView locale={locale} nickname={account.profile.nickname}/>;
+  else if(path==='/supporter'&&features.supporter)content=<SupporterView locale={locale} nickname={account.profile.nickname}/>;
   else if(path==='/devices')content=<DevicesView locale={locale} nickname={account.profile.nickname}/>;
   else if(path==='/settings')content=<SettingsView account={account} w={w} update={()=>void reload()}/>;
-  else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div><Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link><Link className="button" href="/supporter">✦ {t('Hero')}</Link><Link className="button" href="/devices">{t('Devices')}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
+  else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div><Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link>{features.supporter?<Link className="button" href="/supporter">✦ {t('Hero')}</Link>:null}<Link className="button" href="/devices">{t('Devices')}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
   else content=<Card><Empty text={w.private}/></Card>;
-  return <div className="shell"><aside className="sidebar"><Link href="/me" className="brand"><Brand section={t("Player portal")} /></Link><nav aria-label={t("Main")}>{nav.map(([href,title])=><Link key={href} href={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav><div className="sidebar-bottom"><a className="button" href={siteUrl}>{t('OMOBA website')} ↗</a><Link className="button" href="/download">{w.download} ↗</Link><small>{t("OPEN SOURCE · OPEN MOBA")}</small></div></aside><div className="workspace"><header className="topbar"><Link href="/me" className="portal-mobile-brand" aria-label={t("OMOBA player portal")}><Brand section={t("Player portal")} /></Link><span className="beta">BETA</span><span className="muted">{w.account}</span><div className="grow"/><LanguageSelector />{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button onClick={async()=>{try{await api('auth/logout','POST',{});setAccount(null);router.push('/me');}catch{setUnavailable(true);}}}>{w.logout}</button></>:accountDisabled?<span className="muted">{t('Guest prototype')}</span>:<Link href={loginHref}>{w.login}</Link>}</header><main>{unavailable&&!accountDisabled?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer><a href={siteUrl}>OMOBA · {t('Website')} ↗</a><span>2026</span></footer></div><nav className="mobile-nav" aria-label={t("Mobile")}>{nav.filter(([p])=>['/me','/me/matches','/creators','/workshop','/supporters','/friends'].includes(p)).map(([href,title])=><Link href={href} key={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav></div>;
+  return <div className="shell"><aside className="sidebar"><Link href="/me" className="brand"><Brand section={t("Player portal")} /></Link><nav aria-label={t("Main")}>{nav.map(([href,title])=><Link key={href} href={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav><div className="sidebar-bottom"><a className="button" href={siteUrl}>{t('OMOBA website')} ↗</a><Link className="button" href="/download">{w.download} ↗</Link><small>{t("OPEN SOURCE · OPEN MOBA")}</small></div></aside><div className="workspace"><header className="topbar"><Link href="/me" className="portal-mobile-brand" aria-label={t("OMOBA player portal")}><Brand section={t("Player portal")} /></Link><span className="beta">BETA</span><span className="muted">{w.account}</span><div className="grow"/><LanguageSelector />{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button></>:accountDisabled?<span className="muted">{t('Guest prototype')}</span>:socialTicket?<button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button>:<Link href={loginHref}>{signInLabel}</Link>}</header><main>{unavailable&&!accountDisabled?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer><a href={siteUrl}>OMOBA · {t('Website')} ↗</a><span>2026</span></footer></div><nav className="mobile-nav" aria-label={t("Mobile")}>{nav.filter(([p])=>portalNav(MOBILE_NAV,features).includes(p)).map(([href,title])=><Link href={href} key={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav></div>;
 }

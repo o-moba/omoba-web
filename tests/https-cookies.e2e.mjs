@@ -209,7 +209,8 @@ try {
   accountCsrf = (await call("/api/csrf")).body.token;
   const logout = await call("/api/auth/logout", { method: "POST", csrf: accountCsrf, json: {} });
   assert.equal(logout.status, 200);
-  assert.deepEqual(logout.expired.sort(), ["__Host-omoba-csrf", "__Host-omoba-pair", "__Host-omoba-session"]);
+  // Sign-out also drops a pending VK ID attempt and an unlinked VK ID ticket (docs/markets.md).
+  assert.deepEqual(logout.expired.sort(), ["__Host-omoba-csrf", "__Host-omoba-pair", "__Host-omoba-session", "__Host-omoba-social", "__Host-omoba-vk"]);
   assert.equal(jar.has("__Host-omoba-session"), false);
   check("Account BFF: pairing and logout deletions keep Secure; Path=/ on HTTPS");
 

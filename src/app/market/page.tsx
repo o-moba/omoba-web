@@ -2,6 +2,8 @@ import { getLocale } from "@/lib/locale-server";
 import { contourSiteUrl } from "@/lib/navigation.mjs";
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { notFound } from "next/navigation";
+import { marketFeatures } from "@/lib/market-profile.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { MAX_CATALOG_BYTES, parseAssetCatalog } from "@/lib/asset-catalog.mjs";
@@ -37,6 +39,8 @@ async function wildsparkPreviews() {
 // Public Registry read on every request; the Ekza link cookie never leaves the server.
 export default async function MarketPage() {
   await connection();
+  // An Ekza surface: absent in markets without the Ekza feature (ru, cn).
+  if (!marketFeatures().ekza) notFound();
   // Null when the contour or the Studio override is wrong: the links are hidden.
   const studio = studioOrigin();
   const [market, session, previews] = await Promise.all([

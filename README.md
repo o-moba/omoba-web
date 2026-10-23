@@ -51,6 +51,14 @@ this repository. Do not expose the database or raw Account API publicly.
   `OMOBA_ALLOW_INSECURE_LOCAL=1`.
 - `OMOBA_SITE_URL`: the OMOBA website for "About the game" links. Defaults to
   `https://omoba.io` (production) or `https://dev.omoba.io` (dev).
+- `OMOBA_MARKET`: `global` (default, also when unset), `ru` or `cn`, the same switch as the
+  game's separate builds. `ru` and `cn` have no Ekza surfaces and no payments; `ru` signs in
+  with VK ID. `OMOBA_FEATURE_EKZA`, `OMOBA_FEATURE_SUPPORTER`, `OMOBA_FEATURE_VK_SIGN_IN`
+  (`on`/`off`, empty = preset) override one feature. Unknown values fail the build and the
+  server start; a server refuses a market other than the one it was built for. See
+  [Markets](docs/markets.md).
+- `OMOBA_VKID_CLIENT_ID`: numeric VK ID app id (VK, OK and Mail.ru; public client, no secret).
+  Only with the VK sign-in feature; without it the VK ID buttons and `/api/auth/vk/*` are absent.
 - `OMOBA_TRUST_LOOPBACK_PROXY=1`: only behind an ingress that **overwrites**
   `X-Real-IP`, with both Node and Rust listeners inaccessible except through that
   trusted ingress. Enable the same option on the API. Otherwise forwarded headers
@@ -139,5 +147,15 @@ Studio. Crypto checkout is not enabled. See [Community sculptures](docs/communit
 ## Class Workshop
 
 `/workshop` composes local combat-test recipes, saves browser drafts, and supports private saves under the central OMOBA account. See [Class Workshop](docs/class-workshop.md) for game import, account and Ekza boundaries, snapshot refresh and the reproducible synthetic local demo.
+
+## Markets and VK ID
+
+The same build axis as the game: `global` (today's product), `ru` (free, no Ekza, no
+payments, Sign in with VK ID) and `cn` (free, no Ekza, no payments). In `ru` the login
+view offers VK ID, OK and Mail.ru above game pairing, and `/connect?code=…` (opened by the
+game) confirms a device or links an unlinked VK account. The portal never exchanges VK
+codes: the Account API does. The RU portal is self-hosted in Russia with the standalone
+output, not on Vercel. See [Markets](docs/markets.md); `npm run test:market-profiles`
+checks a global or ru build against a fake Account API.
 
 See [Vercel deployment](docs/vercel.md) for the initial public guest mode, upload exclusions and the account-service boundary. The site root opens `/workshop`; the player account area remains `/me`.

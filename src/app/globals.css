@@ -276,3 +276,20 @@ html:lang(zh) .omoba-brand small {
   .supporter-row .hero-recognition { justify-content: flex-start; max-width: 100%; }
   .supporter-row .hero-recognition > small { text-align: left; }
 }
+
+/* Sign in with VK ID (ru market): VK, OK and Mail.ru are one VK ID app. Brand
+   colours as monogram squares; no SDK, script or external image. */
+.vk-buttons { display: grid; gap: 12px; margin: 22px 0 8px; }
+.vk-button { justify-content: flex-start; gap: 14px; min-height: 52px; padding: 8px 16px 8px 8px; font-weight: 600; background: var(--panel2); }
+.vk-button:hover { border-color: var(--vk-brand); }
+.vk-mark { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; background: var(--vk-brand); color: #fff; font-family: var(--omoba-sans); font-size: 14px; font-weight: 750; letter-spacing: 0.02em; }
+.vk-vkid { --vk-brand: #0077FF; }
+.vk-ok_ru { --vk-brand: #EE8208; }
+.vk-mail_ru { --vk-brand: #005FF9; }
+.vk-mail_ru .vk-mark { font-size: 19px; }
+.login-secondary { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
+.login-secondary > p { color: var(--muted); }
+.registration-confirmed { color: var(--text); }
+.connect-code { padding: 6px 0 18px; }
+.connect-card .device-confirm h2 { overflow-wrap: anywhere; }
+.connect-card .connect-code { margin-bottom: 0; }

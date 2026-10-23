@@ -7,6 +7,8 @@ import { requestHostname } from '@/lib/contour.mjs';
 import { assertContour, assertContourHost } from '@/lib/contour-guard.mjs';
 import { LocaleProvider } from '@/components/locale-provider';
 import { ContourProvider } from '@/components/contour';
+import { MarketProvider } from '@/components/market-profile';
+import { assertMarket, vkSignInClientId } from '@/lib/market-profile.mjs';
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const copy = {
@@ -29,6 +31,11 @@ export default async function RootLayout({
   // other contour's host, renders no page at all (fail closed).
   const contour = assertContour();
   assertContourHost(contour, requestHostname((await headers()).get('host')));
+  // A misconfigured market renders no page either. Client components get the
+  // market as context, never as a public build variable; VK ID sign-in is offered
+  // only when its app id is configured too.
+  const { market, features } = assertMarket();
+  const clientFeatures = { ekza: features.ekza, supporter: features.supporter, vkSignIn: vkSignInClientId() !== null };
   const locale = await getLocale();
   return (
     <html lang={locale === 'zh' ? 'zh-CN' : locale}>
@@ -37,7 +44,7 @@ export default async function RootLayout({
         <link rel="preload" href="/brand/fonts/Inter-Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/brand/fonts/Inter-SemiBold.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
       </head>
-      <body><LocaleProvider initialLocale={locale} contour={contour}><ContourProvider contour={contour}>{children}</ContourProvider></LocaleProvider></body>
+      <body><LocaleProvider initialLocale={locale} contour={contour}><ContourProvider contour={contour}><MarketProvider market={market} features={clientFeatures}>{children}</MarketProvider></ContourProvider></LocaleProvider></body>
     </html>
   );
 }
