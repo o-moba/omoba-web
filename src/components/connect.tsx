@@ -29,7 +29,8 @@ export default function ConnectView({ signedIn, socialTicket }: { signedIn: bool
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' }), [busy, setBusy] = useState(false);
   function failed(error: unknown): Phase {
     if (error instanceof ApiFailure) {
-      if (error.code === 'fresh_confirmation_required') return { kind: 'fresh' };
+      // A VK account linked meanwhile signs in again and approves as that account.
+      if (error.code === 'fresh_confirmation_required' || error.code === 'already_linked') return { kind: 'fresh' };
       if (error.status === 404 || error.status === 410) return { kind: 'expired' };
       if (error.status === 409) return { kind: 'conflict' };
       return { kind: 'error', status: error.status };
