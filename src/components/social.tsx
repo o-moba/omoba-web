@@ -59,7 +59,7 @@ export function RegistrationView({ ticket, onSignOut, busy, children }: { ticket
       <span className="eyebrow">{t('VK ID · NEW PLAYER')}</span>
       <h1>{t('Almost there')}</h1>
       <p className="registration-confirmed"><strong>{fill(t('VK account “{name}” confirmed.'), { name: ticket.display_name })}</strong></p>
-      <p>{t('Install OMOBA, open Profile → “Sign in with VK” — your game profile will be linked to this VK account.')}</p>
+      <p>{t('Install OMOBA, open Profile → “Sign in with VK ID” — your game profile will be linked to this VK account.')}</p>
       <p className="muted">{t('The confirmation is valid until')} {new Date(ticket.expires_at).toLocaleTimeString(locale)}</p>
       <button disabled={busy} onClick={onSignOut}>{t('Use another account')}</button>
     </section>

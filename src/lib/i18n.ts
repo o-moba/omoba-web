@@ -697,7 +697,7 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
   "VK ID · NEW PLAYER": {"ru": "VK ID · НОВЫЙ ИГРОК", "zh": "VK ID · 新玩家"},
   "Almost there": {"ru": "Почти готово", "zh": "即将完成"},
   "VK account “{name}” confirmed.": {"ru": "Аккаунт VK «{name}» подтверждён.", "zh": "VK 账号“{name}”已确认。"},
-  "Install OMOBA, open Profile → “Sign in with VK” — your game profile will be linked to this VK account.": {"ru": "Установите OMOBA, откройте «Профиль → Войти через VK» — ваш игровой профиль будет связан с этим аккаунтом VK.", "zh": "安装 OMOBA，打开“个人资料 → 通过 VK 登录”，你的游戏资料将与此 VK 账号关联。"},
+  "Install OMOBA, open Profile → “Sign in with VK ID” — your game profile will be linked to this VK account.": {"ru": "Установите OMOBA, откройте «Профиль → Войти через VK ID» — ваш игровой профиль будет связан с этим аккаунтом VK.", "zh": "安装 OMOBA，打开“个人资料 → 使用 VK ID 登录”，你的游戏资料将与此 VK 账号关联。"},
   "The confirmation is valid until": {"ru": "Подтверждение действует до", "zh": "确认有效期至"},
   "Use another account": {"ru": "Войти другим аккаунтом", "zh": "使用其他账号"},
   "CONNECT A DEVICE": {"ru": "ВХОД НА УСТРОЙСТВЕ", "zh": "设备登录"},

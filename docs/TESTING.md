@@ -66,3 +66,12 @@ synthetic account preferences and logs both test accounts out when finished.
 disposable cluster in the game task directory, on explicit loopback port 55581.
 Run after load tests, never concurrently. It checks an authenticated 503, UI error,
 and the same persisted profile/session after restart, then revokes its test session.
+
+`npm run test:vk-sign-in` (after `OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=51234567 npm run
+build`) runs Sign in with VK ID end to end: it migrates a disposable, empty loopback
+database (`OMOBA_E2E_DATABASE_URL` on 55581), starts the real Account API built for the
+RU market (`OMOBA_ACCOUNT_API_BIN`, `OMOBA_MARKET=ru cargo build -p omoba-account-api`)
+against a loopback VK ID stand-in, starts this RU build on 127.0.0.1:3010 and drives
+Chrome through website registration, the game's link (a synthetic Ed25519 signer of the
+native requests), VK sign-in via OK and a second device. VK ID itself is never loaded.
+`OMOBA_PSQL` names the psql binary used to seed game profiles.

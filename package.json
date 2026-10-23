@@ -23,6 +23,7 @@
     "test:https-cookies": "node tests/https-cookies.e2e.mjs",
     "test:contour": "node tests/contour.e2e.mjs",
     "test:market-profiles": "node tests/market-profiles.e2e.mjs",
+    "test:vk-sign-in": "node tests/vk-sign-in.e2e.mjs",
     "test:vercel-cli": "node tests/vercel-cli.e2e.mjs",
     "test:market-preview": "node tests/market-preview.e2e.mjs",
     "test:sponsor": "node tests/sponsor.e2e.mjs"
