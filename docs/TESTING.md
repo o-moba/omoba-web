@@ -78,9 +78,9 @@ native requests), VK sign-in via OK and a second device. VK ID itself is never l
 
 `npm run test:ru-topology` (same build and variables, `tests/ru-topology.e2e.mjs`) runs
 the RU host topology without a browser: the RU build with the production RU settings
-(`https://app.ru.omoba.io`, the loopback Account API, `OMOBA_TRUST_LOOPBACK_PROXY=1`,
+(`https://omoba.ru`, the loopback Account API, `OMOBA_TRUST_LOOPBACK_PROXY=1`,
 no ingress key), the real Account API with the same flag, and a stand-in for Caddy that
-overwrites `X-Real-IP` per client and passes only native routes on account.ru. It checks
+overwrites `X-Real-IP` per client and passes only native routes on account.omoba.ru. It checks
 `GET /api/me`, `POST /api/me/recovery-codes` (8 codes), web pairing, that 31 VK callbacks
 from one address limit only that address, and that no request through the ingress gets
 403. `OMOBA_CADDYFILE_RU=<game repo>/ops/vps/ru/Caddyfile.ru` reads the native list

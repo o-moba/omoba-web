@@ -1,17 +1,17 @@
 // The RU host topology (LR-02) end to end, without a browser: the real RU portal
 // build with the production environment of the game repo's
-// ops/vps/ru/portal.env.example (production contour, https://app.ru.omoba.io, the
+// ops/vps/ru/portal.env.example (production contour, https://omoba.ru, the
 // loopback Account API, OMOBA_TRUST_LOOPBACK_PROXY=1, no ingress key), the real
 // Account API on loopback with OMOBA_TRUST_LOOPBACK_PROXY=1, a disposable
 // PostgreSQL and a stand-in for Caddy (Caddyfile.ru).
 //
 // The stand-in terminates no TLS. Like `header_up X-Real-IP {remote_host}` it
 // overwrites X-Real-IP with the client's address on every request it passes, and
-// account.ru passes only the native POST routes and health, answering 403 to the
+// account.omoba.ru passes only the native POST routes and health, answering 403 to the
 // rest. Every peer is on loopback here, so each stand-in listener plays one client
-// address: players A and B on app.ru, the game on account.ru. With
+// address: players A and B on omoba.ru, the game on account.omoba.ru. With
 // OMOBA_CADDYFILE_RU=<game repo>/ops/vps/ru/Caddyfile.ru the native list is read
-// from the real file, and its app.ru and account.ru blocks are checked.
+// from the real file, and its omoba.ru and account.omoba.ru blocks are checked.
 //
 //   OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=51234567 npm run build
 //   OMOBA_ACCOUNT_API_BIN=…/omoba-account-api \           # built with OMOBA_MARKET=ru
@@ -39,18 +39,19 @@ const apiMarket = process.env.OMOBA_E2E_API_MARKET || "ru";
 assert.ok(["ru", "global"].includes(apiMarket), "OMOBA_E2E_API_MARKET is ru or global");
 const vkEnabled = apiMarket === "ru";
 const psql = process.env.OMOBA_PSQL || "psql";
-const PORTAL = "https://app.ru.omoba.io", CLIENT_ID = "51234567", out = ".agent/ru-topology";
+const PORTAL = "https://omoba.ru", CLIENT_ID = "51234567", out = ".agent/ru-topology";
 const IP = { a: "203.0.113.10", b: "198.51.100.20", game: "192.0.2.30", spoof: "6.6.6.6" };
 await mkdir(out, { recursive: true });
 
-// --- Caddyfile.ru: the account.ru native allowlist and the app.ru X-Real-IP overwrite.
+// --- Caddyfile.ru: the account.omoba.ru native allowlist and the omoba.ru X-Real-IP overwrite.
 let native = ["/v1/auth/pairings/lookup", "/v1/auth/pairings/approve", "/v1/auth/pairings/deny", "/v1/auth/devices/create",
   "/v1/auth/devices/status", "/v1/auth/devices/recover", "/v1/auth/devices/complete", "/v1/auth/social/link"];
 let caddyfile = null;
 if (process.env.OMOBA_CADDYFILE_RU) {
   caddyfile = await readFile(process.env.OMOBA_CADDYFILE_RU, "utf8");
   const block = (host) => {
-    const start = caddyfile.indexOf(host + " {");
+    // A site address starts a line, so the portal `omoba.ru` never matches inside `account.omoba.ru`.
+    const start = caddyfile.search(new RegExp("^" + host.replace(/\./g, "\\.") + " \\{", "m"));
     assert.ok(start >= 0, host + " block missing");
     let depth = 0;
     for (let i = caddyfile.indexOf("{", start); i < caddyfile.length; i++) {
@@ -59,11 +60,11 @@ if (process.env.OMOBA_CADDYFILE_RU) {
     }
     throw new Error(host + " block unterminated");
   };
-  const account = block("account.ru.omoba.io"), app = block("app.ru.omoba.io");
+  const account = block("account.omoba.ru"), app = block("omoba.ru");
   native = account.match(/@native\s*\{[^}]*?\bpath\s+([^\n]+)/)?.[1].trim().split(/\s+/) ?? [];
-  assert.ok(native.length >= 8, "account.ru @native paths");
-  assert.ok(!/X-Omoba-Portal-Key\s+\S/.test(account), "account.ru serves no portal-key route: the portal calls the loopback API");
-  assert.match(app, /reverse_proxy\s+127\.0\.0\.1:3010\s*\{[^}]*header_up\s+X-Real-IP\s+\{remote_host\}/, "app.ru overwrites X-Real-IP");
+  assert.ok(native.length >= 8, "account.omoba.ru @native paths");
+  assert.ok(!/X-Omoba-Portal-Key\s+\S/.test(account), "account.omoba.ru serves no portal-key route: the portal calls the loopback API");
+  assert.match(app, /reverse_proxy\s+127\.0\.0\.1:3010\s*\{[^}]*header_up\s+X-Real-IP\s+\{remote_host\}/, "omoba.ru overwrites X-Real-IP");
 }
 
 // --- VK ID stand-in: code `user-<id>` is VK user <id>.
@@ -106,9 +107,9 @@ const apiPort = 40600 + Math.floor(Math.random() * 200), portalPort = 3200 + Mat
 const nativeRoute = (req) => (req.method === "POST" && native.includes(req.url.split("?")[0]))
   || (req.method === "GET" && ["/health/live", "/health/ready"].includes(req.url.split("?")[0]));
 const listeners = {
-  a: ingress("app.ru A", IP.a, () => portalPort, "app.ru.omoba.io"),
-  b: ingress("app.ru B", IP.b, () => portalPort, "app.ru.omoba.io"),
-  game: ingress("account.ru game", IP.game, () => apiPort, "account.ru.omoba.io", nativeRoute),
+  a: ingress("omoba.ru A", IP.a, () => portalPort, "omoba.ru"),
+  b: ingress("omoba.ru B", IP.b, () => portalPort, "omoba.ru"),
+  game: ingress("account.omoba.ru game", IP.game, () => apiPort, "account.omoba.ru", nativeRoute),
 };
 for (const server of [vk, ...Object.values(listeners)]) await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const at = (name) => "http://127.0.0.1:" + listeners[name].address().port;
@@ -198,14 +199,14 @@ try {
   await ready(at("a") + "/login", portal);
   const a = client("a");
 
-  // 1. account.ru stays closed to everything but native routes and health.
+  // 1. account.omoba.ru stays closed to everything but native routes and health.
   assert.equal((await game.call("/health/ready")).status, 200);
   for (const [method, path] of [["GET", "/v1/me"], ["POST", "/v1/auth/pairings"], ["POST", "/v1/auth/social/vk"], ["GET", "/v1/releases"]])
     assert.equal((await game.call(path, { method, ...(method === "POST" ? { body: {} } : {}) })).status, 403, method + " " + path);
   const closedProbes = seen.length;
-  checks.push("account.ru answers 403 to every portal route; only native routes and health pass");
+  checks.push("account.omoba.ru answers 403 to every portal route; only native routes and health pass");
 
-  // 2. Through app.ru the portal reaches the loopback API: no session is 401, downloads are 200.
+  // 2. Through omoba.ru the portal reaches the loopback API: no session is 401, downloads are 200.
   const anonymous = await a.call("/api/me");
   assert.equal(anonymous.status, 401, JSON.stringify(anonymous.json));
   const releases = await a.call("/api/releases");
@@ -237,7 +238,7 @@ try {
   assert.equal(codes.status, 200, JSON.stringify(codes.json));
   assert.equal(codes.json.recovery_codes.length, 8);
   assert.ok(codes.json.recovery_codes.every((code) => /^[a-f0-9]{64}$/.test(code)));
-  checks.push("web pairing, GET /api/me (200) and POST /api/me/recovery-codes (8 codes) through app.ru and the loopback API");
+  checks.push("web pairing, GET /api/me (200) and POST /api/me/recovery-codes (8 codes) through omoba.ru and the loopback API");
 
   // 5. 31 VK callbacks from A within one minute: the 31st is limited, B is not.
   const second = Math.floor(Date.now() / 1000) % 60;
@@ -281,7 +282,7 @@ try {
 
   // 6. No 403 anywhere except the deliberate probes of step 1.
   const refused = seen.slice(closedProbes).filter((entry) => entry.status === 403);
-  assert.deepEqual(refused, [], "no 403 through app.ru or for native routes");
+  assert.deepEqual(refused, [], "no 403 through omoba.ru or for native routes");
   checks.push("no 403 on any of " + (seen.length - closedProbes) + " requests through the ingress stand-in");
 
   await writeFile(out + "/result.json", JSON.stringify({ passed: true, api_market: apiMarket, checks, limitations }, null, 2));

@@ -8,7 +8,7 @@ const hosted = { NODE_ENV: 'production', OMOBA_CONTOUR: 'dev', OMOBA_PORTAL_ORIG
   OMOBA_ACCOUNT_API_URL: 'https://account.dev.omoba.io', OMOBA_ACCOUNT_MODE: 'enabled', OMOBA_ACCOUNT_INGRESS_KEY: key };
 // The RU host (game repo ops/vps/ru/portal.env.example): production contour, the
 // loopback Account API on the same host, the player's address from Caddy's X-Real-IP.
-const ru = { NODE_ENV: 'production', OMOBA_MARKET: 'ru', OMOBA_PORTAL_ORIGIN: 'https://app.ru.omoba.io',
+const ru = { NODE_ENV: 'production', OMOBA_MARKET: 'ru', OMOBA_PORTAL_ORIGIN: 'https://omoba.ru',
   OMOBA_ACCOUNT_MODE: 'enabled', OMOBA_ACCOUNT_API_URL: 'http://127.0.0.1:40550', OMOBA_TRUST_LOOPBACK_PROXY: '1',
   OMOBA_VKID_CLIENT_ID: '51234567', PORT: '3010' };
 const bad = ['', 'a'.repeat(63), 'A'.repeat(64), key + '\n', key + '00', ' ' + key];
@@ -37,8 +37,8 @@ test('ingress key is absent from disabled and loopback requests', () => {
 
 test('every Account API behind an ingress needs and gets the key, in every contour and market', () => {
   for (const env of [{ OMOBA_ACCOUNT_API_URL: 'https://api.example' },
-    { ...ru, OMOBA_ACCOUNT_API_URL: 'https://account.ru.omoba.io' },
-    { ...ru, OMOBA_ACCOUNT_API_URL: 'https://account.ru.omoba.io', OMOBA_TRUST_LOOPBACK_PROXY: undefined }]) {
+    { ...ru, OMOBA_ACCOUNT_API_URL: 'https://account.omoba.ru' },
+    { ...ru, OMOBA_ACCOUNT_API_URL: 'https://account.omoba.ru', OMOBA_TRUST_LOOPBACK_PROXY: undefined }]) {
     for (const value of [undefined, ...bad])
       assert.throws(() => portalConfig({ ...env, OMOBA_ACCOUNT_INGRESS_KEY: value }), /OMOBA_ACCOUNT_INGRESS_KEY/, env.OMOBA_ACCOUNT_API_URL);
     assert.deepEqual(accountIngressHeaders({ ...env, OMOBA_ACCOUNT_INGRESS_KEY: key }), { 'X-Omoba-Portal-Key': key });
@@ -52,7 +52,7 @@ test('the RU production configuration calls the loopback API with the player add
   assert.equal(assertContour(ru), 'production');
   assert.equal(assertMarket(ru).market, 'ru');
   assert.equal(vkSignInClientId(ru), '51234567');
-  assert.deepEqual(portalConfig(ru), { origin: 'https://app.ru.omoba.io', api: 'http://127.0.0.1:40550', secure: true, accountEnabled: true });
+  assert.deepEqual(portalConfig(ru), { origin: 'https://omoba.ru', api: 'http://127.0.0.1:40550', secure: true, accountEnabled: true });
   assert.deepEqual(assertPortalConfig(ru), portalConfig(ru));
   assert.deepEqual(accountIngressHeaders(ru), {});
   assert.deepEqual(accountUpstreamHeaders('203.0.113.7', ru), { 'X-Real-IP': '203.0.113.7' });
