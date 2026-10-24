@@ -91,12 +91,12 @@ The RU portal handles Russian users' sign-in and talks to the RU Account API. Ho
 
 The topology (the game repo's `ops/vps/ru/README.md#topology`, `portal.env.example`, `Caddyfile.ru`):
 
-- Caddy serves `app.ru.omoba.io` and **overwrites** `X-Real-IP` with the browser's address;
+- Caddy serves `omoba.ru` and **overwrites** `X-Real-IP` with the browser's address;
 - the portal calls the Account API directly on `http://127.0.0.1:40550`, with no portal ingress key, and forwards that `X-Real-IP` (`OMOBA_TRUST_LOOPBACK_PROXY=1` on the portal and on the API), so per-IP limits such as VK sign-in (30 per minute) stay per player;
-- `account.ru.omoba.io` passes only the game's native routes and health; every portal route answers 403 there.
+- `account.omoba.ru` passes only the game's native routes and health; every portal route answers 403 there.
 
 ```sh
-export OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=<app id> OMOBA_PORTAL_ORIGIN=https://app.ru.omoba.io \
+export OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=<app id> OMOBA_PORTAL_ORIGIN=https://omoba.ru \
   OMOBA_ACCOUNT_API_URL=http://127.0.0.1:40550 OMOBA_TRUST_LOOPBACK_PROXY=1 OMOBA_ACCOUNT_MODE=enabled
 npm run build
 PORT=3010 npm start
