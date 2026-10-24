@@ -13,8 +13,8 @@ import { contourSiteUrl } from '../src/lib/navigation.mjs';
 import { DEV_LOCALE_COOKIE, LOCALE_COOKIE, localeCookie, localeCookieName, storedLocale } from '../src/lib/locale.mjs';
 
 // Written out by hand, independent of the module under test.
-const PROD = { registry: 'https://registry.ekza.io', studio: 'https://studio.ekza.io', portal: 'https://app.omoba.io', site: 'https://omoba.io' };
-const DEV = { registry: 'https://registry.dev.ekza.io', studio: 'https://studio.dev.ekza.io', portal: 'https://app.dev.omoba.io', site: 'https://dev.omoba.io' };
+const PROD = { registry: 'https://registry.ekza.io', studio: 'https://hub.ekza.io', portal: 'https://app.omoba.io', site: 'https://omoba.io' };
+const DEV = { registry: 'https://registry.dev.ekza.io', studio: 'https://hub.dev.ekza.io', portal: 'https://app.dev.omoba.io', site: 'https://dev.omoba.io' };
 const ORIGINS = { production: PROD, dev: DEV };
 const other = (contour) => (contour === 'production' ? 'dev' : 'production');
 // The production project's environment today (docs/vercel.md) and the dev project's.

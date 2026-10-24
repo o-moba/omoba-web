@@ -119,7 +119,7 @@ test('setup writes only to omoba-app-dev and never moves a domain', () => {
     assert.equal(envAdds.length, 12);
     for (const target of ['production', 'preview'])
       for (const kv of ['OMOBA_CONTOUR dev', 'OMOBA_PORTAL_ORIGIN https://app.dev.omoba.io', 'OMOBA_ACCOUNT_MODE disabled',
-        'OMOBA_REGISTRY_URL https://registry.dev.ekza.io', 'OMOBA_STUDIO_URL https://studio.dev.ekza.io', 'OMOBA_SITE_URL https://dev.omoba.io']) {
+        'OMOBA_REGISTRY_URL https://registry.dev.ekza.io', 'OMOBA_STUDIO_URL https://hub.dev.ekza.io', 'OMOBA_SITE_URL https://dev.omoba.io']) {
         const [key, value] = kv.split(' ');
         assert.ok(envAdds.includes(`env add ${key} ${target} --value ${value} --no-sensitive --force --yes --project omoba-app-dev --scope wotoris-projects-c784733b`), kv + target);
         // What the CLI reads on stdin is exactly the value, never the rest of the list.

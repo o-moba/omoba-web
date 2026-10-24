@@ -17,7 +17,7 @@ const required = JSON.parse(await readFile(new URL("../.next/required-server-fil
 const built = required.config?.env?.OMOBA_BUILT_CONTOUR;
 assert.ok(built === "production" || built === "dev", "the build carries no contour; run npm run build first");
 const other = built === "production" ? "dev" : "production";
-const STUDIO = { production: "https://studio.ekza.io", dev: "https://studio.dev.ekza.io" };
+const STUDIO = { production: "https://hub.ekza.io", dev: "https://hub.dev.ekza.io" };
 const HOST = { production: "app.omoba.io", dev: "app.dev.omoba.io" };
 
 // A Registry double with an empty, valid catalogue; nothing else is reachable.
@@ -190,11 +190,11 @@ try {
 
   if (built === "dev")
     await run("dev refuses the production Studio", (port) => ({ ...local("dev", port), OMOBA_STUDIO_URL: STUDIO.production }), async ({ first, log }) =>
-      refused(first, log, /OMOBA_STUDIO_URL: Studio URL https:\/\/studio\.ekza\.io is a production origin/),
+      refused(first, log, /OMOBA_STUDIO_URL: Studio URL https:\/\/hub\.ekza\.io is a production origin/),
     );
   else
     await run("production refuses a dev-contour Studio", (port) => ({ ...local("production", port), OMOBA_STUDIO_URL: STUDIO.dev }), async ({ first, log }) =>
-      refused(first, log, /OMOBA_STUDIO_URL names the dev-contour host studio\.dev\.ekza\.io/),
+      refused(first, log, /OMOBA_STUDIO_URL names the dev-contour host hub\.dev\.ekza\.io/),
     );
   console.log(`contour e2e passed for a ${built} build`);
 } finally {

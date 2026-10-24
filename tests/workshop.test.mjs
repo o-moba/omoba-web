@@ -151,27 +151,27 @@ test("BFF workshop routes stay exact and preserve method boundary", () => {
   assert.equal(allowedPath("me/ekza-library", "PATCH"), false);
 });
 test("verification links only accept real studio or explicitly labelled local fixture", () => {
-  const prod = { studio: "https://studio.ekza.io" };
+  const prod = { studio: "https://hub.ekza.io" };
   assert.ok(
     safeLibraryVerificationUrl(
-      "https://studio.ekza.io/studio?view=connect&code=ABC",
+      "https://hub.ekza.io/studio?view=connect&code=ABC",
       prod,
     ),
   );
   for (const url of [
     "javascript:alert(1)",
     "https://evil.example/studio?view=connect",
-    "https://u:p@studio.ekza.io/studio?view=connect",
+    "https://u:p@hub.ekza.io/studio?view=connect",
     "http://127.0.0.1:40561/studio?view=connect",
-    "https://studio.dev.ekza.io/studio?view=connect&code=ABC",
+    "https://hub.dev.ekza.io/studio?view=connect&code=ABC",
   ])
     assert.equal(safeLibraryVerificationUrl(url, prod), null);
   // The Studio is the active contour's (studioOrigin()); none means no hosted link.
-  const dev = { studio: "https://studio.dev.ekza.io" };
-  assert.ok(safeLibraryVerificationUrl("https://studio.dev.ekza.io/studio?view=connect&code=ABC", dev));
-  assert.equal(safeLibraryVerificationUrl("https://studio.ekza.io/studio?view=connect&code=ABC", dev), null);
+  const dev = { studio: "https://hub.dev.ekza.io" };
+  assert.ok(safeLibraryVerificationUrl("https://hub.dev.ekza.io/studio?view=connect&code=ABC", dev));
+  assert.equal(safeLibraryVerificationUrl("https://hub.ekza.io/studio?view=connect&code=ABC", dev), null);
   for (const context of [{}, { studio: null }, undefined])
-    assert.equal(safeLibraryVerificationUrl("https://studio.ekza.io/studio?view=connect&code=ABC", context), null);
+    assert.equal(safeLibraryVerificationUrl("https://hub.ekza.io/studio?view=connect&code=ABC", context), null);
   assert.ok(
     safeLibraryVerificationUrl(
       "http://127.0.0.1:40561/studio?view=connect&code=ABC",

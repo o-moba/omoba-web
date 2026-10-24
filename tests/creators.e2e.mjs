@@ -148,7 +148,7 @@ try {
   // Wildspark's Q guns are contributed as one repeater + launcher set.
   assert.equal(
     await studio.getAttribute("href"),
-    "https://studio.ekza.io/studio?view=new&kind=weapon&project=omoba&requirement=wildspark.handheld.set",
+    "https://hub.ekza.io/studio?view=new&kind=weapon&project=omoba&requirement=wildspark.handheld.set",
   );
   assert.equal(
     await card

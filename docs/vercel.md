@@ -11,7 +11,7 @@ OMOBA_PORTAL_ORIGIN=https://app.omoba.io
 OMOBA_ACCOUNT_MODE=disabled
 ```
 
-Leave `OMOBA_CONTOUR` unset on `omoba-app`; unset means `production` (see [Contours](#contours)). Leave `OMOBA_MARKET`, `OMOBA_FEATURE_*` and `OMOBA_VKID_CLIENT_ID` unset on both Vercel projects: unset means the `global` market. The `ru` portal handles Russian users' VK ID sign-in and is self-hosted in Russia with the standalone output, never on Vercel; see [Markets](markets.md). The market (`/market`) reads the public Ekza Registry and uses its own Ekza link cookies. It needs no further variables in production: `OMOBA_REGISTRY_URL` and `OMOBA_STUDIO_URL` default to `https://registry.ekza.io` and `https://studio.ekza.io`. Do not set them on Vercel; any other value is accepted only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1` and otherwise renders "Market unavailable". A dev-contour host (`*.dev.omoba.io`, `*.dev.ekza.io`) in any `OMOBA_*` URL fails the build. In-place claims need a Registry with the `library-claim` link scope and `POST/DELETE /v1/account/library/{assetId}`; against an older Registry the market still lists items and sign-in reports that claims are not available yet. Sign-out also ends the link with `DELETE /v1/account/session`; a Registry without that route leaves the link listed under Studio connections until it expires, and the page says so. See [Market](market.md).
+Leave `OMOBA_CONTOUR` unset on `omoba-app`; unset means `production` (see [Contours](#contours)). Leave `OMOBA_MARKET`, `OMOBA_FEATURE_*` and `OMOBA_VKID_CLIENT_ID` unset on both Vercel projects: unset means the `global` market. The `ru` portal handles Russian users' VK ID sign-in and is self-hosted in Russia with the standalone output, never on Vercel; see [Markets](markets.md). The market (`/market`) reads the public Ekza Registry and uses its own Ekza link cookies. It needs no further variables in production: `OMOBA_REGISTRY_URL` and `OMOBA_STUDIO_URL` default to `https://registry.ekza.io` and `https://hub.ekza.io`. Do not set them on Vercel; any other value is accepted only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1` and otherwise renders "Market unavailable". A dev-contour host (`*.dev.omoba.io`, `*.dev.ekza.io`) in any `OMOBA_*` URL fails the build. In-place claims need a Registry with the `library-claim` link scope and `POST/DELETE /v1/account/library/{assetId}`; against an older Registry the market still lists items and sign-in reports that claims are not available yet. Sign-out also ends the link with `DELETE /v1/account/session`; a Registry without that route leaves the link listed under Studio connections until it expires, and the page says so. See [Market](market.md).
 
 Keep the exact canonical HTTPS origin configured. The fallback hostname does not become an additional trusted origin for account mutations. Do not enable `OMOBA_ALLOW_INSECURE_LOCAL` or `OMOBA_TRUST_LOOPBACK_PROXY` on Vercel. No fixture credentials or Registry tokens belong in this deployment.
 
@@ -44,8 +44,8 @@ The targeted smoke starts an isolated production server on loopback port 3013 wi
 
 | Contour | Registry | Studio | Portal origin | Website (`OMOBA_SITE_URL`) | Account API |
 |---|---|---|---|---|---|
-| `production` | `https://registry.ekza.io` | `https://studio.ekza.io` | any HTTPS origin except dev-contour hosts (today `https://app.omoba.io`) | default `https://omoba.io` | any HTTPS origin except dev-contour hosts |
-| `dev` | `https://registry.dev.ekza.io` | `https://studio.dev.ekza.io` | exactly `https://app.dev.omoba.io` | `https://dev.omoba.io` only (the default) | exactly `https://account.dev.omoba.io`; explicit loopback fixtures remain available |
+| `production` | `https://registry.ekza.io` | `https://hub.ekza.io` | any HTTPS origin except dev-contour hosts (today `https://app.omoba.io`) | default `https://omoba.io` | any HTTPS origin except dev-contour hosts |
+| `dev` | `https://registry.dev.ekza.io` | `https://hub.dev.ekza.io` | exactly `https://app.dev.omoba.io` | `https://dev.omoba.io` only (the default) | exactly `https://account.dev.omoba.io`; explicit loopback fixtures remain available |
 
 Dev-contour hosts are `dev.omoba.io`, `dev.ekza.io` and their subdomains. Production hosts are `omoba.io`, `ekza.io` and their other subdomains. Unset Registry, Studio and website variables take the contour's origin. Loopback test doubles stay possible in both contours, only with `OMOBA_ALLOW_INSECURE_LOCAL=1`; on Vercel (`VERCEL=1`) the dev contour refuses that flag, so a hosted dev deployment accepts only its fixed dev origins. The rules live in `src/lib/contour.mjs` and `src/lib/contour-guard.mjs`.
 
@@ -69,7 +69,7 @@ Production is unchanged: no `X-Robots-Tag`, no badge, the same titles, the same 
 ```sh
 npm run build && npm run test:contour       # production build
 OMOBA_CONTOUR=dev OMOBA_PORTAL_ORIGIN=https://app.dev.omoba.io OMOBA_ACCOUNT_MODE=disabled \
-  OMOBA_REGISTRY_URL=https://registry.dev.ekza.io OMOBA_STUDIO_URL=https://studio.dev.ekza.io \
+  OMOBA_REGISTRY_URL=https://registry.dev.ekza.io OMOBA_STUDIO_URL=https://hub.dev.ekza.io \
   OMOBA_SITE_URL=https://dev.omoba.io npm run build && npm run test:contour
 npm run build                               # back to a production build before the other suites
 ```
@@ -89,20 +89,20 @@ OMOBA_CONTOUR=dev
 OMOBA_PORTAL_ORIGIN=https://app.dev.omoba.io
 OMOBA_ACCOUNT_MODE=disabled
 OMOBA_REGISTRY_URL=https://registry.dev.ekza.io
-OMOBA_STUDIO_URL=https://studio.dev.ekza.io
+OMOBA_STUDIO_URL=https://hub.dev.ekza.io
 OMOBA_SITE_URL=https://dev.omoba.io
 ```
 
 - Never set `OMOBA_ALLOW_INSECURE_LOCAL` or `OMOBA_TRUST_LOOPBACK_PROXY` on Vercel. Enabled accounts use only the exact dev API and the server-only ingress key described below.
 - The Registry, Studio and website values equal the dev defaults. They are set anyway: if `OMOBA_CONTOUR=dev` were lost, they make the build fail instead of building production.
-- The dev Registry must use `EKZA_STUDIO_WEB_URL=https://studio.dev.ekza.io`. Otherwise its device-link approval URL is not the dev Studio, and the market refuses it (sign-in fails closed).
+- The dev Registry must use `EKZA_STUDIO_WEB_URL=https://hub.dev.ekza.io`. Otherwise its device-link approval URL is not the dev Studio, and the market refuses it (sign-in fails closed).
 - `https://dev.omoba.io` is the dev landing: its own new Vercel project from the `dev` branch of `landing-v2` (planned name `landing-v2-omoba-dev`), never `landing-v2-omoba`. Until it is live, "About the game" links on the dev app do not resolve.
 
 DNS (zone `omoba.io` at Name.com, set by the owner): host `app.dev`, type `CNAME`, answer `cname.vercel-dns.com`, TTL 300.
 
 - No TXT record is expected: the apex is already verified in this team. If `vercel domains add` returns a `verification` array, add the `_vercel` TXT it names.
 - Do not create `*.dev` wildcards, and add no CAA record.
-- `registry.dev.ekza.io` and `studio.dev.ekza.io` are A records to the dev VPS, not Vercel.
+- `registry.dev.ekza.io` and `hub.dev.ekza.io` (the Ekza Hub) are A records to the dev VPS, not Vercel. `studio.dev.ekza.io` is the Ekza Studio editor (Vercel `ekza-studio-editor-dev`), which 308-redirects `/studio*` to the Hub; the portal never uses it.
 
 ### Hosted dev accounts
 
@@ -138,7 +138,7 @@ scripts/vercel-dev.sh --apply check     # read-only checks of the live dev proje
 
 - `setup` creates the project only if `vercel project inspect` does not find it, sets Next.js, Node 24.x, `npm ci` and `npm run build`, writes the env with `--force` (re-runs overwrite the same values), and attaches `app.dev.omoba.io` only if the project does not list it yet. It never passes `--force` to `domains add`: that would move the domain from another project.
 - `deploy` refuses a `.vercel` directory in the checkout. It first resolves the dev project: `vercel api /v9/projects/omoba-app-dev` must answer a `prj_` id that is not the production id, under the name `omoba-app-dev`. It fetches `origin/dev`, exports that commit with `git archive` into a fresh `mktemp -d` outside the checkout, and gates the export: `npm ci`, `npm test`, `npm run typecheck`, and `npm run build` with the env above (`GATE=0` skips the gate). Then it runs `vercel link --project omoba-app-dev --cwd <export>`. Unless `<export>/.vercel/project.json` holds exactly the resolved id (and team), it stops before deploying. It runs `vercel deploy --prod --project omoba-app-dev --cwd <export> -m contour=dev -m gitRef=dev -m gitSha=<sha>`; an explicit `--project` wins over environment IDs in the CLI. Finally it reads the new deployment (`vercel api /v13/deployments/<id or URL>`, from the URL or JSON the CLI prints) and requires its `projectId` to be the resolved id. Otherwise it exits 2 and says to roll `omoba-app` back at once if the deployment landed there. The checkout is only read; no `.vercel` ever lands in it.
-- `check` reads the domain config (`misconfigured` must be false), refuses env drift (missing keys or forbidden local-fixture variables; guest mode also refuses Account API settings), and checks the live site: `/` redirects to `/workshop`, `/market` sends `X-Robots-Tag: noindex, nofollow` and shows the `DEV` badge, `/robots.txt` disallows `/`, and the only Studio link is `https://studio.dev.ekza.io`.
+- `check` reads the domain config (`misconfigured` must be false), refuses env drift (missing keys or forbidden local-fixture variables; guest mode also refuses Account API settings), and checks the live site: `/` redirects to `/workshop`, `/market` sends `X-Robots-Tag: noindex, nofollow` and shows the `DEV` badge, `/robots.txt` disallows `/`, and the only Studio link is `https://hub.dev.ekza.io`.
 
 The same steps by hand, if the script cannot be used. Save them as a file outside any checkout (for example `/tmp/omoba-dev-deploy.sh`) and run `bash /tmp/omoba-dev-deploy.sh`. Use bash, not an interactive zsh: zsh does not split `$VC` into words, and `exit` would close the shell.
 

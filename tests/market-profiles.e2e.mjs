@@ -134,7 +134,7 @@ if (market === "ru") {
     }
     assert.equal(calls.length, before, "a disabled feature reached the Account API");
     const workshop = await (await get(origin, "/workshop")).text();
-    for (const link of ['href="/market"', 'href="/creators"', 'href="/sponsor"', 'href="/supporter"', "studio.ekza.io", "Ekza"])
+    for (const link of ['href="/market"', 'href="/creators"', 'href="/sponsor"', 'href="/supporter"', "studio.ekza.io", "hub.ekza.io", "Ekza"])
       assert.ok(!workshop.includes(link), "workshop contains " + link);
     const login = await (await get(origin, "/login")).text();
     assert.equal([...login.matchAll(/data-vk-method="(\w+)"/g)].map((m) => m[1]).join(","), "vkid,ok_ru,mail_ru");

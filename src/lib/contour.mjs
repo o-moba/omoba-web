@@ -8,17 +8,23 @@ export const CONTOUR_VARIABLE = "OMOBA_CONTOUR";
 export const DEFAULT_CONTOUR = "production";
 export const DEV_ACCOUNT_API_ORIGIN = "https://account.dev.omoba.io";
 
-/** The only hosted origins each contour may talk to, serve from or link to. */
+/**
+ * The only hosted origins each contour may talk to, serve from or link to.
+ * `studio` is the Ekza Hub (the Registry's web, formerly "Ekza Studio"): its
+ * `/studio` pages approve device links and host uploads. Since 2026-10-20 it is
+ * hub.ekza.io; studio.ekza.io now serves the Ekza Studio editor, which only
+ * redirects `/studio*` to the Hub, so the Registry's approval links name the Hub.
+ */
 export const CONTOURS = Object.freeze({
   production: Object.freeze({
     registry: "https://registry.ekza.io",
-    studio: "https://studio.ekza.io",
+    studio: "https://hub.ekza.io",
     portal: "https://app.omoba.io",
     site: "https://omoba.io",
   }),
   dev: Object.freeze({
     registry: "https://registry.dev.ekza.io",
-    studio: "https://studio.dev.ekza.io",
+    studio: "https://hub.dev.ekza.io",
     portal: "https://app.dev.omoba.io",
     site: "https://dev.omoba.io",
   }),

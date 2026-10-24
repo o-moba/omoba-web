@@ -39,7 +39,7 @@ DEV_ENV="OMOBA_CONTOUR=dev
 OMOBA_PORTAL_ORIGIN=https://app.dev.omoba.io
 OMOBA_ACCOUNT_MODE=$DEV_ACCOUNT_MODE
 OMOBA_REGISTRY_URL=https://registry.dev.ekza.io
-OMOBA_STUDIO_URL=https://studio.dev.ekza.io
+OMOBA_STUDIO_URL=https://hub.dev.ekza.io
 OMOBA_SITE_URL=https://dev.omoba.io"
 FORBIDDEN_ENV="OMOBA_ALLOW_INSECURE_LOCAL OMOBA_TRUST_LOOPBACK_PROXY"
 if [ "$DEV_ACCOUNT_MODE" = enabled ]; then
@@ -284,7 +284,7 @@ check() {
   if [ "$APPLY" != 1 ]; then
     echo "+ $(quote "${VC_CMD[@]}" api "/v6/domains/$DEV_DOMAIN/config?projectIdOrName=$DEV_PROJECT" -X GET --scope "$VERCEL_SCOPE")   # misconfigured=false"
     echo "+ $(quote "${VC_CMD[@]}" api "/v9/projects/$DEV_PROJECT/env" -X GET --scope "$VERCEL_SCOPE")   # exactly the DEV_ENV keys"
-    echo "+ curl https://$DEV_DOMAIN/ /market /robots.txt   # 307 /workshop; X-Robots-Tag noindex, nofollow; Disallow: /; DEV badge; only studio.dev.ekza.io"
+    echo "+ curl https://$DEV_DOMAIN/ /market /robots.txt   # 307 /workshop; X-Robots-Tag noindex, nofollow; Disallow: /; DEV badge; only hub.dev.ekza.io"
     return 0
   fi
   vc_read api "/v6/domains/$DEV_DOMAIN/config?projectIdOrName=$DEV_PROJECT" -X GET --scope "$VERCEL_SCOPE" |
@@ -307,8 +307,8 @@ OMOBA_ACCOUNT_INGRESS_KEY=<sensitive>"; fi
   curl -sS "$base/robots.txt" | grep -qx 'Disallow: /' || die "robots.txt does not disallow /"
   html=$(curl -sS "$base/market")
   printf '%s' "$html" | grep -q 'data-contour-badge="dev"' || die "DEV badge missing"
-  if printf '%s' "$html" | grep -Eo 'https://studio[.a-z]*\.ekza\.io' | sort -u | grep -vx 'https://studio.dev.ekza.io'; then
-    die "the dev market links a non-dev Studio"
+  if printf '%s' "$html" | grep -Eo 'https://(studio|hub)[.a-z]*\.ekza\.io' | sort -u | grep -vx 'https://hub.dev.ekza.io'; then
+    die "the dev market links a Hub other than hub.dev.ekza.io"
   fi
   say "dev contour OK; now confirm omoba-app is unchanged (same production deployment, domains and env)"
 }

@@ -69,7 +69,7 @@ Upstream errors map to stable codes; Registry messages are not forwarded:
 |---|---|---|
 | `OMOBA_CONTOUR` | `production` | `production` or `dev`, nothing else. Selects the only Registry and Studio origins below. See [Contours](vercel.md#contours). |
 | `OMOBA_REGISTRY_URL` | the contour's: `https://registry.ekza.io` (production), `https://registry.dev.ekza.io` (dev) | Any other origin requires `OMOBA_ALLOW_INSECURE_LOCAL=1` and a loopback host. The other contour's origin is always refused. Misconfiguration renders Market unavailable. |
-| `OMOBA_STUDIO_URL` | the contour's: `https://studio.ekza.io` (production), `https://studio.dev.ekza.io` (dev) | Same rule. Used for draft links and to verify the approval link. In production a rejected value links the production Studio, as before; under dev, or for a dev-contour value under production, the Studio links are hidden. A link never crosses contours. |
+| `OMOBA_STUDIO_URL` | the contour's: `https://hub.ekza.io` (production), `https://hub.dev.ekza.io` (dev) | Same rule. Used for draft links and to verify the approval link. In production a rejected value links the production Studio, as before; under dev, or for a dev-contour value under production, the Studio links are hidden. A link never crosses contours. |
 | `OMOBA_PORTAL_ORIGIN` | `http://127.0.0.1:3010` | Existing. Exact origin for CSRF checks and the Secure/`__Host-` decision. In dev it must be `https://app.dev.omoba.io` (loopback only with `OMOBA_ALLOW_INSECURE_LOCAL=1`). |
 
 ## Local run
@@ -86,7 +86,7 @@ npm run dev
 
 Open `http://127.0.0.1:3010/market`.
 
-Against the hosted dev contour (`registry.dev.ekza.io`, `studio.dev.ekza.io`); the local portal origin needs the loopback flag there too:
+Against the hosted dev contour (`registry.dev.ekza.io`, `hub.dev.ekza.io`); the local portal origin needs the loopback flag there too:
 
 ```sh
 OMOBA_CONTOUR=dev \
