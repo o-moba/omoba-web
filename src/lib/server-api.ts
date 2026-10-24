@@ -1,7 +1,6 @@
 import 'server-only';
 import { cookies, headers } from 'next/headers';
-import { isIP } from 'node:net';
-import { OPAQUE_SECRET, accountIngressHeaders, cookieNames, portalConfig } from './security.mjs';
+import { OPAQUE_SECRET, accountUpstreamHeaders, cookieNames, portalConfig } from './security.mjs';
 import { marketFeatures } from './market-profile.mjs';
 
 export async function initialAccount() {
@@ -10,8 +9,9 @@ export async function initialAccount() {
     if (!config.accountEnabled) return { account: null, unavailable: false, disabled: true };
     const token = (await cookies()).get(cookieNames(config.secure).session)?.value;
     if (!token) return { account: null, unavailable: false };
-    const forwarded:Record<string,string>={ ...accountIngressHeaders(), Authorization: 'Bearer '+token };
-    if(process.env.OMOBA_TRUST_LOOPBACK_PROXY==='1'){const ip=(await headers()).get('x-real-ip');if(!ip||!isIP(ip))throw new Error('Trusted ingress required');forwarded['X-Real-IP']=ip;}
+    const forwarded = accountUpstreamHeaders((await headers()).get('x-real-ip'));
+    if (!forwarded) throw new Error('Trusted ingress required');
+    forwarded.Authorization = 'Bearer ' + token;
     const response = await fetch(config.api+'/v1/me', {
       headers: forwarded, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(8000),
     });
@@ -34,8 +34,9 @@ export async function initialSocialTicket(): Promise<SocialTicket | null> {
     if (!config.accountEnabled || !marketFeatures().vkSignIn) return null;
     const ticket = (await cookies()).get(cookieNames(config.secure).social)?.value;
     if (!ticket || !OPAQUE_SECRET.test(ticket)) return null;
-    const forwarded: Record<string, string> = { ...accountIngressHeaders(), 'Content-Type': 'application/json' };
-    if (process.env.OMOBA_TRUST_LOOPBACK_PROXY === '1') { const ip = (await headers()).get('x-real-ip'); if (!ip || !isIP(ip)) return null; forwarded['X-Real-IP'] = ip; }
+    const forwarded = accountUpstreamHeaders((await headers()).get('x-real-ip'));
+    if (!forwarded) return null;
+    forwarded['Content-Type'] = 'application/json';
     const response = await fetch(config.api + '/v1/auth/social/ticket', {
       method: 'POST', headers: forwarded, body: JSON.stringify({ social_ticket: ticket }),
       cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(8000),

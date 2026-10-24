@@ -1,7 +1,6 @@
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
-import { isIP } from 'node:net';
-import { accountIngressHeaders, cookieNames, portalConfig } from './security.mjs';
+import { accountUpstreamHeaders, cookieNames, portalConfig } from './security.mjs';
 import { contourHostProblem, contourName, requestHostname } from './contour.mjs';
 import { marketFeatures, vkSignInClientId } from './market-profile.mjs';
 import { applyCookies, type CookieChanges } from './vk-id.mjs';
@@ -32,13 +31,7 @@ export function vkContext(request: NextRequest): VkContext | NextResponse {
 
 /** Server-to-server headers, as the BFF sends them (ingress key, trusted client IP). */
 export function upstreamHeaders(request: NextRequest): Record<string, string> | null {
-  const headers: Record<string, string> = { ...accountIngressHeaders() };
-  if (process.env.OMOBA_TRUST_LOOPBACK_PROXY === '1') {
-    const ip = request.headers.get('x-real-ip');
-    if (!ip || !isIP(ip)) return null;
-    headers['X-Real-IP'] = ip;
-  }
-  return headers;
+  return accountUpstreamHeaders(request.headers.get('x-real-ip'));
 }
 
 /** A 302 that carries cookie changes; relative locations stay on the portal origin. */

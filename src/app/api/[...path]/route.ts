@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
-import { isIP } from 'node:net';
-import { accountIngressHeaders, allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig, socialTicketBody } from '@/lib/security.mjs';
+import { accountUpstreamHeaders, allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig, socialTicketBody } from '@/lib/security.mjs';
 import { marketFeatures } from '@/lib/market-profile.mjs';
 import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
 
@@ -58,11 +57,11 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (path === 'me/supporter/recognition' || /^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawStrictBody=raw;
   }
   const token = jar.get(names.session)?.value;
-  const headers: Record<string,string> = {...accountIngressHeaders(), 'Content-Type':'application/json'};
+  // Ingress key (non-loopback API only) and the player's X-Real-IP from the portal's own ingress.
+  const headers = accountUpstreamHeaders(request.headers.get('x-real-ip'));
+  if (!headers) return fail('trusted_ingress_required',503);
+  headers['Content-Type']='application/json';
   if (token) headers.Authorization='Bearer '+token;
-  if(process.env.OMOBA_TRUST_LOOPBACK_PROXY==='1'){
-    const ip=request.headers.get('x-real-ip');if(!ip||!isIP(ip))return fail('trusted_ingress_required',503);headers['X-Real-IP']=ip;
-  }
   const operation = request.headers.get('idempotency-key');
   if (operation && /^[A-Za-z0-9_-]{16,128}$/.test(operation)) headers['Idempotency-Key']=operation;
   // No browser-controlled actor, API URL, forwarding header or service token is forwarded.

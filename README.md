@@ -38,7 +38,13 @@ this repository. Do not expose the database or raw Account API publicly.
 ## Configuration
 
 - `OMOBA_PORTAL_ORIGIN`: exact public HTTPS origin, no path or trailing slash.
-- `OMOBA_ACCOUNT_API_URL`: internal Account API origin; server-side only.
+- `OMOBA_ACCOUNT_API_URL`: internal Account API origin; server-side only. A loopback
+  origin (`http://127.0.0.1:40550`, the API on the same host as on RU) is called
+  directly; any other origin is reached through its ingress and needs
+  `OMOBA_ACCOUNT_INGRESS_KEY`.
+- `OMOBA_ACCOUNT_INGRESS_KEY`: the private portal ingress key (64 lowercase hex), sent
+  as `X-Omoba-Portal-Key` only to an enabled Account API that is not on loopback, and
+  required there. A malformed value is refused even when unused.
 - `OMOBA_ACCOUNT_MODE=disabled`: explicit public guest prototype; no account upstream requests. Defaults to `enabled` for local development.
 - `OMOBA_ALLOW_INSECURE_LOCAL=1`: loopback development/testing only.
 - `OMOBA_CONTOUR`: `production` (default, also when unset) or `dev`; nothing else. It
@@ -63,6 +69,12 @@ this repository. Do not expose the database or raw Account API publicly.
   `X-Real-IP`, with both Node and Rust listeners inaccessible except through that
   trusted ingress. Enable the same option on the API. Otherwise forwarded headers
   are ignored. Configure per-IP edge limits too. Never trust client-supplied IP headers.
+  Required for a portal on a public origin that calls the loopback Account API, or
+  every player would share the portal's address in per-IP limits.
+
+The server checks these at startup (`src/instrumentation.ts`, `assertPortalConfig`)
+and refuses to serve a bad combination with `OMOBA portal misconfigured, refusing to
+serve (fail closed)`.
 
 The browser receives HttpOnly session/preauth cookies. Pair secrets and API bearer
 values never enter localStorage, public environment variables or rendered JSON.
