@@ -53,7 +53,7 @@ this repository. Do not expose the database or raw Account API publicly.
   fallback to production). See [Contours](docs/vercel.md#contours).
 - `OMOBA_REGISTRY_URL`, `OMOBA_STUDIO_URL`: Ekza Registry and Studio origins for the
   market. Default to the contour's origins (`https://registry.ekza.io` and
-  `https://studio.ekza.io` in production); other values only on loopback with
+  `https://hub.ekza.io` in production); other values only on loopback with
   `OMOBA_ALLOW_INSECURE_LOCAL=1`.
 - `OMOBA_SITE_URL`: the OMOBA website for "About the game" links. Defaults to
   `https://omoba.io` (production) or `https://dev.omoba.io` (dev).

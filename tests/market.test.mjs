@@ -82,21 +82,21 @@ test('a malformed catalogue document fails instead of looking empty', () => {
 });
 
 test('Studio deep links carry the Wildspark set requirement only', () => {
-  const wildspark = 'https://studio.ekza.io/studio?view=new&kind=weapon&project=omoba&requirement=wildspark.handheld.set';
+  const wildspark = 'https://hub.ekza.io/studio?view=new&kind=weapon&project=omoba&requirement=wildspark.handheld.set';
   assert.equal(studioDraftUrl(undefined, WILDSPARK_SET_REQUIREMENT), wildspark);
   for (const id of ['wildspark.handheld.repeater', 'wildspark.handheld.launcher']) {
     assert.equal(isWildsparkHandheld(id), true);
-    assert.equal(studioDraftUrl('https://studio.ekza.io', id), wildspark);
+    assert.equal(studioDraftUrl('https://hub.ekza.io', id), wildspark);
   }
-  assert.equal(studioDraftUrl('https://studio.ekza.io', 'riftshot.handheld.repeater'), 'https://studio.ekza.io/studio?view=new');
-  assert.equal(studioDraftUrl('http://127.0.0.1:5188', WILDSPARK_SET_REQUIREMENT), wildspark.replace('https://studio.ekza.io', 'http://127.0.0.1:5188'));
+  assert.equal(studioDraftUrl('https://hub.ekza.io', 'riftshot.handheld.repeater'), 'https://hub.ekza.io/studio?view=new');
+  assert.equal(studioDraftUrl('http://127.0.0.1:5188', WILDSPARK_SET_REQUIREMENT), wildspark.replace('https://hub.ekza.io', 'http://127.0.0.1:5188'));
   // Created and Studio-saved items are managed in the Studio library.
-  assert.equal(studioLibraryUrl(), 'https://studio.ekza.io/studio?view=library');
+  assert.equal(studioLibraryUrl(), 'https://hub.ekza.io/studio?view=library');
   assert.equal(studioLibraryUrl('http://127.0.0.1:5188'), 'http://127.0.0.1:5188/studio?view=library');
 });
 
 test('Registry and Studio origins are fixed unless a loopback double is explicitly allowed', () => {
-  assert.deepEqual(ekzaConfig({}), { registry: 'https://registry.ekza.io', studio: 'https://studio.ekza.io' });
+  assert.deepEqual(ekzaConfig({}), { registry: 'https://registry.ekza.io', studio: 'https://hub.ekza.io' });
   assert.deepEqual(ekzaConfig({ OMOBA_REGISTRY_URL: 'https://registry.ekza.io/' }).registry, 'https://registry.ekza.io');
   for (const url of ['http://127.0.0.1:8018', 'https://registry.example', 'http://localhost:8018'])
     assert.throws(() => ekzaConfig({ OMOBA_REGISTRY_URL: url }), /Registry URL/);
@@ -106,7 +106,7 @@ test('Registry and Studio origins are fixed unless a loopback double is explicit
     assert.throws(() => ekzaConfig({ OMOBA_ALLOW_INSECURE_LOCAL: '1', OMOBA_REGISTRY_URL: url }));
   assert.throws(() => ekzaConfig({ OMOBA_STUDIO_URL: 'https://studio.evil.example' }), /Studio URL/);
   // Links never point at an untrusted Studio, even when the Registry override is wrong.
-  assert.equal(studioOrigin({ OMOBA_STUDIO_URL: 'https://studio.evil.example' }), 'https://studio.ekza.io');
+  assert.equal(studioOrigin({ OMOBA_STUDIO_URL: 'https://studio.evil.example' }), 'https://hub.ekza.io');
   assert.equal(studioOrigin({ OMOBA_REGISTRY_URL: 'http://bad.example', OMOBA_ALLOW_INSECURE_LOCAL: '1', OMOBA_STUDIO_URL: 'http://127.0.0.1:5188' }), 'http://127.0.0.1:5188');
 });
 
@@ -138,19 +138,19 @@ test('market mutations reuse the exact-origin CSRF rule and host-only cookies', 
 
 test('device start keeps the device code server-side and trusts only the Studio approval page', () => {
   const now = Date.parse('2026-10-11T10:00:00Z');
-  const response = { deviceCode: 'd'.repeat(43), userCode: 'ABCD2345', verificationUrl: 'https://studio.ekza.io/studio?view=connect&code=ABCD2345', expiresAt: '2026-10-11T10:10:00Z', interval: 3 };
-  const parsed = parseDeviceStart(response, 'https://studio.ekza.io', now);
+  const response = { deviceCode: 'd'.repeat(43), userCode: 'ABCD2345', verificationUrl: 'https://hub.ekza.io/studio?view=connect&code=ABCD2345', expiresAt: '2026-10-11T10:10:00Z', interval: 3 };
+  const parsed = parseDeviceStart(response, 'https://hub.ekza.io', now);
   assert.equal(parsed.maxAge, 600);
   assert.deepEqual(parsed.browser, { userCode: 'ABCD2345', verificationUrl: response.verificationUrl, expiresAt: '2026-10-11T10:10:00.000Z', interval: 3 });
   assert.equal(JSON.stringify(parsed.browser).includes(response.deviceCode), false);
-  for (const url of ['https://evil.example/studio?view=connect&code=ABCD2345', 'https://studio.ekza.io/studio?view=connect&code=WXYZ2345',
-    'https://studio.ekza.io/login?view=connect&code=ABCD2345', 'https://studio.ekza.io/studio?view=connect&code=ABCD2345&next=https://evil.example',
-    'http://studio.ekza.io/studio?view=connect&code=ABCD2345', 'javascript:alert(1)'])
-    assert.equal(safeVerificationUrl(url, 'https://studio.ekza.io', 'ABCD2345'), null, url);
-  assert.equal(parseDeviceStart({ ...response, verificationUrl: 'https://evil.example/' }, 'https://studio.ekza.io', now).browser.verificationUrl, null);
+  for (const url of ['https://evil.example/studio?view=connect&code=ABCD2345', 'https://hub.ekza.io/studio?view=connect&code=WXYZ2345',
+    'https://hub.ekza.io/login?view=connect&code=ABCD2345', 'https://hub.ekza.io/studio?view=connect&code=ABCD2345&next=https://evil.example',
+    'http://hub.ekza.io/studio?view=connect&code=ABCD2345', 'javascript:alert(1)'])
+    assert.equal(safeVerificationUrl(url, 'https://hub.ekza.io', 'ABCD2345'), null, url);
+  assert.equal(parseDeviceStart({ ...response, verificationUrl: 'https://evil.example/' }, 'https://hub.ekza.io', now).browser.verificationUrl, null);
   for (const bad of [{ ...response, deviceCode: 'short' }, { ...response, userCode: 'abcd2345' }, { ...response, userCode: 'ABCD1234' }, { ...response, expiresAt: '2026-10-11T09:00:00Z' }, null])
-    assert.throws(() => parseDeviceStart(bad, 'https://studio.ekza.io', now));
-  assert.equal(parseDeviceStart({ ...response, interval: 999 }, 'https://studio.ekza.io', now).browser.interval, 30);
+    assert.throws(() => parseDeviceStart(bad, 'https://hub.ekza.io', now));
+  assert.equal(parseDeviceStart({ ...response, interval: 999 }, 'https://hub.ekza.io', now).browser.interval, 30);
 });
 
 test('poll approval requires an OMOBA link token, account name and future expiry', () => {

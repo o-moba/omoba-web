@@ -62,7 +62,7 @@ test('dedicated placement routes and cookies do not inherit market scope or cred
   assert.equal(sponsorRoute('placements', 'DELETE'), null);
   assert.equal(ekzaRoute('placements', 'POST'), null);
   assert.equal(portalReturnTo('/sponsor'), '/sponsor');
-  assert.equal(sculptureDraftUrl('https://studio.dev.ekza.io'), 'https://studio.dev.ekza.io/studio?view=new&kind=map_prop&project=omoba&requirement=community.map.sculpture');
+  assert.equal(sculptureDraftUrl('https://hub.dev.ekza.io'), 'https://hub.dev.ekza.io/studio?view=new&kind=map_prop&project=omoba&requirement=community.map.sculpture');
 });
 
 test('title and credit reject C1 controls in requests and published placements', () => {
