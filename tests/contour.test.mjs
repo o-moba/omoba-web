@@ -162,7 +162,7 @@ test('production keeps its portal rules', () => {
   assert.deepEqual(portalConfig({ ...PROD_PROJECT, OMOBA_CONTOUR: 'production' }), portalConfig(PROD_PROJECT));
   assert.equal(portalConfig({}).origin, 'http://127.0.0.1:3010');
   assert.throws(() => portalConfig({ NODE_ENV: 'production' }), /Production portal requires HTTPS/);
-  assert.equal(portalConfig({ OMOBA_ACCOUNT_API_URL: 'https://api.omoba.io' }).api, 'https://api.omoba.io');
+  assert.equal(portalConfig({ OMOBA_ACCOUNT_API_URL: 'https://api.omoba.io', OMOBA_ACCOUNT_INGRESS_KEY: 'a'.repeat(64) }).api, 'https://api.omoba.io');
   for (const api of ['https://api.dev.omoba.io', 'https://accounts.dev.ekza.io'])
     assert.throws(() => portalConfig({ ...PROD_PROJECT, OMOBA_ACCOUNT_API_URL: api }), /Account API .* dev-contour origin/, api);
 });

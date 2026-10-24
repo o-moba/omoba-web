@@ -75,3 +75,14 @@ against a loopback VK ID stand-in, starts this RU build on 127.0.0.1:3010 and dr
 Chrome through website registration, the game's link (a synthetic Ed25519 signer of the
 native requests), VK sign-in via OK and a second device. VK ID itself is never loaded.
 `OMOBA_PSQL` names the psql binary used to seed game profiles.
+
+`npm run test:ru-topology` (same build and variables, `tests/ru-topology.e2e.mjs`) runs
+the RU host topology without a browser: the RU build with the production RU settings
+(`https://app.ru.omoba.io`, the loopback Account API, `OMOBA_TRUST_LOOPBACK_PROXY=1`,
+no ingress key), the real Account API with the same flag, and a stand-in for Caddy that
+overwrites `X-Real-IP` per client and passes only native routes on account.ru. It checks
+`GET /api/me`, `POST /api/me/recovery-codes` (8 codes), web pairing, that 31 VK callbacks
+from one address limit only that address, and that no request through the ingress gets
+403. `OMOBA_CADDYFILE_RU=<game repo>/ops/vps/ru/Caddyfile.ru` reads the native list
+from the real file; `OMOBA_E2E_API_MARKET=global` accepts a global Account API build
+(the VK callback and its limit are checked, VK sign-in success is not).

@@ -60,7 +60,7 @@ Fail closed, like the contour (`src/lib/market-profile.mjs`):
 VK, OK and Mail.ru are one **VK ID app**: a public client (OAuth 2.1 with PKCE S256, no client secret). The portal never exchanges the code; the RU Account API does, and verifies the identity.
 
 1. `GET /api/auth/vk/start?method=vkid|ok_ru|mail_ru&returnTo=<path>`: 32 random bytes of `state` (hex) and a 43-character `code_verifier` go into one HttpOnly, SameSite=Lax cookie (`__Host-omoba-vk` on HTTPS, `omoba-vk` on loopback HTTP; 600 s; `Path=/`), together with the method and the destination. `returnTo` must pass the navigation allowlist, including `/connect?code=XXXXXXXX` (8 × `[A-Z2-9]`); anything else becomes `/me`. Then 302 to `https://id.vk.ru/authorize` with `response_type=code`, `client_id`, `redirect_uri`, `state`, `code_challenge`, `code_challenge_method=S256`, `scope=vkid.personal_info` and `provider=<method>`. `redirect_uri` is exactly `${OMOBA_PORTAL_ORIGIN}/api/auth/vk/callback`.
-2. `GET /api/auth/vk/callback`: needs the attempt cookie and a constant-time equal `state`; the cookie is cleared on every outcome. A missing cookie, another state, `error=…`, or a missing `code` / `device_id` goes to `/login?signin=failed` (`cancelled` for `access_denied`) without an upstream request. Otherwise the portal sends `POST {OMOBA_ACCOUNT_API_URL}/v1/auth/social/vk` with `{"method","code","code_verifier","device_id","redirect_uri","state"}` server-to-server (ingress key and trusted `X-Real-IP` as the BFF, no redirects, 12 s, bodies never logged).
+2. `GET /api/auth/vk/callback`: needs the attempt cookie and a constant-time equal `state`; the cookie is cleared on every outcome. A missing cookie, another state, `error=…`, or a missing `code` / `device_id` goes to `/login?signin=failed` (`cancelled` for `access_denied`) without an upstream request. Otherwise the portal sends `POST {OMOBA_ACCOUNT_API_URL}/v1/auth/social/vk` with `{"method","code","code_verifier","device_id","redirect_uri","state"}` server-to-server (the BFF's headers: trusted `X-Real-IP`, and the ingress key only for an API that is not on loopback; no redirects, 12 s, bodies never logged).
    - `{"state":"signed_in","session_token":<64 hex>,…}`: the normal session cookie (7 days), exactly as pairing `complete`; the pairing and CSRF cookies are cleared. Redirect to `returnTo`.
    - `{"state":"unlinked","social_ticket":<64 hex>,"display_name","expires_at"}`: an HttpOnly ticket cookie (`__Host-omoba-social`, up to 1800 s, never longer than `expires_at`). Redirect to `returnTo` (default `/me`, which then shows "finish registration in the game").
    - Errors go to `/login?signin=<reason>[&returnTo=…]` with a localized message: `400 invalid_request` → failed, `502 provider_rejected` → rejected, `503 provider_unavailable`, `409 session_limit`, `429 rate_limited`, `404 not_found` (VK not configured on the API) and anything else → unavailable.
@@ -87,16 +87,22 @@ One VK ID **web** app in the VK ID developer cabinet covers VK, OK and Mail.ru:
 
 ## Hosting the RU portal
 
-The RU portal handles Russian users' sign-in and talks to the RU Account API. Host it in Russia next to that API, not on Vercel: build with the RU environment and run the existing standalone output (`output: 'standalone'`, `npm start` → `scripts/start.mjs`, which binds to loopback) behind the same TLS ingress as the API.
+The RU portal handles Russian users' sign-in and talks to the RU Account API. Host it in Russia on the same host as that API, not on Vercel: build with the RU environment and run the existing standalone output (`output: 'standalone'`, `npm start` → `scripts/start.mjs`, which binds to loopback) behind the host's TLS ingress (Caddy).
+
+The topology (the game repo's `ops/vps/ru/README.md#topology`, `portal.env.example`, `Caddyfile.ru`):
+
+- Caddy serves `app.ru.omoba.io` and **overwrites** `X-Real-IP` with the browser's address;
+- the portal calls the Account API directly on `http://127.0.0.1:40550`, with no portal ingress key, and forwards that `X-Real-IP` (`OMOBA_TRUST_LOOPBACK_PROXY=1` on the portal and on the API), so per-IP limits such as VK sign-in (30 per minute) stay per player;
+- `account.ru.omoba.io` passes only the game's native routes and health; every portal route answers 403 there.
 
 ```sh
-OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=<app id> OMOBA_PORTAL_ORIGIN=https://<ru portal> \
-  OMOBA_ACCOUNT_API_URL=https://<ru account api> OMOBA_ACCOUNT_MODE=enabled npm run build
-OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=<app id> OMOBA_PORTAL_ORIGIN=https://<ru portal> \
-  OMOBA_ACCOUNT_API_URL=https://<ru account api> OMOBA_ACCOUNT_MODE=enabled PORT=3010 npm start
+export OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=<app id> OMOBA_PORTAL_ORIGIN=https://app.ru.omoba.io \
+  OMOBA_ACCOUNT_API_URL=http://127.0.0.1:40550 OMOBA_TRUST_LOOPBACK_PROXY=1 OMOBA_ACCOUNT_MODE=enabled
+npm run build
+PORT=3010 npm start
 ```
 
-The runtime environment must repeat the build's market and features (the server refuses otherwise). `OMOBA_TRUST_LOOPBACK_PROXY=1` only behind an ingress that overwrites `X-Real-IP`, as in the README. The `cn` market has no hosting or sign-in decided yet.
+The runtime environment must repeat the build's market and features (the server refuses otherwise). The server also refuses to serve the loopback API without `OMOBA_TRUST_LOOPBACK_PROXY=1`, or an API that is not on loopback without a 64-hex `OMOBA_ACCOUNT_INGRESS_KEY` (see the README). The `cn` market has no hosting or sign-in decided yet.
 
 ## Verification
 
