@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
+import { notFound } from 'next/navigation';
+import { marketFeatures } from '@/lib/market-profile.mjs';
 import { cookies } from 'next/headers';
 import Sponsor from '@/components/sponsor';
 import { portalConfig } from '@/lib/security.mjs';
@@ -25,6 +27,8 @@ async function session(): Promise<SponsorSession> {
 }
 export default async function SponsorPage() {
   await connection();
+  // Registry-served map placements are part of the Ekza feature.
+  if (!marketFeatures().ekza) notFound();
   const [data, initialSession] = await Promise.all([loadSponsor(), session()]);
   const studio = studioOrigin();
   return <Sponsor initialData={data} initialSession={initialSession} uploadUrl={studio ? sculptureDraftUrl(studio) : null} siteUrl={contourSiteUrl()} />;

@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { cookieOptions, expireCookie, mutationAllowed, portalConfig } from '@/lib/security.mjs';
 import { LINK_TOKEN, ekzaConfig, parseDeviceStart, parsePoll } from '@/lib/ekza-link.mjs';
 import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
+import { marketFeatures } from '@/lib/market-profile.mjs';
 import { RegistryUnavailable, registryRequest, revokeLink } from '@/lib/market-server.mjs';
 import { PLACEMENT_SCOPE, parseOwnPlacements, parsePlacement, parsePlacementRequest, sponsorCookieNames, sponsorRoute } from '@/lib/sponsor.mjs';
 import { loadSponsor } from '@/lib/sponsor-server.mjs';
@@ -13,6 +14,7 @@ export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store', Vary: 'Cookie' };
 const reply = (value: unknown, status = 200) => NextResponse.json(value, { status, headers });
 const fail = (code: string, status: number) => reply({ code }, status);
+const ekzaEnabled = () => { try { return marketFeatures().ekza; } catch { return false; } };
 
 /** Bounded JSON before parsing; no arbitrary request body is forwarded upstream. */
 async function body(request: NextRequest) {
@@ -44,6 +46,9 @@ async function hasBody(request: NextRequest) {
 }
 
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  // Without the Ekza feature (ru, cn) this BFF does not exist: no cookie is read and
+  // no Registry is contacted. A misconfigured market answers the same way.
+  if (!ekzaEnabled()) return fail('not_found', 404);
   let portal: ReturnType<typeof portalConfig>;
   let ekza: ReturnType<typeof ekzaConfig> | null = null;
   try { portal = portalConfig(); } catch { return fail('configuration_unavailable', 503); }

@@ -16,10 +16,12 @@ export function normalizeLocale(value) {
 }
 
 /** Manual choice wins; browser language takes priority over a country fallback.
- * @param {{cookie?:string|null,acceptLanguage?:string|null,country?:string|null}} options
+ * The `ru` and `cn` markets have their own fallback (`ru`, `zh`) instead of the
+ * IP-country heuristic; the global market keeps it.
+ * @param {{cookie?:string|null,acceptLanguage?:string|null,country?:string|null,market?:'global'|'ru'|'cn'}} options
  * @returns {'en'|'ru'|'zh'}
  */
-export function resolveLocale({ cookie, acceptLanguage, country } = {}) {
+export function resolveLocale({ cookie, acceptLanguage, country, market = 'global' } = {}) {
   if (SUPPORTED_LOCALES.includes(cookie || '')) return /** @type {'en'|'ru'|'zh'} */ (cookie);
   const preferences = (acceptLanguage || '').split(',').map((entry, index) => {
     const [tag, ...parameters] = entry.trim().split(';');
@@ -29,6 +31,8 @@ export function resolveLocale({ cookie, acceptLanguage, country } = {}) {
   }).filter(item => item.locale && Number.isFinite(item.weight) && item.weight > 0 && item.weight <= 1)
     .sort((a, b) => b.weight - a.weight || a.index - b.index);
   if (preferences[0]?.locale) return preferences[0].locale;
+  if (market === 'ru') return 'ru';
+  if (market === 'cn') return 'zh';
   if (['CN', 'TW', 'HK', 'MO'].includes((country || '').toUpperCase())) return 'zh';
   if ((country || '').toUpperCase() === 'RU') return 'ru';
   return 'en';

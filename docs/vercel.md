@@ -11,7 +11,7 @@ OMOBA_PORTAL_ORIGIN=https://app.omoba.io
 OMOBA_ACCOUNT_MODE=disabled
 ```
 
-Leave `OMOBA_CONTOUR` unset on `omoba-app`; unset means `production` (see [Contours](#contours)). The market (`/market`) reads the public Ekza Registry and uses its own Ekza link cookies. It needs no further variables in production: `OMOBA_REGISTRY_URL` and `OMOBA_STUDIO_URL` default to `https://registry.ekza.io` and `https://studio.ekza.io`. Do not set them on Vercel; any other value is accepted only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1` and otherwise renders "Market unavailable". A dev-contour host (`*.dev.omoba.io`, `*.dev.ekza.io`) in any `OMOBA_*` URL fails the build. In-place claims need a Registry with the `library-claim` link scope and `POST/DELETE /v1/account/library/{assetId}`; against an older Registry the market still lists items and sign-in reports that claims are not available yet. Sign-out also ends the link with `DELETE /v1/account/session`; a Registry without that route leaves the link listed under Studio connections until it expires, and the page says so. See [Market](market.md).
+Leave `OMOBA_CONTOUR` unset on `omoba-app`; unset means `production` (see [Contours](#contours)). Leave `OMOBA_MARKET`, `OMOBA_FEATURE_*` and `OMOBA_VKID_CLIENT_ID` unset on both Vercel projects: unset means the `global` market. The `ru` portal handles Russian users' VK ID sign-in and is self-hosted in Russia with the standalone output, never on Vercel; see [Markets](markets.md). The market (`/market`) reads the public Ekza Registry and uses its own Ekza link cookies. It needs no further variables in production: `OMOBA_REGISTRY_URL` and `OMOBA_STUDIO_URL` default to `https://registry.ekza.io` and `https://studio.ekza.io`. Do not set them on Vercel; any other value is accepted only on loopback with `OMOBA_ALLOW_INSECURE_LOCAL=1` and otherwise renders "Market unavailable". A dev-contour host (`*.dev.omoba.io`, `*.dev.ekza.io`) in any `OMOBA_*` URL fails the build. In-place claims need a Registry with the `library-claim` link scope and `POST/DELETE /v1/account/library/{assetId}`; against an older Registry the market still lists items and sign-in reports that claims are not available yet. Sign-out also ends the link with `DELETE /v1/account/session`; a Registry without that route leaves the link listed under Studio connections until it expires, and the page says so. See [Market](market.md).
 
 Keep the exact canonical HTTPS origin configured. The fallback hostname does not become an additional trusted origin for account mutations. Do not enable `OMOBA_ALLOW_INSECURE_LOCAL` or `OMOBA_TRUST_LOOPBACK_PROXY` on Vercel. No fixture credentials or Registry tokens belong in this deployment.
 
@@ -31,6 +31,7 @@ npm run test:guest-deployment
 npm run test:market
 npm run test:https-cookies
 npm run test:contour
+npm run test:market-profiles
 ```
 
 The targeted smoke starts an isolated production server on loopback port 3013 with a trap Account API. It checks the root redirect, stale-cookie behavior, unavailable login/account pages, local save/export, public gallery and zero Account API calls; it does not open `/market` (see `npm run test:market`). No hosted account service or personal credentials are used.

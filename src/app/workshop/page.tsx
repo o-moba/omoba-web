@@ -10,6 +10,7 @@ import { parseAssetCatalog, MAX_CATALOG_BYTES } from "@/lib/asset-catalog.mjs";
 import { verifyCatalogRevision } from "@/lib/asset-catalog-server.mjs";
 import { parseWorkshopCatalog, MAX_WORKSHOP_BYTES } from "@/lib/workshop.mjs";
 import { studioOrigin } from "@/lib/ekza-link.mjs";
+import { marketFeatures } from "@/lib/market-profile.mjs";
 import Workshop from "@/components/workshop";
 import "../creators/creators.css";
 import "./workshop.css";
@@ -40,7 +41,7 @@ export default async function WorkshopPage() {
   return (
     <Workshop
       siteUrl={contourSiteUrl()}
-      studioUrl={studioOrigin()}
+      studioUrl={marketFeatures().ekza ? studioOrigin() : null}
       catalog={catalog}
       assets={assets}
       initialAccount={session.account}

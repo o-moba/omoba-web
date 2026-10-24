@@ -674,6 +674,18 @@ export const creatorTranslations: Record<string, { ru: string; zh: string }> = {
     "ru": "Здесь работают черновики в браузере и скачивание JSON. Вход, сохранение в аккаунте и подключение библиотеки Ekza пока недоступны в публичном прототипе.",
     "zh": "此公开原型支持浏览器草稿和 JSON 下载，暂不支持登录、账号保存及 Ekza 资源库连接。"
   },
+  "Browser drafts and JSON downloads work here. Sign-in and account saves are unavailable in this public prototype.": {
+    "ru": "Здесь работают черновики в браузере и скачивание JSON. Вход и сохранение в аккаунте пока недоступны в публичном прототипе.",
+    "zh": "此公开原型支持浏览器草稿和 JSON 下载，暂不支持登录和账号保存。"
+  },
+  "Sign in to save and reopen private builds on another browser. The draft here stays intact.": {
+    "ru": "Войди, чтобы сохранять личные сборки и открывать их в другом браузере. Этот черновик сохранится.",
+    "zh": "登录后即可保存私人配置并在其他浏览器中打开。当前草稿会保留。"
+  },
+  "Sign in ↗": {
+    "ru": "Войти ↗",
+    "zh": "登录 ↗"
+  },
   "Sign in through the game to save and reopen private builds on another browser. The draft here stays intact.": {
     "ru": "Войди через игру, чтобы сохранять личные сборки и открывать их в другом браузере. Этот черновик сохранится.",
     "zh": "通过游戏账号登录，即可保存私人配置并在其他浏览器中打开。当前草稿会保留。"

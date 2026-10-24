@@ -71,7 +71,7 @@ test('account dictionaries and public source translations cover every language',
     for (const locale of ['en', 'ru', 'zh']) assert.ok(dictionaries[locale][key].trim(), `${locale}.${key}`);
     assert.match(dictionaries.zh[key], /[\u3400-\u9fff]/u, `Chinese translation missing for ${key}`);
   }
-  for (const file of ['portal.tsx', 'devices.tsx', 'supporter.tsx', 'supporters.tsx', 'hero-recognition.tsx', 'locale-provider.tsx', 'contour.tsx']) {
+  for (const file of ['portal.tsx', 'devices.tsx', 'supporter.tsx', 'supporters.tsx', 'hero-recognition.tsx', 'locale-provider.tsx', 'contour.tsx', 'social.tsx', 'connect.tsx']) {
     const component = await readFile(new URL('../src/components/' + file, import.meta.url), 'utf8');
     for (const match of component.matchAll(/\b(?:t|setMessage|setError)\((['"])([^'"\n]+)\1\)/g)) {
       assert.ok(portalTranslations[match[2]]?.ru, `Missing Russian: ${match[2]}`);

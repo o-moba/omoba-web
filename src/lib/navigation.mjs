@@ -1,22 +1,55 @@
 import { CONTOURS, contourName } from './contour.mjs';
+import { MARKET_PRESETS, navForMarket, routeEnabled } from './market-profile.mjs';
 
 export const DEFAULT_SITE_URL = CONTOURS.production.site;
 
 const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/workshop', '/friends', '/players', '/devices', '/supporter', '/supporters', '/settings', '/download', '/creators', '/market', '/sponsor']);
 
-/** Only known local pages may be used after game-confirmed browser sign-in. */
-export function portalReturnTo(value) {
+/** The device-confirmation page the game opens: exactly one 8-character enrollment code. */
+export const CONNECT_CODE = /^[A-Z2-9]{8}$/;
+
+/** Sidebar order; `navForMarket` drops the pages this market does not serve. */
+export const PORTAL_NAV = Object.freeze(['/me', '/me/matches', '/me/stats', '/players', '/friends', '/creators', '/market', '/sponsor', '/workshop', '/supporter', '/supporters', '/devices', '/settings']);
+export const MOBILE_NAV = Object.freeze(['/me', '/me/matches', '/creators', '/workshop', '/supporters', '/friends']);
+/** Buttons on the guest-prototype card. */
+export const GUEST_LINKS = Object.freeze(['/creators', '/sponsor', '/market']);
+
+/**
+ * @param {readonly string[]} list
+ * @param {{ekza: boolean, supporter: boolean}} [features] the market's features (default: global)
+ */
+export function portalNav(list, features = MARKET_PRESETS.global) {
+  return navForMarket(list, features);
+}
+
+/**
+ * Only known local pages may be used after browser sign-in: game-confirmed
+ * pairing or VK ID. Pages of a feature this market does not serve are refused,
+ * and `/connect` keeps nothing but its enrollment code.
+ * @param {unknown} value
+ * @param {{ekza: boolean, supporter: boolean}} [features] the market's features (default: global)
+ */
+export function portalReturnTo(value, features = MARKET_PRESETS.global) {
   if (typeof value !== 'string' || value.length > 2048 || !value.startsWith('/') || value.startsWith('//') || /[\\\s\u0000-\u001f\u007f]/.test(value)) return '/me';
   try {
     const url = new URL(value, 'https://portal.invalid');
     if (url.origin !== 'https://portal.invalid' || url.hash) return '/me';
+    if (url.pathname === '/connect') {
+      const code = url.searchParams.get('code');
+      return url.search === '?code=' + code && CONNECT_CODE.test(code || '') ? '/connect?code=' + code : '/me';
+    }
     if (!privateRoutes.has(url.pathname) && !/^\/matches\/[A-Za-z0-9_-]{1,128}$/.test(url.pathname)) return '/me';
+    if (!routeEnabled(url.pathname, features)) return '/me';
     return url.pathname + url.search;
   } catch { return '/me'; }
 }
 
-export function portalLoginHref(destination) {
-  return '/login?returnTo=' + encodeURIComponent(portalReturnTo(destination));
+/**
+ * @param {unknown} destination
+ * @param {{ekza: boolean, supporter: boolean}} [features]
+ */
+export function portalLoginHref(destination, features = MARKET_PRESETS.global) {
+  return '/login?returnTo=' + encodeURIComponent(portalReturnTo(destination, features));
 }
 
 /**

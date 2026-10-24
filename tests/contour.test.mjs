@@ -313,7 +313,8 @@ test('the dev preference is read first; production\'s only as a read-only start'
 test('next.config adds X-Robots-Tag only in dev and refuses a misconfigured contour', async () => {
   // Same approach as the dictionary test: strip types without a framework runtime.
   const source = stripTypeScriptTypes(await readFile(new URL('../next.config.ts', import.meta.url), 'utf8'))
-    .replace("'./src/lib/contour-guard.mjs'", JSON.stringify(new URL('../src/lib/contour-guard.mjs', import.meta.url).href));
+    .replace("'./src/lib/contour-guard.mjs'", JSON.stringify(new URL('../src/lib/contour-guard.mjs', import.meta.url).href))
+    .replace("'./src/lib/market-profile.mjs'", JSON.stringify(new URL('../src/lib/market-profile.mjs', import.meta.url).href));
   assert.match(source, /file:.*contour-guard\.mjs/);
   const saved = { ...process.env };
   const load = async (env, tag) => {
@@ -329,10 +330,12 @@ test('next.config adds X-Robots-Tag only in dev and refuses a misconfigured cont
   };
   const robots = async (config) => (await config.headers())[0].headers.filter((h) => h.key === 'X-Robots-Tag').map((h) => h.value);
   const prod = await load({ OMOBA_PORTAL_ORIGIN: PROD.portal, OMOBA_ACCOUNT_MODE: 'disabled' }, 'production');
-  assert.deepEqual(prod.env, { OMOBA_BUILT_CONTOUR: 'production' });
+  // The market is independent of the contour (tests/market-profile.test.mjs).
+  const GLOBAL = 'global (ekza on, supporter on, vk_sign_in off)';
+  assert.deepEqual(prod.env, { OMOBA_BUILT_CONTOUR: 'production', OMOBA_BUILT_MARKET: GLOBAL });
   assert.deepEqual(await robots(prod), []);
   const dev = await load(DEV_PROJECT, 'dev');
-  assert.deepEqual(dev.env, { OMOBA_BUILT_CONTOUR: 'dev' });
+  assert.deepEqual(dev.env, { OMOBA_BUILT_CONTOUR: 'dev', OMOBA_BUILT_MARKET: GLOBAL });
   assert.deepEqual(await robots(dev), ['noindex, nofollow']);
   // The other security headers are the same in both contours.
   const others = async (config) => (await config.headers())[0].headers.filter((h) => h.key !== 'X-Robots-Tag');

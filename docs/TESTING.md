@@ -46,6 +46,9 @@ Run `npm test`, `npm run typecheck`, `npm run build` for frontend verification.
 `npm test` includes the contour rules (`tests/contour.test.mjs`) and the dev Vercel
 helper against a fake CLI (`tests/vercel-dev.test.mjs`). `npm run test:contour` checks
 a production build and, after a dev build, the dev contour; see `docs/vercel.md#contours`.
+`npm test` also covers the market rules and VK ID sign-in (`tests/market-profile.test.mjs`,
+`tests/vk-id.test.mjs`); `npm run test:market-profiles` checks a global or ru build against
+a loopback fake Account API, see `docs/markets.md#verification`.
 `VERCEL_CLI=<…/node_modules/vercel/dist/vc.js> npm run test:vercel-cli` runs the same
 helper through the real pinned Vercel CLI against a loopback fake of the Vercel API
 (fake token, throwaway HOME; no request leaves the machine). Rerun it when the CLI pin moves.
@@ -63,3 +66,12 @@ synthetic account preferences and logs both test accounts out when finished.
 disposable cluster in the game task directory, on explicit loopback port 55581.
 Run after load tests, never concurrently. It checks an authenticated 503, UI error,
 and the same persisted profile/session after restart, then revokes its test session.
+
+`npm run test:vk-sign-in` (after `OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=51234567 npm run
+build`) runs Sign in with VK ID end to end: it migrates a disposable, empty loopback
+database (`OMOBA_E2E_DATABASE_URL` on 55581), starts the real Account API built for the
+RU market (`OMOBA_ACCOUNT_API_BIN`, `OMOBA_MARKET=ru cargo build -p omoba-account-api`)
+against a loopback VK ID stand-in, starts this RU build on 127.0.0.1:3010 and drives
+Chrome through website registration, the game's link (a synthetic Ed25519 signer of the
+native requests), VK sign-in via OK and a second device. VK ID itself is never loaded.
+`OMOBA_PSQL` names the psql binary used to seed game profiles.
