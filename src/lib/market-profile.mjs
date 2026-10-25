@@ -35,6 +35,64 @@ export const MARKET_PRESETS = Object.freeze({
 /** Fallback page language when the player has not chosen one; null keeps negotiation. */
 export const MARKET_LOCALES = Object.freeze({ global: null, ru: "ru", cn: "zh" });
 
+/** A market without legal documents, links or age sign (global, cn). */
+const NO_LEGAL = Object.freeze({
+  version: null, privacy: null, terms: null, offer: null, delete: null, source: null,
+  supportEmail: null, communityVk: null, communityTelegram: null, ageRating: null,
+});
+
+/**
+ * Each market's legal documents, source link, player channels and age sign (LR-06,
+ * LR-07, LR-21): the game's `scripts/markets.py` `Legal` and `shared/src/market.rs`
+ * `Market::legal`, field for field and value for value (camelCase here). null is
+ * "not provided" and is not shown. `version` is the version of the user agreement and
+ * privacy policy the game asks a player to accept; `source` is the public source tree
+ * of a release, `{version}` standing for the release (`0.45.0`).
+ *
+ * `offer` (the public offer for supporter cosmetics, LR-67) is portal-only for now:
+ * the game links `/supporter`, which links the offer; the game table gains it with
+ * LR-67/LR-68. `delete` (the public account-deletion page, O-15; the URL for Play's
+ * Data safety form) is portal-only too; the game table gains it with the in-app
+ * deletion request (LR-69). RU support and community stay null until the owner
+ * provides them (LR-21).
+ */
+export const MARKET_LEGAL = Object.freeze({
+  global: NO_LEGAL,
+  ru: Object.freeze({
+    version: "0-draft",
+    privacy: "https://omoba.ru/privacy",
+    terms: "https://omoba.ru/terms",
+    offer: "https://omoba.ru/offer",
+    delete: "https://omoba.ru/delete",
+    source: "https://github.com/o-moba/omoba-bevy/tree/v{version}-ru",
+    supportEmail: null,
+    communityVk: null,
+    communityTelegram: null,
+    ageRating: "12+",
+  }),
+  cn: NO_LEGAL,
+});
+
+/**
+ * Each market's public landing (LR-22; launch plan section 7: the RU landing is the RU
+ * portal's guest home):
+ * - `home: "site"`: the OMOBA website is the landing (`OMOBA_SITE_URL`, else the
+ *   contour's site). This portal's `/` opens the class workshop and is never indexed.
+ * - `home: "portal"`: this portal's own guest home at `/` is the landing (hosted with
+ *   the portal, no foreign analytics). Signed-out visitors see the game, its modes and
+ *   the downloads; signed-in players go to `/me`. Production lets search engines index
+ *   it, with the market's page language (`marketLocale`) as `hreflang`. Every "OMOBA
+ *   website" link leads to it, so `OMOBA_SITE_URL` is refused there (`marketProblems`).
+ * - `workshop`: `"listed"` keeps the class workshop a normal page; `"experimental"`
+ *   labels it experimental and leaves it out of the phone navigation.
+ * LR-68 turns the market into a runtime region: `marketLanding` stays the one accessor.
+ */
+export const MARKET_LANDING = Object.freeze({
+  global: Object.freeze({ home: "site", workshop: "listed" }),
+  ru: Object.freeze({ home: "portal", workshop: "experimental" }),
+  cn: Object.freeze({ home: "site", workshop: "listed" }),
+});
+
 /**
  * Pages that exist only with a feature. `/creators`, `/market` and `/sponsor` are
  * Ekza surfaces (Registry, Studio, Ekza library); `/supporter` and `/supporters`
@@ -158,6 +216,15 @@ export function marketProblems(env = process.env) {
   } catch (error) {
     problems.push(message(error));
   }
+  // Where the landing is this portal's own home page, its "OMOBA website" links lead
+  // there; another website would send players to another market's site (LR-22).
+  try {
+    const market = marketName(env);
+    if (marketLanding(market).home === "portal" && env.OMOBA_SITE_URL)
+      problems.push("OMOBA_SITE_URL must be unset in the " + market + " market: its landing is this portal's own home page (got " + shown(env.OMOBA_SITE_URL) + ")");
+  } catch {
+    // An invalid market is reported above.
+  }
   return problems;
 }
 
@@ -221,4 +288,23 @@ export function navForMarket(items, features) {
 /** @param {"global" | "ru" | "cn"} market */
 export function marketLocale(market) {
   return MARKET_LOCALES[market] ?? null;
+}
+
+/**
+ * The market's legal table (`MARKET_LEGAL`); an unknown market has none (fail closed).
+ * The one accessor pages and components use, so LR-68 can switch it to the runtime region.
+ * @param {"global" | "ru" | "cn"} market
+ */
+export function marketLegal(market) {
+  return Object.hasOwn(MARKET_LEGAL, market) ? MARKET_LEGAL[market] : NO_LEGAL;
+}
+
+/**
+ * The market's public landing (`MARKET_LANDING`); an unknown market has none of its own
+ * (fail closed: the website is the landing). The one accessor pages and components use,
+ * so LR-68 can switch it to the runtime region.
+ * @param {"global" | "ru" | "cn"} market
+ */
+export function marketLanding(market) {
+  return Object.hasOwn(MARKET_LANDING, market) ? MARKET_LANDING[market] : MARKET_LANDING.global;
 }

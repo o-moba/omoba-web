@@ -6,6 +6,7 @@ import { api, ApiFailure } from "@/lib/client-api";
 import { Brand } from "@/components/brand";
 import { LanguageSelector, useLocale } from "@/components/locale-provider";
 import { useMarket } from "@/components/market-profile";
+import { LegalLinks } from "@/components/legal";
 import { creatorText } from "@/lib/creator-translations";
 import type { Account } from "@/lib/types";
 import type { AssetCatalog, CatalogIcon } from "@/lib/asset-catalog-types";
@@ -76,7 +77,10 @@ export default function Workshop({
 }) {
   const { locale, t } = useLocale();
   // Without the Ekza feature (ru, cn): no Ekza library panel, no asset library, market or Studio links.
-  const { ekza, vkSignIn } = useMarket().features;
+  const market = useMarket();
+  const { ekza, vkSignIn } = market.features;
+  // Where the market labels the workshop experimental (marketLanding, LR-22).
+  const experimental = market.landing.workshop === "experimental";
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
   const [document, setDocument] = useState<ClassBuildDocument>(() =>
     defaultBuild(catalog, "dawnweaver"),
@@ -423,6 +427,11 @@ export default function Workshop({
         <LanguageSelector />
       </header>
       <main id="workshop-content">
+        {experimental ? (
+          <p className="notice workshop-experimental" role="note" data-experimental>
+            {t("Experimental: the class workshop is a prototype. Class builds are drafts and cannot be used in online matches.")}
+          </p>
+        ) : null}
         <section className="workshop-heading">
           <div>
             <span className="creator-overline">{t("OMOBA / CLASS WORKSHOP")}</span>
@@ -983,6 +992,7 @@ export default function Workshop({
           <div>
             <strong>{t("OMOBA / CLASS WORKSHOP")}</strong>
             <p>{t("Private drafts. Real game rules. Local experiments.")}</p>
+            <LegalLinks />
           </div>
           <details>
             <summary>{t("Source & compatibility")}</summary>

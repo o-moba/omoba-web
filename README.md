@@ -56,7 +56,10 @@ this repository. Do not expose the database or raw Account API publicly.
   `https://hub.ekza.io` in production); other values only on loopback with
   `OMOBA_ALLOW_INSECURE_LOCAL=1`.
 - `OMOBA_SITE_URL`: the OMOBA website for "About the game" links. Defaults to
-  `https://omoba.io` (production) or `https://dev.omoba.io` (dev).
+  `https://omoba.io` (production) or `https://dev.omoba.io` (dev). Leave it unset in the
+  `ru` market: its landing is this portal's own guest home at `/` (LR-22), every website
+  link leads there, and a value fails the build and the start
+  ([Markets › RU landing](docs/markets.md#ru-landing-the-guest-home-lr-22)).
 - `OMOBA_MARKET`: `global` (default, also when unset), `ru` or `cn`, the same switch as the
   game's separate builds. `ru` and `cn` have no Ekza surfaces and no payments; `ru` signs in
   with VK ID. `OMOBA_FEATURE_EKZA`, `OMOBA_FEATURE_SUPPORTER`, `OMOBA_FEATURE_VK_SIGN_IN`
@@ -169,5 +172,13 @@ game) confirms a device or links an unlinked VK account. The portal never exchan
 codes: the Account API does. The RU portal is self-hosted in Russia with the standalone
 output, not on Vercel. See [Markets](docs/markets.md); `npm run test:market-profiles`
 checks a global or ru build against a fake Account API.
+
+`ru` also serves its legal documents (LR-06): `/privacy`, `/terms` and `/offer` render the
+versioned Russian files in [`legal/`](legal/README.md) (now the `0-draft` drafts with a
+visible «Проект — требует проверки юристом» banner); the login card and `/connect` show a
+notice linking the user agreement and the privacy policy, and the footer links Privacy,
+Terms, account deletion, Support and Source. The public `/delete` page describes how to
+have an account deleted (the operator's e-mail procedure, O-15). `global` and `cn` have no
+legal table and are unchanged.
 
 See [Vercel deployment](docs/vercel.md) for the initial public guest mode, upload exclusions and the account-service boundary. The site root opens `/workshop`; the player account area remains `/me`.

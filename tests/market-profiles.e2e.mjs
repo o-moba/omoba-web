@@ -27,6 +27,7 @@ const account = {
   social: [{ provider: "vk", method: "vkid", linked_at: "2026-10-23T09:00:00Z" }],
 };
 const later = () => new Date(Date.now() + 25 * 60000).toISOString();
+const RELEASE = { platform: "linux", architecture: "x86_64", version: "0.45.0", url: "https://omoba.ru/downloads/omoba-0.45.0-ru-linux-x64.tar.gz", sha256: "0".repeat(64), size_bytes: "1000", published_at: "2026-10-24T00:00:00Z", instructions: "", test_status: "Открытая бета" };
 const api = createServer(async (req, res) => {
   let raw = "";
   for await (const chunk of req) raw += chunk;
@@ -50,7 +51,7 @@ const api = createServer(async (req, res) => {
       ? send(200, { enrollment_id: "b".repeat(64), public_key: KEY, label: "Desktop", expires_at: later(), nickname: account.profile.nickname, profile_id: account.profile.profile_id })
       : send(404, { code: "not_found" });
   if (req.method === "POST" && path === "/v1/me/devices/approve") return authed ? send(200, { status: "approved" }) : send(401, { code: "unauthorized" });
-  if (req.method === "GET" && path === "/v1/releases") return send(200, { releases: [] });
+  if (req.method === "GET" && path === "/v1/releases") return send(200, { releases: [RELEASE] });
   if (req.method === "GET" && path === "/v1/me/matches") return send(200, { matches: [], next_cursor: null, data_as_of: new Date().toISOString() });
   if (req.method === "GET" && path === "/v1/me/sessions") return send(200, { sessions: [] });
   if (req.method === "POST" && path === "/v1/auth/logout") return authed ? send(200, { status: "logged_out" }) : send(401, { code: "unauthorized" });
@@ -247,6 +248,77 @@ if (market === "ru") {
     }
   });
 
+  await run("ru legal pages, the sign-in notice and the footer links (LR-06)", RU, async ({ origin }) => {
+    const before = calls.length;
+    for (const [name, title] of [["privacy", "Политика обработки персональных данных"], ["terms", "Пользовательское соглашение"], ["offer", "Публичная оферта"]]) {
+      const response = await get(origin, "/" + name);
+      assert.equal(response.status, 200, name);
+      const html = await response.text();
+      assert.match(html, /<html lang="ru"/, name);
+      assert.match(html, new RegExp('data-legal-document="' + name + '" data-legal-version="0-draft" data-legal-status="draft"'), name);
+      assert.match(html, /data-legal-draft/, name);
+      assert.ok(html.includes("Проект — требует проверки юристом."), name + " has no draft banner");
+      assert.match(html, /Редакция[\s\S]{0,40}0-draft[\s\S]{0,80}не вступила в силу/, name);
+      assert.ok(html.includes("<title>" + title), name + " title");
+      assert.match(html, /<footer class="legal-page-footer">[\s\S]*data-legal-link="privacy"[\s\S]*data-legal-link="terms"/, name);
+    }
+    assert.equal(calls.length, before, "a legal page called the Account API");
+    const login = await (await get(origin, "/login")).text();
+    const notice = /<p class="legal-notice"[\s\S]*?<\/p>/.exec(login)?.[0] ?? "";
+    assert.match(notice, /data-legal-version="0-draft"/);
+    assert.match(notice, /Входя, вы принимаете/);
+    assert.deepEqual([...notice.matchAll(/href="([^"]+)"/g)].map((m) => m[1]), ["/terms", "/privacy"]);
+    const footer = /<nav class="legal-links"[\s\S]*?<\/nav>/.exec(login)?.[0] ?? "";
+    // Supporter is off in ru: no offer link; support and community wait for the owner (LR-21).
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "delete", "source"]);
+    assert.match(footer, /href="https:\/\/github.com\/o-moba\/omoba-bevy"/);
+    assert.match(await (await get(origin, "/connect?code=" + CODE)).text(), /<p class="legal-notice"/);
+    assert.match(await (await get(origin, "/workshop")).text(), /data-legal-links/);
+  });
+
+  await run("browser: ru footer and notice links open the documents", RU, async ({ origin }) => {
+    const browser = await chromium.launch({ channel: "chrome", headless: true });
+    try {
+      const context = await browser.newContext({ locale: "ru-RU", viewport: { width: 1440, height: 1000 } });
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(origin + "/login");
+      await page.locator("footer [data-legal-link=privacy]").click();
+      await page.waitForURL("**/privacy");
+      await page.locator("[data-legal-document=privacy] [data-legal-draft]").waitFor();
+      await page.locator("footer [data-legal-link=terms]").click();
+      await page.waitForURL("**/terms");
+      assert.equal(await page.locator("h1").innerText(), "Пользовательское соглашение");
+      await page.locator("footer [data-legal-link=delete]").click();
+      await page.waitForURL("**/delete");
+      assert.equal(await page.locator("h1").innerText(), "Удаление аккаунта OMOBA");
+      await page.locator("[data-deletion-page] [data-legal-link=privacy]").click();
+      await page.waitForURL("**/privacy#requests");
+      await page.goto(origin + "/login");
+      await page.locator("[data-legal-notice] [data-legal-link=privacy]").click();
+      await page.waitForURL("**/privacy");
+      assert.equal(await page.locator("h1").innerText(), "Политика обработки персональных данных");
+      // Each download links the source of its release (the public tag v<version>-ru).
+      await page.goto(origin + "/download");
+      await page.locator("[data-release-source]").waitFor();
+      assert.equal(await page.locator("[data-release-source]").getAttribute("href"), "https://github.com/o-moba/omoba-bevy/tree/v0.45.0-ru");
+      // Phones hide the portal footer; with legal links it stays visible.
+      const phone = await (await browser.newContext({ locale: "ru-RU", viewport: { width: 360, height: 800 } })).newPage();
+      phone.on("pageerror", (error) => errors.push(error.message));
+      await phone.goto(origin + "/login");
+      assert.ok(await phone.locator("footer [data-legal-links]").isVisible(), "legal links hidden on a phone");
+      for (const path of ["/login", "/privacy", "/terms", "/offer", "/delete"]) {
+        await phone.goto(origin + path);
+        await phone.locator("footer [data-legal-links]").waitFor();
+        assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), path + " overflows on a phone");
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await browser.close();
+    }
+  });
+
   await run("a ru build refuses to serve as global", {}, async ({ first, log }) => {
     await refused(first, log, /OMOBA market mismatch, refusing to serve \(fail closed\): this build was made for ru/);
   });
@@ -264,6 +336,13 @@ if (market === "ru") {
     assert.ok(!/data-vk-method/.test(login));
     for (const link of ['href="/market"', 'href="/creators"', 'href="/supporter"', 'href="/supporters"']) assert.ok(login.includes(link), "nav lacks " + link);
     assert.equal((await get(origin, "/supporters")).status, 200);
+  });
+  await run("a global build has no legal pages, sign-in notice or legal links", {}, async ({ origin }) => {
+    for (const path of ["/privacy", "/terms", "/offer", "/delete"]) assert.equal((await get(origin, path)).status, 404, path);
+    for (const path of ["/login", "/workshop", "/connect?code=" + CODE, "/download"]) {
+      const html = await (await get(origin, path)).text();
+      for (const marker of ["data-legal-notice", "data-legal-links", "data-legal-link", "data-release-source"]) assert.ok(!html.includes(marker), path + " contains " + marker);
+    }
   });
   await run("a global build refuses to serve as ru", { OMOBA_MARKET: "ru" }, async ({ first, log }) => {
     await refused(first, log, /OMOBA market mismatch, refusing to serve \(fail closed\): this build was made for global/);

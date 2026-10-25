@@ -1,5 +1,5 @@
 import { CONTOURS, contourName } from './contour.mjs';
-import { MARKET_PRESETS, navForMarket, routeEnabled } from './market-profile.mjs';
+import { MARKET_LANDING, MARKET_PRESETS, marketLanding, marketName, navForMarket, routeEnabled } from './market-profile.mjs';
 
 export const DEFAULT_SITE_URL = CONTOURS.production.site;
 
@@ -20,6 +20,16 @@ export const GUEST_LINKS = Object.freeze(['/creators', '/sponsor', '/market']);
  */
 export function portalNav(list, features = MARKET_PRESETS.global) {
   return navForMarket(list, features);
+}
+
+/**
+ * The phone navigation: the market's pages, without the class workshop where the
+ * market labels it experimental (`marketLanding`, LR-22); the sidebar keeps it, labelled.
+ * @param {{ekza: boolean, supporter: boolean}} [features] the market's features (default: global)
+ * @param {{workshop: "listed" | "experimental"}} [landing] the market's landing (default: global)
+ */
+export function mobileNav(features = MARKET_PRESETS.global, landing = MARKET_LANDING.global) {
+  return portalNav(MOBILE_NAV, features).filter((href) => href !== '/workshop' || landing.workshop === 'listed');
 }
 
 /**
@@ -71,8 +81,11 @@ export function publicSiteUrl(raw, environment, fallback = DEFAULT_SITE_URL) {
  * The OMOBA website of the active contour: `OMOBA_SITE_URL`, else
  * https://omoba.io (production) or https://dev.omoba.io (dev). Throws for an
  * unknown contour; the contour guard refuses dev values under production and
- * production values under dev.
+ * production values under dev. In a market whose landing is this portal's own guest
+ * home (`marketLanding`, RU: LR-22) it is that page, `/`, and `OMOBA_SITE_URL` is
+ * refused (`marketProblems`).
  */
 export function contourSiteUrl(env = process.env) {
+  if (marketLanding(marketName(env)).home === 'portal') return '/';
   return publicSiteUrl(env.OMOBA_SITE_URL, env.NODE_ENV, CONTOURS[contourName(env)].site);
 }

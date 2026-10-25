@@ -104,10 +104,60 @@ PORT=3010 npm start
 
 The runtime environment must repeat the build's market and features (the server refuses otherwise). The server also refuses to serve the loopback API without `OMOBA_TRUST_LOOPBACK_PROXY=1`, or an API that is not on loopback without a 64-hex `OMOBA_ACCOUNT_INGRESS_KEY` (see the README). The `cn` market has no hosting or sign-in decided yet.
 
+## Legal documents and links (LR-06)
+
+Each market has a legal table, `MARKET_LEGAL` in `src/lib/market-profile.mjs`, read only through `marketLegal(market)` (the one place LR-68 switches to the runtime region). It mirrors the game's `scripts/markets.py` `Legal` and `shared/src/market.rs` `Market::legal` field for field (camelCase here):
+
+| Field | `ru` | Used for |
+|---|---|---|
+| `version` | `0-draft` (the Russian drafts, LR-04) | the documents shown, the notice |
+| `privacy`, `terms` | `https://omoba.ru/privacy`, `https://omoba.ru/terms` | `/privacy`, `/terms`, footer, sign-in notice |
+| `offer` (portal only) | `https://omoba.ru/offer` | `/offer`; linked only with the Supporter feature |
+| `delete` (portal only) | `https://omoba.ru/delete` | `/delete` (account deletion, O-15; the URL for Play's Data safety form), footer |
+| `source` | `https://github.com/o-moba/omoba-bevy/tree/v{version}-ru` | footer (the repository), each download card (the release's tag) |
+| `supportEmail`, `communityVk`, `communityTelegram` | empty until the owner provides them (LR-21) | footer; hidden while empty |
+| `ageRating` | `12+` (placeholder, LR-07) | the guest home and the portal footer (LR-22) |
+
+`global` and `cn` have no table (every field null): no legal pages (`/privacy`, `/terms`, `/offer` and `/delete` answer 404), no notice, no legal links, footers as before.
+
+`offer` and `delete` are portal-only for now: the game's table gains `offer` with LR-67/LR-68 and `delete` with the in-app deletion request (LR-69).
+
+**Pages.** `/privacy`, `/terms` and `/offer` render `legal/<market>/<version>/<name>.md` ([legal/README.md](../legal/README.md): format, and how to publish the counsel-approved texts). They are public and make no Account API call. A file whose front-matter `version` differs from the table refuses to render, so the page always shows the version the game asks players to accept. A `draft` shows the «Проект — требует проверки юристом» banner and «не вступила в силу»; a `final` document shows its effective date and review line. The documents are Russian; other page languages get a one-line note. `next.config.ts` traces `legal/**` into the standalone output.
+
+**Account deletion** (`/delete`, `src/components/deletion.tsx`, strings in `src/lib/deletion-translations.ts`; launch plan section 7, O-15): a public page without sign-in and without an Account API call, laid out like the documents and translated (en, ru, zh). Until deletion ships in the game and the portal (LR-42, LR-69) it describes the operator's manual procedure of the privacy policy's requests section: write to the support e-mail with the subject «Персональные данные», giving the nickname with its tag; the operator checks that the request comes from the owner; once confirmed, the account's device keys are refused at once, and erasure (sessions and linked sign-ins revoked, friends, settings, recovery codes, class builds and feedback deleted, the nickname replaced with «Удалённый игрок») completes within 30 days; match results stay anonymised. The address is the legal table's `supportEmail` (`deletionPage`); while the owner has not provided it (LR-21) the page shows a highlighted placeholder. The page names no payment method, so store builds can link it as it is (LR-68).
+
+**Links** (`src/lib/legal.mjs`, `src/components/legal.tsx`):
+
+- the login card (under the VK ID buttons, or under game pairing) and `/connect` show «Входя, вы принимаете Пользовательское соглашение и соглашаетесь на обработку персональных данных в соответствии с Политикой обработки персональных данных» with both documents linked (`SignInLegalNotice`, needs both `terms` and `privacy`);
+- the portal footer, the legal pages and the workshop footer list Privacy, Terms, the offer (only with the Supporter feature: the one switch for Supporter links, LR-67/LR-68), account deletion (`/delete`), Support (`mailto:`), Source and the community (`LegalLinks`). On phones the portal footer, otherwise hidden, stays visible when it carries legal links;
+- each download card links the source of that release (`v<version>-ru`, the tag `release.py catalog --market ru` requires).
+
+The drafts list every data category the RU services process (Account API migrations 001-007, career store 001-004, in-memory chat, cookies, logs, backups), with retention; `tests/legal.test.mjs` keeps that coverage. The privacy policy and the user agreement carry no payment-method details: those live in the offer, so store builds can leave it out.
+
+## RU landing: the guest home (LR-22)
+
+The RU landing is the RU portal's own guest home at `/` (`https://omoba.ru`), hosted in Russia with the portal and without foreign analytics; the omoba.io landing is not changed. Each market's landing is in `MARKET_LANDING` (`src/lib/market-profile.mjs`), read only through `marketLanding(market)` (the one place LR-68 switches to the runtime region):
+
+| Market | `home` | `workshop` |
+|---|---|---|
+| `global`, `cn` | `site`: the OMOBA website; `/` opens the workshop, as before | `listed` |
+| `ru` | `portal`: `/` is the guest home | `experimental` |
+
+Where `home` is `portal`:
+
+- **`/` signed out** renders the guest home (`src/components/guest-home.tsx`): the hero classes counted from the game's catalog snapshot (`public/asset-catalog/catalog.json`, exported from the game's `shared/assets/catalog`, `src/lib/landing-server.ts`), the Verdant Arena and the four ways to play named as the game names them (Ranked, Casual PvP, vs Bots, Offline practice; the game's `client/i18n` `queue.json` and `home.json`), the release status, the age sign from the legal table, the downloads and how progress is kept (VK ID in the game). The footer carries the legal, source, support and community links (`LegalLinks`) and the age sign. No donate, wallet, crypto, Solana or Ekza content appears on any RU page (`tests/ru-landing.e2e.mjs`).
+- **`/` signed in** redirects to `/me`.
+- **Downloads** come from the Account API's `GET /v1/releases` (the market's `releases.json`, written by the game's `release.py catalog --market ru`), read on the server for `/` and in the browser for `/download` (`src/lib/releases.mjs`): only `direct` entries of Windows, macOS, Linux and Android with an https link, a SHA-256 and a size, the newest per platform, in that order. Each card shows the version, the status in the page language («Открытая бета» → "Open beta"), the size in МБ/MB, the package link, the release's source tag and the SHA-256 in plain sight. IPFS mirrors, store channels and iOS packages are never offered. `/download?platform=<p>` (the game's update button) lists that platform first.
+- **Search.** `/` is indexable in production (`robots: index, follow`) with a canonical link and `hreflang` = the market's page language (`ru`); every other page stays `noindex` and the dev contour stays `noindex` everywhere. Adding the site to Yandex Webmaster is the owner's step once `omoba.ru` answers.
+- **`OMOBA_SITE_URL`**: the "OMOBA website" links lead to `/` (the brand, the footer's «OMOBA», the workshop and legal pages); the sidebar shows no external website button. Leave `OMOBA_SITE_URL` unset: a value fails the build and the server start (`marketProblems`), so no RU page can link another market's website.
+- **Workshop** (`experimental`): `/workshop` shows «Эксперимент: мастерская классов — прототип…», the sidebar entry carries an «эксперимент» tag, and the phone navigation leaves it out (`mobileNav`).
+
 ## Verification
 
-- `npm test` includes `tests/market-profile.test.mjs` (parsing, presets, overrides, fail closed, built-line check, allowlist and nav per market, return destinations, language fallback, `next.config`) and `tests/vk-id.test.mjs` (authorize URL, PKCE against the RFC 7636 vector, cookie attributes, callback with a stubbed Account API, ticket injection).
-- `npm run test:market-profiles` (`tests/market-profiles.e2e.mjs`) runs the current standalone build against a loopback fake Account API, in the market it was built for, and checks that it refuses the other market. A ru build also takes two screenshots into `.agent/market-profiles/` (real Chrome). Run it after a global and after a ru build:
+- `npm test` includes `tests/market-profile.test.mjs` (parsing, presets, overrides, fail closed, built-line check, allowlist and nav per market, return destinations, language fallback, `next.config`), `tests/vk-id.test.mjs` (authorize URL, PKCE against the RFC 7636 vector, cookie attributes, callback with a stubbed Account API, ticket injection) and `tests/legal.test.mjs` (the legal table against the game's values, footer and notice links per market, the deletion page's contact and procedure in every language, the document format, version and data-category coverage of the drafts). With `OMOBA_GAME_MARKETS_PY=<game repo>/scripts/markets.py` it also compares the table with the game's file.
+- `tests/landing.test.mjs` (in `npm test`) covers the landing table, the RU site link and the `OMOBA_SITE_URL` refusal, the phone navigation, the catalog filter, sizes and status labels, the counted class claim with Russian plurals and the absence of donate, wallet, crypto and Ekza text in the guest home and its translations. With `OMOBA_GAME_HEROES=<game repo>/shared/assets/catalog/heroes.json` it also compares the class count with the game's catalog.
+- `npm run test:ru-landing` (`tests/ru-landing.e2e.mjs`) runs the current standalone build against a loopback fake Account API. A ru build: `/` signed out is the guest home (claims, modes, downloads with SHA-256 and МБ, status, footer links, age sign, index/canonical/hreflang), signed in it redirects to `/me`, the English page and an unavailable catalog, the experimental workshop, no donate/wallet/crypto/Ekza text or link on `/`, `/download`, `/login`, `/me`, `/workshop`, `/privacy`, `/terms`, `/offer`, `/delete`, `/connect` and `/settings`, the `/delete` page itself (the procedure in ru, en and zh, the placeholder address, no Account API call), and in Chrome the page hydrates without errors and fits a phone (no screenshots). A global build: `/` still redirects to `/workshop`, the website link is unchanged and `/delete` answers 404.
+- `npm run test:market-profiles` (`tests/market-profiles.e2e.mjs`) runs the current standalone build against a loopback fake Account API, in the market it was built for, and checks that it refuses the other market. A ru build also renders `/privacy`, `/terms` and `/offer` (draft banner, version, no Account API call), checks the notice on the login card and `/connect` and the footer links, follows them (and `/delete`) in Chrome (desktop, and the footer on a phone width) and takes two screenshots into `.agent/market-profiles/`; a global build checks that the legal pages and `/delete` answer 404 and no notice or legal link appears. Run it after a global and after a ru build:
 
 ```sh
 npm run build && npm run test:market-profiles

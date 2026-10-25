@@ -8,7 +8,7 @@ import { assertContour, assertContourHost } from '@/lib/contour-guard.mjs';
 import { LocaleProvider } from '@/components/locale-provider';
 import { ContourProvider } from '@/components/contour';
 import { MarketProvider } from '@/components/market-profile';
-import { assertMarket, vkSignInClientId } from '@/lib/market-profile.mjs';
+import { assertMarket, marketLanding, marketLegal, vkSignInClientId } from '@/lib/market-profile.mjs';
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const copy = {
@@ -44,7 +44,7 @@ export default async function RootLayout({
         <link rel="preload" href="/brand/fonts/Inter-Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/brand/fonts/Inter-SemiBold.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
       </head>
-      <body><LocaleProvider initialLocale={locale} contour={contour}><ContourProvider contour={contour}><MarketProvider market={market} features={clientFeatures}>{children}</MarketProvider></ContourProvider></LocaleProvider></body>
+      <body><LocaleProvider initialLocale={locale} contour={contour}><ContourProvider contour={contour}><MarketProvider market={market} features={clientFeatures} legal={marketLegal(market)} landing={marketLanding(market)}>{children}</MarketProvider></ContourProvider></LocaleProvider></body>
     </html>
   );
 }
