@@ -333,3 +333,34 @@ footer .legal-links { justify-content: center; }
   .legal-main { padding: 26px 18px 50px; }
   .legal-table table { min-width: 560px; }
 }
+
+/* Guest home: a market's landing on this portal (LR-22), and the download cards it
+   shares with /download. The age sign is a bordered mark, as on packaging. */
+.landing-hero .landing-lead { font-size: 16px; color: var(--text); max-width: 560px; }
+.landing-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 4px; }
+.landing-hero .landing-actions .button { margin: 0; font-size: 14px; }
+.landing-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 18px 0 0; }
+.age-sign { display: inline-grid; place-items: center; min-width: 38px; height: 26px; padding: 0 6px; border: 1.5px solid currentColor; border-radius: 5px; font-family: var(--omoba-sans); font-size: 12px; font-weight: 700; color: var(--text); }
+footer .age-sign { color: var(--muted); }
+.landing-section { margin-top: 34px; }
+.landing-section > h2 { margin-bottom: 18px; }
+.landing-modes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.landing-modes .card { margin: 0; }
+.landing-modes h3 { font-size: 17px; margin-bottom: 8px; }
+.landing-modes p { margin: 0; }
+.release-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin-bottom: 14px; }
+.release-list .release-card { margin: 0; display: flex; flex-direction: column; }
+.release-card.highlighted { border-color: var(--omoba-crystal); }
+.release-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+.release-sha { margin: 14px 0 0; color: var(--muted); font-size: 11px; }
+.release-sha span { color: var(--text); }
+.nav-tag { margin-left: auto; font-style: normal; font-size: 10px; letter-spacing: .04em; color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 4px; padding: 1px 6px; }
+.workshop-experimental { margin: 0 0 22px; }
+@media (max-width: 1100px) {
+  .landing-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .landing-modes { grid-template-columns: 1fr; gap: 12px; }
+  .release-list { grid-template-columns: 1fr; }
+  .landing-section { margin-top: 26px; }
+}

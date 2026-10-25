@@ -14,6 +14,8 @@ export type MarketLegal = Readonly<{
   communityTelegram: string | null;
   ageRating: string | null;
 }>;
+/** Where the market's landing lives and how the workshop is offered (LR-22). */
+export type MarketLanding = Readonly<{ home: "site" | "portal"; workshop: "listed" | "experimental" }>;
 export const MARKET_VARIABLE: "OMOBA_MARKET";
 export const DEFAULT_MARKET: "global";
 export const MARKETS: readonly Market[];
@@ -22,6 +24,7 @@ export const FEATURES: readonly Readonly<{ name: FeatureName; key: "ekza" | "sup
 export const MARKET_PRESETS: Readonly<Record<Market, MarketFeatures>>;
 export const MARKET_LOCALES: Readonly<Record<Market, "ru" | "zh" | null>>;
 export const MARKET_LEGAL: Readonly<Record<Market, MarketLegal>>;
+export const MARKET_LANDING: Readonly<Record<Market, MarketLanding>>;
 export const FEATURE_ROUTES: Readonly<Record<string, "ekza" | "supporter">>;
 export function marketName(env?: Record<string, string | undefined>): Market;
 export function marketFeatures(env?: Record<string, string | undefined>): MarketFeatures;
@@ -37,3 +40,4 @@ export function routeEnabled(pathname: string, features: { ekza: boolean; suppor
 export function navForMarket<T extends string | readonly [string, ...unknown[]]>(items: readonly T[], features: { ekza: boolean; supporter: boolean }): T[];
 export function marketLocale(market: Market): "ru" | "zh" | null;
 export function marketLegal(market: Market): MarketLegal;
+export function marketLanding(market: Market): MarketLanding;

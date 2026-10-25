@@ -1,7 +1,7 @@
 'use client';
 import { Brand } from '@/components/brand';
 import { NavIcon } from '@/components/nav-icon';
-import { DEFAULT_SITE_URL, GUEST_LINKS, MOBILE_NAV, PORTAL_NAV, portalNav, portalReturnTo, portalLoginHref } from '@/lib/navigation.mjs';
+import { DEFAULT_SITE_URL, GUEST_LINKS, PORTAL_NAV, mobileNav, portalNav, portalReturnTo, portalLoginHref } from '@/lib/navigation.mjs';
 import Link from 'next/link';
 import { api, ApiFailure } from '@/lib/client-api';
 import DevicesView from './devices';
@@ -9,7 +9,9 @@ import ConnectView from './connect';
 import { RegistrationView, VkSignInButtons, fill, useMethodLabel, useSigninFailure, type SocialTicket } from './social';
 import { useMarket } from './market-profile';
 import { LegalLinks, SignInLegalNotice } from './legal';
-import { legalSourceUrl } from '@/lib/legal.mjs';
+import { GuestHome, type GuestHomeData } from './guest-home';
+import { ReleaseList } from './releases';
+import { pageReleases } from '@/lib/releases.mjs';
 import SupporterView from './supporter';
 import SupportersView from './supporters';
 import { HeroRecognitionBadge } from './hero-recognition';
@@ -17,7 +19,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { dictionaries, type Words } from '@/lib/i18n';
 import { useLocale, LanguageSelector } from '@/components/locale-provider';
-import type {Account,Profile,History,Friends,Match,Analytics,Sessions,Release,Settings} from '@/lib/types';
+import type {Account,Profile,History,Friends,Match,Analytics,Sessions,Settings} from '@/lib/types';
 
 function errorText(error:unknown,w:Words) {
   if(error instanceof ApiFailure){if(error.code==='handle_taken')return w.handleTaken;if(error.code==='player_not_found')return w.playerNotFound;if(error.status===404)return w.private;if(error.status===409)return w.conflict;
@@ -145,12 +147,15 @@ function SettingsView({account,w,update}:{account:Account;w:Words;update:()=>voi
     <Card><h2>{w.privacy}</h2><form onSubmit={e=>{e.preventDefault();void save('me/settings',{...s,expected_version:s.version,version:undefined});}}>{(['public_profile_enabled','public_stats_enabled','discoverable'] as const).map((key,i)=><label className="toggle" key={key}><input type="checkbox" checked={s[key]} disabled={i>0&&!s.public_profile_enabled} onChange={e=>setS({...s,[key]:e.target.checked,...(key==='public_profile_enabled'&&!e.target.checked?{public_stats_enabled:false,discoverable:false}:{})})}/>{[w.publicProfile,w.publicStats,w.discoverable][i]}</label>)}<p className="muted">{w.privacyHelp}</p><div className="filters"><label>{w.language}<LanguageSelector /></label><label>{w.timezone}<input value={s.timezone} onChange={e=>setS({...s,timezone:e.target.value})} list="timezones"/><datalist id="timezones">{['UTC','Europe/Moscow','Asia/Shanghai','Europe/Berlin','America/New_York'].map(v=><option key={v} value={v}/>)}</datalist></label></div><button disabled={busy} className="primary">{w.save}</button></form></Card>
     {features.vkSignIn?<SocialLink account={account} w={w} update={update}/>:null}<Card><h2>{w.sessions}</h2><p className="muted">{w.revokeHelp}</p><Status error={sessions.error} busy={sessions.busy} w={w} retry={sessions.refresh}/>{sessions.data?.sessions.map(session=><div className="friend-row" key={session.session_id}><div className="grow"><strong>{session.label}{session.current?' · '+w.currentSession:''}</strong><small>{new Date(session.last_seen).toLocaleString(locale,{timeZone:account.settings.timezone})}</small></div><button onClick={async()=>{try{await api('me/sessions/'+session.session_id,'DELETE');sessions.refresh();if(session.current)update();}catch(e){setError(e);}}}>{w.revoke}</button></div>)}</Card></>;
 }
-function Downloads({w}:{w:Words}){const {locale,t}=useLocale();const {legal}=useMarket(); const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale); const{data,error,busy,refresh}=useData<{releases:Release[]}>('releases');return <><h1>{w.downloadsTitle}</h1><p>{w.downloadsHelp}</p><Status error={error} busy={busy} w={w} retry={refresh}/>{data?.releases.length===0?<Card><Empty text={w.noRelease}/></Card>:null}{data?.releases.map(r=><Card key={r.platform+r.architecture+r.version}><span className="eyebrow">{r.platform} · {r.architecture}</span><h2>{r.version}</h2><p>{r.instructions}</p><p className="muted">{r.test_status} · {number(r.size_bytes)} B</p><a className="button primary" href={r.url} rel="noreferrer">{w.download} ↗</a>{legalSourceUrl(legal,r.version)?<a className="button" href={legalSourceUrl(legal,r.version)!} rel="noreferrer noopener" data-release-source>{t('Source code of this version')} ↗</a>:null}<details><summary>SHA-256</summary><p className="code">{r.sha256}</p></details></Card>)}</>;}
+// Direct downloads only, sizes in MB and the status in the page language (LR-22); the
+// game's update button opens `?platform=<its platform>`, which is listed first.
+function Downloads({w}:{w:Words}){const{data,error,busy,refresh}=useData<unknown>('releases');const releases=data?pageReleases(data):null;const platform=useSearchParams().get('platform');return <><h1>{w.downloadsTitle}</h1><p>{w.downloadsHelp}</p><Status error={error} busy={busy} w={w} retry={refresh}/>{releases?.length===0?<Card><Empty text={w.noRelease}/></Card>:null}{releases?<ReleaseList releases={releases} platform={platform}/>:null}</>;}
 
-export default function Portal({initialAccount,initiallyUnavailable,accountDisabled=false,siteUrl=DEFAULT_SITE_URL,socialTicket:initialTicket=null}:{initialAccount:Account|null;initiallyUnavailable:boolean;accountDisabled?:boolean;siteUrl?:string;socialTicket?:SocialTicket|null}){
+/** `home`: the guest home's data, given only on `/` where the market's landing is this portal (LR-22). */
+export default function Portal({initialAccount,initiallyUnavailable,accountDisabled=false,siteUrl=DEFAULT_SITE_URL,socialTicket:initialTicket=null,home=null}:{initialAccount:Account|null;initiallyUnavailable:boolean;accountDisabled?:boolean;siteUrl?:string;socialTicket?:SocialTicket|null;home?:GuestHomeData|null}){
   const[account,setAccount]=useState(initialAccount),[unavailable,setUnavailable]=useState(initiallyUnavailable);
   const[socialTicket,setSocialTicket]=useState(initialTicket),[signingOut,setSigningOut]=useState(false);
-  const { features } = useMarket();
+  const { features, landing, legal } = useMarket();
   const { locale, t } = useLocale();
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
   const path=usePathname();const router=useRouter();const w=dictionaries[locale],tz=account?.settings.timezone||'UTC';
@@ -165,9 +170,13 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   const titles:Record<string,string>={'/me':w.overview,'/me/matches':w.matches,'/me/stats':w.stats,'/players':w.players,'/friends':w.friends,'/creators':t('Creators'),'/market':t('Market'),'/sponsor':t('Community sculptures'),'/workshop':t('Workshop'),'/supporter':t('Hero'),'/supporters':t('Supporters'),'/devices':t('Devices'),'/settings':w.settings};
   // Only pages this market serves (no Ekza or Supporter pages in ru/cn).
   const nav=portalNav(PORTAL_NAV,features).map(href=>[href,titles[href]] as const);
+  // Where `/` is the market's landing (LR-22) the brand leads there and no other website is linked.
+  const ownLanding=landing.home==='portal',brandHref=ownLanding?'/':'/me';
+  const experimental=(href:string)=>href==='/workshop'&&landing.workshop==='experimental'?<em className="nav-tag" data-experimental>{t('experimental')}</em>:null;
   const guestLinks=portalNav(GUEST_LINKS,features);
   let content:React.ReactNode;
-  if (path === '/supporters' && features.supporter) content = <SupportersView accountDisabled={accountDisabled}/>;
+  if (path === '/' && home && !account) content = <GuestHome home={home} loginHref={portalLoginHref('/me',features)} signInLabel={signInLabel}/>;
+  else if (path === '/supporters' && features.supporter) content = <SupportersView accountDisabled={accountDisabled}/>;
   else if (accountDisabled)
     content = (
       <Card className="portal-welcome">
@@ -223,5 +232,5 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   else if(path==='/settings')content=<SettingsView account={account} w={w} update={()=>void reload()}/>;
   else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div><Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link>{features.supporter?<Link className="button" href="/supporter">✦ {t('Hero')}</Link>:null}<Link className="button" href="/devices">{t('Devices')}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
   else content=<Card><Empty text={w.private}/></Card>;
-  return <div className="shell"><aside className="sidebar"><Link href="/me" className="brand"><Brand section={t("Player portal")} /></Link><nav aria-label={t("Main")}>{nav.map(([href,title])=><Link key={href} href={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav><div className="sidebar-bottom"><a className="button" href={siteUrl}>{t('OMOBA website')} ↗</a><Link className="button" href="/download">{w.download} ↗</Link><small>{t("OPEN SOURCE · OPEN MOBA")}</small></div></aside><div className="workspace"><header className="topbar"><Link href="/me" className="portal-mobile-brand" aria-label={t("OMOBA player portal")}><Brand section={t("Player portal")} /></Link><span className="beta">BETA</span><span className="muted">{w.account}</span><div className="grow"/><LanguageSelector />{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button></>:accountDisabled?<span className="muted">{t('Guest prototype')}</span>:socialTicket?<button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button>:<Link href={loginHref}>{signInLabel}</Link>}</header><main>{unavailable&&!accountDisabled?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer><a href={siteUrl}>OMOBA · {t('Website')} ↗</a><LegalLinks/><span>2026</span></footer></div><nav className="mobile-nav" aria-label={t("Mobile")}>{nav.filter(([p])=>portalNav(MOBILE_NAV,features).includes(p)).map(([href,title])=><Link href={href} key={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav></div>;
+  return <div className="shell"><aside className="sidebar"><Link href={brandHref} className="brand"><Brand section={t("Player portal")} /></Link><nav aria-label={t("Main")}>{nav.map(([href,title])=><Link key={href} href={href} className={path===href?'active':''}><NavIcon href={href}/>{title}{experimental(href)}</Link>)}</nav><div className="sidebar-bottom">{ownLanding?null:<a className="button" href={siteUrl}>{t('OMOBA website')} ↗</a>}<Link className="button" href="/download">{w.download} ↗</Link><small>{t("OPEN SOURCE · OPEN MOBA")}</small></div></aside><div className="workspace"><header className="topbar"><Link href={brandHref} className="portal-mobile-brand" aria-label={t("OMOBA player portal")}><Brand section={t("Player portal")} /></Link><span className="beta">BETA</span><span className="muted">{w.account}</span><div className="grow"/><LanguageSelector />{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button></>:accountDisabled?<span className="muted">{t('Guest prototype')}</span>:socialTicket?<button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button>:<Link href={loginHref}>{signInLabel}</Link>}</header><main>{unavailable&&!accountDisabled?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer>{ownLanding?<Link href="/">OMOBA</Link>:<a href={siteUrl}>OMOBA · {t('Website')} ↗</a>}<LegalLinks/>{legal.ageRating?<span className="age-sign" title={t('Age rating')} aria-label={t('Age rating')+' '+legal.ageRating} data-age-rating>{legal.ageRating}</span>:null}<span>2026</span></footer></div><nav className="mobile-nav" aria-label={t("Mobile")}>{nav.filter(([p])=>mobileNav(features,landing).includes(p)).map(([href,title])=><Link href={href} key={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav></div>;
 }

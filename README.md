@@ -56,7 +56,10 @@ this repository. Do not expose the database or raw Account API publicly.
   `https://hub.ekza.io` in production); other values only on loopback with
   `OMOBA_ALLOW_INSECURE_LOCAL=1`.
 - `OMOBA_SITE_URL`: the OMOBA website for "About the game" links. Defaults to
-  `https://omoba.io` (production) or `https://dev.omoba.io` (dev).
+  `https://omoba.io` (production) or `https://dev.omoba.io` (dev). Leave it unset in the
+  `ru` market: its landing is this portal's own guest home at `/` (LR-22), every website
+  link leads there, and a value fails the build and the start
+  ([Markets › RU landing](docs/markets.md#ru-landing-the-guest-home-lr-22)).
 - `OMOBA_MARKET`: `global` (default, also when unset), `ru` or `cn`, the same switch as the
   game's separate builds. `ru` and `cn` have no Ekza surfaces and no payments; `ru` signs in
   with VK ID. `OMOBA_FEATURE_EKZA`, `OMOBA_FEATURE_SUPPORTER`, `OMOBA_FEATURE_VK_SIGN_IN`
