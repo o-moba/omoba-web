@@ -717,6 +717,8 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
   "Confirm sign-in": {"ru": "Подтвердить вход", "zh": "确认登录"},
   "VK “{name}” is not linked to an OMOBA profile yet. Press “Continue” and confirm the link in the game.": {"ru": "VK «{name}» ещё не связан с профилем OMOBA. Нажмите «Продолжить» и подтвердите привязку в игре.", "zh": "VK“{name}”尚未关联 OMOBA 资料。请点击“继续”，然后在游戏中确认关联。"},
   "Continue": {"ru": "Продолжить", "zh": "继续"},
+  // LR-18: progress follows the VK-linked account (ProgressFollowsVk).
+  "Progress follows the VK-linked account. After a reinstall or on a new device, open Profile → “Sign in with VK ID” in the game and sign in with the same VK ID to get your profile back. Recovery codes work on any device too.": {"ru": "Прогресс следует за аккаунтом, привязанным к VK. После переустановки игры или на новом устройстве откройте в игре «Профиль → Войти через VK ID» и войдите с тем же VK ID — профиль вернётся. Коды восстановления тоже работают на любом устройстве.", "zh": "进度跟随已关联 VK 的账号。重新安装游戏或换用新设备后，在游戏中打开“个人资料 → 使用 VK ID 登录”，并用同一个 VK ID 登录即可找回资料。恢复码在任何设备上同样有效。"},
   "Sign in to confirm this device.": {"ru": "Войдите, чтобы подтвердить это устройство.", "zh": "请登录以确认此设备。"},
   "Unlink this VK account? You can still sign in through the game.": {"ru": "Отвязать этот аккаунт VK? Войти можно будет через игру.", "zh": "确定解除此 VK 账号关联？你仍可通过游戏登录。"},
   "Sign in again to confirm this action: it needs a sign-in within the last 10 minutes.": {"ru": "Войдите заново, чтобы подтвердить действие: нужен вход не позднее 10 минут назад.", "zh": "请重新登录以确认此操作：需要最近 10 分钟内的登录。"},

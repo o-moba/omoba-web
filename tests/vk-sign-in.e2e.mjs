@@ -149,8 +149,14 @@ try {
   const home = register("Лиса");
   const nickname = sql(`SELECT nickname FROM career_profiles WHERE profile_id='${home.profile}'`);
 
-  // 2. Registration on the website: an unknown VK account signs nobody in.
-  await page.goto(origin + "/login");
+  // 2. Registration on the website: an unknown VK account signs nobody in. Guest
+  //    home and sign-in say that progress follows the VK-linked account (LR-18).
+  const progressNote = /^Прогресс следует за аккаунтом, привязанным к VK\. .*тем же VK ID.*Коды восстановления/;
+  for (const path of ["/me", "/login"]) {
+    await page.goto(origin + path);
+    assert.match(await page.locator("[data-progress-follows-vk]").innerText(), progressNote, path);
+  }
+  checks.push("guest home and sign-in say that progress follows the VK-linked account");
   await vkSignIn();
   const first = authorize[0];
   assert.equal(first.client_id, CLIENT_ID);
@@ -203,6 +209,9 @@ try {
   await page.getByText(nickname).first().waitFor();
   await page.screenshot({ path: out + "/3-signed-in.png", fullPage: true });
   checks.push("VK (via OK) signs the website into the linked game account");
+  await page.goto(origin + "/devices");
+  assert.match(await page.locator("[data-progress-follows-vk]").innerText(), progressNote, "/devices");
+  checks.push("Devices says it next to the recovery codes");
 
   // 6. A second computer: the website approves its code as the account; the game switches.
   register("Guest");

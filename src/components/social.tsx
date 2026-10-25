@@ -1,5 +1,6 @@
 'use client';
 import { useLocale } from '@/components/locale-provider';
+import { useMarket } from '@/components/market-profile';
 
 export type SocialTicket = { display_name: string; expires_at: string };
 export type VkMethod = 'vkid' | 'ok_ru' | 'mail_ru';
@@ -19,6 +20,18 @@ const METHODS: { method: VkMethod; mark: string }[] = [
 export function useMethodLabel() {
   const { t } = useLocale();
   return (method: string) => method === 'vkid' ? t('Sign in with VK ID') : method === 'ok_ru' ? t('Odnoklassniki') : method === 'mail_ru' ? 'Mail.ru' : method;
+}
+
+/**
+ * Where the market signs in with VK ID (LR-18): progress follows the VK-linked
+ * account, so a reinstall or a new device gets the profile back with the same
+ * VK ID; recovery codes work everywhere. Guest home, sign-in, `/connect` and Devices.
+ */
+export function ProgressFollowsVk() {
+  const { t } = useLocale();
+  const { features } = useMarket();
+  if (!features.vkSignIn) return null;
+  return <p data-progress-follows-vk>{t('Progress follows the VK-linked account. After a reinstall or on a new device, open Profile → “Sign in with VK ID” in the game and sign in with the same VK ID to get your profile back. Recovery codes work on any device too.')}</p>;
 }
 
 /** VK, OK and Mail.ru are one VK ID app; `provider` picks the account type. */

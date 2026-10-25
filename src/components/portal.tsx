@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { api, ApiFailure } from '@/lib/client-api';
 import DevicesView from './devices';
 import ConnectView from './connect';
-import { RegistrationView, VkSignInButtons, fill, useMethodLabel, useSigninFailure, type SocialTicket } from './social';
+import { ProgressFollowsVk, RegistrationView, VkSignInButtons, fill, useMethodLabel, useSigninFailure, type SocialTicket } from './social';
 import { useMarket } from './market-profile';
 import SupporterView from './supporter';
 import SupportersView from './supporters';
@@ -56,7 +56,7 @@ function Login({w,onConnected,returnTo}:{w:Words;onConnected:()=>void;returnTo:s
   // Markets with VK ID (ru): VK, OK and Mail.ru first; game pairing stays the secondary path.
   const pairing=<>{pair?<><div className="pair-code" aria-label={pair.code}>{pair.code.slice(0,4)}—{pair.code.slice(4)}</div><p>{w.pairHelp}</p><p role="status" className="accent">{w.awaiting}</p><time className="muted">{new Date(pair.expires_at).toLocaleTimeString(locale)}</time><div><button onClick={async()=>{try{await api('auth/pairings/cancel','POST',{});setPair(null);setState('cancelled');}catch(e){setError(e);}}}>{w.cancel}</button></div></>:<><p role="status">{state==='denied'?w.denied:['expired','cancelled'].includes(state)?w.expired:''}</p><button className={features.vkSignIn?'':'primary'} disabled={busy} onClick={start}>{w.createPair}</button></>}</>;
   return <Card className="login-card"><span className="eyebrow">{t("OMOBA ACCOUNT")}</span>{failure?<p role="alert" className="notice error" data-signin-failure>{failure}</p>:null}
-    {features.vkSignIn?<><h1>{t('Sign in to OMOBA')}</h1><p>{t('Use your VK, OK or Mail.ru account. The game confirms the first link to your profile.')}</p><VkSignInButtons returnTo={returnTo}/>
+    {features.vkSignIn?<><h1>{t('Sign in to OMOBA')}</h1><p>{t('Use your VK, OK or Mail.ru account. The game confirms the first link to your profile.')}</p><VkSignInButtons returnTo={returnTo}/><ProgressFollowsVk/>
       <div className="login-secondary" data-pairing><h2>{t('Or connect your game')}</h2><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}</div></>
     :<><h1>{w.login}</h1><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}</>}
     <p className="muted separated">{w.newPlayer}</p><Link href="/download">{w.download} ↗</Link></Card>;
@@ -210,7 +210,7 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   else if(path==='/login')content=<Login w={w} onConnected={connected} returnTo={returnTo}/>;
   else if(path==='/download')content=<Downloads w={w}/>;
   else if(path.startsWith('/players/'))content=<PlayersView id={path.split('/')[2]} w={w} me={account?.profile.profile_id}/>;
-  else if(!account)content=<><div className="hero"><span className="eyebrow">{t("OMOBA · PLAYER PORTAL")}</span><h1>{w.title}</h1><p>{w.intro}</p><Link className="button primary" href={loginHref}>{signInLabel} →</Link><Link className="button" href="/download">{w.download}</Link></div><div className="value-grid">{[[w.matches,w.historical],[w.stats,w.ratingHistory],[w.friends,w.friendCode]].map(([title,description])=><Card key={title}><h2>{title}</h2><p className="muted">{description}</p></Card>)}</div></>;
+  else if(!account)content=<><div className="hero"><span className="eyebrow">{t("OMOBA · PLAYER PORTAL")}</span><h1>{w.title}</h1><p>{w.intro}</p><Link className="button primary" href={loginHref}>{signInLabel} →</Link><Link className="button" href="/download">{w.download}</Link><ProgressFollowsVk/></div><div className="value-grid">{[[w.matches,w.historical],[w.stats,w.ratingHistory],[w.friends,w.friendCode]].map(([title,description])=><Card key={title}><h2>{title}</h2><p className="muted">{description}</p></Card>)}</div></>;
   else if(path==='/me/matches')content=<HistoryView w={w} tz={tz} locale={locale}/>;
   else if(path.startsWith('/matches/'))content=<MatchView id={path.split('/')[2]} me={account.profile.profile_id} w={w} tz={tz} locale={locale}/>;
   else if(path==='/me/stats')content=<StatsView w={w} tz={tz} locale={locale}/>;
