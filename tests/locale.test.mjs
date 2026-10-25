@@ -63,7 +63,11 @@ test('account dictionaries and public source translations cover every language',
   // The production project uses Node 24; strip types without a framework runtime.
   const source = await readFile(new URL('../src/lib/i18n.ts', import.meta.url), 'utf8');
   const javascript = stripTypeScriptTypes(source);
-  const { dictionaries, portalTranslations } = await import('data:text/javascript;base64,' + Buffer.from(javascript).toString('base64'));
+  const { dictionaries, portalTranslations: portal } = await import('data:text/javascript;base64,' + Buffer.from(javascript).toString('base64'));
+  // The legal links and notice (LR-06) keep their strings in their own file; the provider merges both.
+  const legalSource = stripTypeScriptTypes(await readFile(new URL('../src/lib/legal-translations.ts', import.meta.url), 'utf8'));
+  const { legalTranslations } = await import('data:text/javascript;base64,' + Buffer.from(legalSource).toString('base64'));
+  const portalTranslations = { ...portal, ...legalTranslations };
   const keys = Object.keys(dictionaries.en).sort();
   assert.deepEqual(Object.keys(dictionaries.ru).sort(), keys);
   assert.deepEqual(Object.keys(dictionaries.zh).sort(), keys);
@@ -71,7 +75,7 @@ test('account dictionaries and public source translations cover every language',
     for (const locale of ['en', 'ru', 'zh']) assert.ok(dictionaries[locale][key].trim(), `${locale}.${key}`);
     assert.match(dictionaries.zh[key], /[\u3400-\u9fff]/u, `Chinese translation missing for ${key}`);
   }
-  for (const file of ['portal.tsx', 'devices.tsx', 'supporter.tsx', 'supporters.tsx', 'hero-recognition.tsx', 'locale-provider.tsx', 'contour.tsx', 'social.tsx', 'connect.tsx']) {
+  for (const file of ['portal.tsx', 'devices.tsx', 'supporter.tsx', 'supporters.tsx', 'hero-recognition.tsx', 'locale-provider.tsx', 'contour.tsx', 'social.tsx', 'connect.tsx', 'legal.tsx']) {
     const component = await readFile(new URL('../src/components/' + file, import.meta.url), 'utf8');
     for (const match of component.matchAll(/\b(?:t|setMessage|setError)\((['"])([^'"\n]+)\1\)/g)) {
       assert.ok(portalTranslations[match[2]]?.ru, `Missing Russian: ${match[2]}`);

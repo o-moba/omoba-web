@@ -293,3 +293,43 @@ html:lang(zh) .omoba-brand small {
 .connect-code { padding: 6px 0 18px; }
 .connect-card .device-confirm h2 { overflow-wrap: anywhere; }
 .connect-card .connect-code { margin-bottom: 0; }
+
+/* Legal documents and links (LR-06): footer links, the sign-in notice and the
+   /privacy, /terms and /offer pages. Markets without a legal table render none. */
+.legal-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.legal-links a { color: var(--muted); }
+.legal-links a:hover { color: var(--mint); }
+footer .legal-links { justify-content: center; }
+.creator-footer .legal-links { margin-top: 10px; }
+.legal-notice { color: var(--muted); font-size: 12px; margin: 18px 0 0; }
+.legal-notice a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.legal-page { min-height: 100vh; display: flex; flex-direction: column; }
+.legal-header { display: flex; align-items: center; gap: 16px; padding: 18px 5%; border-bottom: 1px solid var(--line); }
+.legal-header select { font-size: 11px; background: transparent; min-height: 36px; }
+.legal-brand { font-size: 18px; font-weight: 750; letter-spacing: 2px; }
+.legal-main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 40px 5% 70px; }
+.legal-document h1 { font-size: clamp(28px, 4vw, 42px); }
+.legal-document h2 { margin: 34px 0 14px; scroll-margin-top: 20px; }
+.legal-document h3 { margin: 22px 0 10px; font-size: 16px; }
+.legal-document p, .legal-document li { overflow-wrap: anywhere; }
+.legal-document ul, .legal-document ol { padding-left: 24px; margin: 0 0 14px; }
+.legal-document li + li { margin-top: 6px; }
+.legal-document a { color: var(--mint); text-decoration: underline; text-underline-offset: 3px; }
+.legal-draft strong { display: block; font-size: 15px; margin-bottom: 4px; }
+.legal-meta { color: var(--muted); font-size: 13px; margin-bottom: 26px; }
+.legal-note { border-left: 3px solid var(--gold); padding: 8px 14px; color: var(--gold); font-size: 13px; background: #3f392426; }
+.legal-placeholder { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--text); border-radius: 4px; padding: 0 4px; }
+.legal-table { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 10px; }
+.legal-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.legal-table th, .legal-table td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.legal-table th { color: var(--muted); font-weight: 600; background: var(--panel); }
+.legal-table tr:last-child td { border-bottom: 0; }
+.legal-page-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; justify-content: space-between; }
+@media (max-width: 760px) {
+  /* The portal footer is hidden on phones; with legal links it stays, above the bottom nav. */
+  footer:has(.legal-links) { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 18px 18px calc(84px + env(safe-area-inset-bottom)); }
+  footer .legal-links { justify-content: flex-start; }
+  footer.legal-page-footer { padding-bottom: 24px; }
+  .legal-main { padding: 26px 18px 50px; }
+  .legal-table table { min-width: 560px; }
+}

@@ -104,10 +104,35 @@ PORT=3010 npm start
 
 The runtime environment must repeat the build's market and features (the server refuses otherwise). The server also refuses to serve the loopback API without `OMOBA_TRUST_LOOPBACK_PROXY=1`, or an API that is not on loopback without a 64-hex `OMOBA_ACCOUNT_INGRESS_KEY` (see the README). The `cn` market has no hosting or sign-in decided yet.
 
+## Legal documents and links (LR-06)
+
+Each market has a legal table, `MARKET_LEGAL` in `src/lib/market-profile.mjs`, read only through `marketLegal(market)` (the one place LR-68 switches to the runtime region). It mirrors the game's `scripts/markets.py` `Legal` and `shared/src/market.rs` `Market::legal` field for field (camelCase here):
+
+| Field | `ru` | Used for |
+|---|---|---|
+| `version` | `0-draft` (the Russian drafts, LR-04) | the documents shown, the notice |
+| `privacy`, `terms` | `https://omoba.ru/privacy`, `https://omoba.ru/terms` | `/privacy`, `/terms`, footer, sign-in notice |
+| `offer` (portal only) | `https://omoba.ru/offer` | `/offer`; linked only with the Supporter feature |
+| `source` | `https://github.com/o-moba/omoba-bevy/tree/v{version}-ru` | footer (the repository), each download card (the release's tag) |
+| `supportEmail`, `communityVk`, `communityTelegram` | empty until the owner provides them (LR-21) | footer; hidden while empty |
+| `ageRating` | `12+` (placeholder, LR-07) | not shown by the portal yet (LR-22) |
+
+`global` and `cn` have no table (every field null): no legal pages (`/privacy`, `/terms` and `/offer` answer 404), no notice, no legal links, footers as before.
+
+**Pages.** `/privacy`, `/terms` and `/offer` render `legal/<market>/<version>/<name>.md` ([legal/README.md](../legal/README.md): format, and how to publish the counsel-approved texts). They are public and make no Account API call. A file whose front-matter `version` differs from the table refuses to render, so the page always shows the version the game asks players to accept. A `draft` shows the «Проект — требует проверки юристом» banner and «не вступила в силу»; a `final` document shows its effective date and review line. The documents are Russian; other page languages get a one-line note. `next.config.ts` traces `legal/**` into the standalone output.
+
+**Links** (`src/lib/legal.mjs`, `src/components/legal.tsx`):
+
+- the login card (under the VK ID buttons, or under game pairing) and `/connect` show «Входя, вы принимаете Пользовательское соглашение и соглашаетесь на обработку персональных данных в соответствии с Политикой обработки персональных данных» with both documents linked (`SignInLegalNotice`, needs both `terms` and `privacy`);
+- the portal footer, the legal pages and the workshop footer list Privacy, Terms, the offer (only with the Supporter feature: the one switch for Supporter links, LR-67/LR-68), Support (`mailto:`), Source and the community (`LegalLinks`). On phones the portal footer, otherwise hidden, stays visible when it carries legal links;
+- each download card links the source of that release (`v<version>-ru`, the tag `release.py catalog --market ru` requires).
+
+The drafts list every data category the RU services process (Account API migrations 001-007, career store 001-004, in-memory chat, cookies, logs, backups), with retention; `tests/legal.test.mjs` keeps that coverage. The privacy policy and the user agreement carry no payment-method details: those live in the offer, so store builds can leave it out.
+
 ## Verification
 
-- `npm test` includes `tests/market-profile.test.mjs` (parsing, presets, overrides, fail closed, built-line check, allowlist and nav per market, return destinations, language fallback, `next.config`) and `tests/vk-id.test.mjs` (authorize URL, PKCE against the RFC 7636 vector, cookie attributes, callback with a stubbed Account API, ticket injection).
-- `npm run test:market-profiles` (`tests/market-profiles.e2e.mjs`) runs the current standalone build against a loopback fake Account API, in the market it was built for, and checks that it refuses the other market. A ru build also takes two screenshots into `.agent/market-profiles/` (real Chrome). Run it after a global and after a ru build:
+- `npm test` includes `tests/market-profile.test.mjs` (parsing, presets, overrides, fail closed, built-line check, allowlist and nav per market, return destinations, language fallback, `next.config`), `tests/vk-id.test.mjs` (authorize URL, PKCE against the RFC 7636 vector, cookie attributes, callback with a stubbed Account API, ticket injection) and `tests/legal.test.mjs` (the legal table against the game's values, footer and notice links per market, the document format, version and data-category coverage of the drafts). With `OMOBA_GAME_MARKETS_PY=<game repo>/scripts/markets.py` it also compares the table with the game's file.
+- `npm run test:market-profiles` (`tests/market-profiles.e2e.mjs`) runs the current standalone build against a loopback fake Account API, in the market it was built for, and checks that it refuses the other market. A ru build also renders `/privacy`, `/terms` and `/offer` (draft banner, version, no Account API call), checks the notice on the login card and `/connect` and the footer links, follows them in Chrome (desktop, and the footer on a phone width) and takes two screenshots into `.agent/market-profiles/`; a global build checks that the legal pages answer 404 and no notice or legal link appears. Run it after a global and after a ru build:
 
 ```sh
 npm run build && npm run test:market-profiles

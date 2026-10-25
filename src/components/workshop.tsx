@@ -6,6 +6,7 @@ import { api, ApiFailure } from "@/lib/client-api";
 import { Brand } from "@/components/brand";
 import { LanguageSelector, useLocale } from "@/components/locale-provider";
 import { useMarket } from "@/components/market-profile";
+import { LegalLinks } from "@/components/legal";
 import { creatorText } from "@/lib/creator-translations";
 import type { Account } from "@/lib/types";
 import type { AssetCatalog, CatalogIcon } from "@/lib/asset-catalog-types";
@@ -983,6 +984,7 @@ export default function Workshop({
           <div>
             <strong>{t("OMOBA / CLASS WORKSHOP")}</strong>
             <p>{t("Private drafts. Real game rules. Local experiments.")}</p>
+            <LegalLinks />
           </div>
           <details>
             <summary>{t("Source & compatibility")}</summary>

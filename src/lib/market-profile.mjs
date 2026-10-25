@@ -35,6 +35,40 @@ export const MARKET_PRESETS = Object.freeze({
 /** Fallback page language when the player has not chosen one; null keeps negotiation. */
 export const MARKET_LOCALES = Object.freeze({ global: null, ru: "ru", cn: "zh" });
 
+/** A market without legal documents, links or age sign (global, cn). */
+const NO_LEGAL = Object.freeze({
+  version: null, privacy: null, terms: null, offer: null, source: null,
+  supportEmail: null, communityVk: null, communityTelegram: null, ageRating: null,
+});
+
+/**
+ * Each market's legal documents, source link, player channels and age sign (LR-06,
+ * LR-07, LR-21): the game's `scripts/markets.py` `Legal` and `shared/src/market.rs`
+ * `Market::legal`, field for field and value for value (camelCase here). null is
+ * "not provided" and is not shown. `version` is the version of the user agreement and
+ * privacy policy the game asks a player to accept; `source` is the public source tree
+ * of a release, `{version}` standing for the release (`0.45.0`).
+ *
+ * `offer` (the public offer for supporter cosmetics, LR-67) is portal-only for now:
+ * the game links `/supporter`, which links the offer; the game table gains it with
+ * LR-67/LR-68. RU support and community stay null until the owner provides them (LR-21).
+ */
+export const MARKET_LEGAL = Object.freeze({
+  global: NO_LEGAL,
+  ru: Object.freeze({
+    version: "0-draft",
+    privacy: "https://omoba.ru/privacy",
+    terms: "https://omoba.ru/terms",
+    offer: "https://omoba.ru/offer",
+    source: "https://github.com/o-moba/omoba-bevy/tree/v{version}-ru",
+    supportEmail: null,
+    communityVk: null,
+    communityTelegram: null,
+    ageRating: "12+",
+  }),
+  cn: NO_LEGAL,
+});
+
 /**
  * Pages that exist only with a feature. `/creators`, `/market` and `/sponsor` are
  * Ekza surfaces (Registry, Studio, Ekza library); `/supporter` and `/supporters`
@@ -221,4 +255,13 @@ export function navForMarket(items, features) {
 /** @param {"global" | "ru" | "cn"} market */
 export function marketLocale(market) {
   return MARKET_LOCALES[market] ?? null;
+}
+
+/**
+ * The market's legal table (`MARKET_LEGAL`); an unknown market has none (fail closed).
+ * The one accessor pages and components use, so LR-68 can switch it to the runtime region.
+ * @param {"global" | "ru" | "cn"} market
+ */
+export function marketLegal(market) {
+  return Object.hasOwn(MARKET_LEGAL, market) ? MARKET_LEGAL[market] : NO_LEGAL;
 }

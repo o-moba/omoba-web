@@ -49,6 +49,10 @@ a production build and, after a dev build, the dev contour; see `docs/vercel.md#
 `npm test` also covers the market rules and VK ID sign-in (`tests/market-profile.test.mjs`,
 `tests/vk-id.test.mjs`); `npm run test:market-profiles` checks a global or ru build against
 a loopback fake Account API, see `docs/markets.md#verification`.
+`tests/legal.test.mjs` covers the legal table against the game's values, the footer and
+sign-in links, the document format and that the RU drafts cover every data category;
+`OMOBA_GAME_MARKETS_PY=<game repo>/scripts/markets.py npm test` also compares the table
+with the game's file.
 `VERCEL_CLI=<…/node_modules/vercel/dist/vc.js> npm run test:vercel-cli` runs the same
 helper through the real pinned Vercel CLI against a loopback fake of the Vercel API
 (fake token, throwaway HOME; no request leaves the machine). Rerun it when the CLI pin moves.

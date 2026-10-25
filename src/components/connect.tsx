@@ -7,6 +7,7 @@ import { CONNECT_CODE, portalLoginHref } from '@/lib/navigation.mjs';
 import { useLocale } from '@/components/locale-provider';
 import { useMarket } from '@/components/market-profile';
 import { VkSignInButtons, fill, type SocialTicket } from '@/components/social';
+import { SignInLegalNotice } from '@/components/legal';
 
 type Enrollment = { enrollment_id: string; public_key: string; label: string; expires_at: string; nickname: string; profile_id: string };
 type Phase =
@@ -89,5 +90,6 @@ export default function ConnectView({ signedIn, socialTicket }: { signedIn: bool
     <h1>{t('Sign in on your device')}</h1>
     {code ? <p className="pair-code connect-code" aria-label={code}>{code.slice(0, 4)}—{code.slice(4)}</p> : null}
     {body}
+    <SignInLegalNotice />
   </section>;
 }

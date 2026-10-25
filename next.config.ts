@@ -15,6 +15,8 @@ const config: NextConfig = {
   // Ship route styles in the initial HTML, including page-specific stylesheets.
   experimental: { inlineCss: true },
   output: 'standalone',
+  // The legal pages read their market's versioned documents at runtime (LR-06).
+  outputFileTracingIncludes: { '/privacy': ['legal/**/*.md'], '/terms': ['legal/**/*.md'], '/offer': ['legal/**/*.md'] },
   async headers() {
     return [{ source: '/:path*', headers: [
       { key: 'X-Content-Type-Options', value: 'nosniff' },

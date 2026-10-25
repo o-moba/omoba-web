@@ -170,4 +170,10 @@ codes: the Account API does. The RU portal is self-hosted in Russia with the sta
 output, not on Vercel. See [Markets](docs/markets.md); `npm run test:market-profiles`
 checks a global or ru build against a fake Account API.
 
+`ru` also serves its legal documents (LR-06): `/privacy`, `/terms` and `/offer` render the
+versioned Russian files in [`legal/`](legal/README.md) (now the `0-draft` drafts with a
+visible «Проект — требует проверки юристом» banner); the login card and `/connect` show a
+notice linking the user agreement and the privacy policy, and the footer links Privacy,
+Terms, Support and Source. `global` and `cn` have no legal table and are unchanged.
+
 See [Vercel deployment](docs/vercel.md) for the initial public guest mode, upload exclusions and the account-service boundary. The site root opens `/workshop`; the player account area remains `/me`.
