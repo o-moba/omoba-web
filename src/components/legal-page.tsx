@@ -3,8 +3,11 @@ import { notFound } from 'next/navigation';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { cache } from 'react';
+import { DeletionView } from '@/components/deletion';
 import { LegalDocumentView } from '@/components/legal';
-import { LEGAL_DIR, legalDocumentFile, parseLegalDocument, type LegalDocumentName } from '@/lib/legal.mjs';
+import { deletionText } from '@/lib/deletion-translations';
+import { LEGAL_DIR, deletionPage, legalDocumentFile, parseLegalDocument, type LegalDocumentName } from '@/lib/legal.mjs';
+import { getLocale } from '@/lib/locale-server';
 import { assertMarket, marketLegal } from '@/lib/market-profile.mjs';
 import { contourSiteUrl } from '@/lib/navigation.mjs';
 
@@ -37,4 +40,21 @@ export async function LegalPage({ name }: { name: LegalDocumentName }) {
   const document = await loadLegalDocument(name);
   if (!document) notFound();
   return <LegalDocumentView name={name} document={document} siteUrl={contourSiteUrl()} />;
+}
+
+/** The market's deletion page (`deletionPage`), or null where it has none (global, cn). */
+function loadDeletionPage() {
+  const { market } = assertMarket();
+  return deletionPage(marketLegal(market));
+}
+
+export async function deletionMetadata(): Promise<Metadata> {
+  return loadDeletionPage() ? { title: deletionText(await getLocale(), 'Delete your OMOBA account') } : {};
+}
+
+/** `/delete`: public, no account call; 404 where the market has no deletion page (O-15). */
+export function DeletionPage() {
+  const page = loadDeletionPage();
+  if (!page) notFound();
+  return <DeletionView page={page} siteUrl={contourSiteUrl()} />;
 }

@@ -39,3 +39,8 @@ Anything else fails the tests and the page (`src/lib/legal.mjs`), so a typo neve
 
 Keep payment-method details out of the privacy policy and the user agreement: they
 belong in the offer, which store builds never link (LR-67, LR-68).
+
+`/delete` (account deletion, O-15) is not a versioned document: it is a translated page
+(`src/components/deletion.tsx`) that restates the privacy policy's requests section
+(`#requests`). When the counsel-approved policy changes that procedure or its deadline,
+change the page's strings (`src/lib/deletion-translations.ts`) with it.

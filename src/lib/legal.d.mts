@@ -1,7 +1,7 @@
 import type { MarketLegal } from './market-profile.mjs';
 
 export type LegalDocumentName = 'privacy' | 'terms' | 'offer';
-export type LegalLinkKey = 'privacy' | 'terms' | 'offer' | 'support' | 'source' | 'vk' | 'telegram';
+export type LegalLinkKey = 'privacy' | 'terms' | 'offer' | 'delete' | 'support' | 'source' | 'vk' | 'telegram';
 export type LegalLink = { key: LegalLinkKey; href: string; external: boolean };
 export type Inline =
   | { type: 'text'; value: string }
@@ -18,11 +18,13 @@ export type LegalMeta = { title: string; version: string; status: 'draft' | 'fin
 export type LegalDocument = { meta: LegalMeta; blocks: Block[] };
 
 export const LEGAL_PAGES: Readonly<Record<LegalDocumentName, string>>;
+export const DELETION_PAGE: '/delete';
 export const LEGAL_VERSION: RegExp;
 export const LEGAL_DIR: 'legal';
 export function legalDocumentFile(market: string, legal: MarketLegal, name: LegalDocumentName): string | null;
 export function legalSourceUrl(legal: MarketLegal, version?: string | null): string | null;
 export function legalLinks(legal: MarketLegal, features: { supporter: boolean }): LegalLink[];
+export function deletionPage(legal: MarketLegal): { email: string | null; privacy: string | null } | null;
 export function signInNotice(legal: MarketLegal): { terms: string; privacy: string; version: string | null } | null;
 export function parseInline(text: string, nested?: boolean): Inline[];
 export function parseLegalDocument(source: string): LegalDocument;

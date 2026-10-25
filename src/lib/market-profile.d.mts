@@ -2,12 +2,13 @@ export type Market = "global" | "ru" | "cn";
 export type MarketFeatures = Readonly<{ ekza: boolean; supporter: boolean; vkSignIn: boolean }>;
 export type MarketProfile = { market: Market; features: MarketFeatures };
 export type FeatureName = "ekza" | "supporter" | "vkSignIn";
-/** scripts/markets.py `Legal` (camelCase) plus the portal-only `offer`; null = not provided. */
+/** scripts/markets.py `Legal` (camelCase) plus the portal-only `offer` and `delete`; null = not provided. */
 export type MarketLegal = Readonly<{
   version: string | null;
   privacy: string | null;
   terms: string | null;
   offer: string | null;
+  delete: string | null;
   source: string | null;
   supportEmail: string | null;
   communityVk: string | null;

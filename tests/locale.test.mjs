@@ -70,7 +70,10 @@ test('account dictionaries and public source translations cover every language',
   // So do the guest home and the download cards (LR-22).
   const landingSource = stripTypeScriptTypes(await readFile(new URL('../src/lib/landing-translations.ts', import.meta.url), 'utf8'));
   const { landingTranslations } = await import('data:text/javascript;base64,' + Buffer.from(landingSource).toString('base64'));
-  const portalTranslations = { ...portal, ...legalTranslations, ...landingTranslations };
+  // And the public deletion page (O-15, LR-22).
+  const deletionSource = stripTypeScriptTypes(await readFile(new URL('../src/lib/deletion-translations.ts', import.meta.url), 'utf8'));
+  const { deletionTranslations } = await import('data:text/javascript;base64,' + Buffer.from(deletionSource).toString('base64'));
+  const portalTranslations = { ...portal, ...legalTranslations, ...landingTranslations, ...deletionTranslations };
   const keys = Object.keys(dictionaries.en).sort();
   assert.deepEqual(Object.keys(dictionaries.ru).sort(), keys);
   assert.deepEqual(Object.keys(dictionaries.zh).sort(), keys);
@@ -78,7 +81,7 @@ test('account dictionaries and public source translations cover every language',
     for (const locale of ['en', 'ru', 'zh']) assert.ok(dictionaries[locale][key].trim(), `${locale}.${key}`);
     assert.match(dictionaries.zh[key], /[\u3400-\u9fff]/u, `Chinese translation missing for ${key}`);
   }
-  for (const file of ['portal.tsx', 'devices.tsx', 'supporter.tsx', 'supporters.tsx', 'hero-recognition.tsx', 'locale-provider.tsx', 'contour.tsx', 'social.tsx', 'connect.tsx', 'legal.tsx', 'guest-home.tsx', 'releases.tsx']) {
+  for (const file of ['portal.tsx', 'devices.tsx', 'supporter.tsx', 'supporters.tsx', 'hero-recognition.tsx', 'locale-provider.tsx', 'contour.tsx', 'social.tsx', 'connect.tsx', 'legal.tsx', 'guest-home.tsx', 'releases.tsx', 'deletion.tsx']) {
     const component = await readFile(new URL('../src/components/' + file, import.meta.url), 'utf8');
     for (const match of component.matchAll(/\b(?:t|setMessage|setError)\((['"])([^'"\n]+)\1\)/g)) {
       assert.ok(portalTranslations[match[2]]?.ru, `Missing Russian: ${match[2]}`);

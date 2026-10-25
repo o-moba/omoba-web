@@ -5,8 +5,9 @@
 // Only a loopback fake Account API is contacted (/v1/me and /v1/releases).
 // RU: `/` is the guest home signed out and `/me` signed in; its claims are counted from
 // the game's catalog snapshot; downloads come from the catalog with SHA-256, sizes in МБ
-// and the localized status; the footer carries the legal links and the age sign; and no
-// RU page shows donate, wallet, crypto, Solana or Ekza content. Global: `/` is unchanged.
+// and the localized status; the footer carries the legal links and the age sign; the public
+// `/delete` page describes the deletion procedure without sign-in; and no RU page shows
+// donate, wallet, crypto, Solana or Ekza content. Global: `/` is unchanged, no `/delete`.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
@@ -42,8 +43,9 @@ const RELEASES = [
   { ...entry("android", "universal", "store.apk", 1), channel: "rustore" },
   entry("ios", "arm64", "Omoba-0.45.0-ru-ios.ipa", 1),
 ];
-let releasesUp = true;
+let releasesUp = true, calls = 0;
 const api = createServer(async (req, res) => {
+  calls++;
   for await (const _ of req);
   const path = new URL(req.url, "http://127.0.0.1").pathname;
   const send = (status, value) => { res.writeHead(status, { "Content-Type": "application/json" }); res.end(JSON.stringify(value)); };
@@ -134,7 +136,7 @@ if (market === "ru") {
     assert.ok(!html.includes("ipfs") && !html.includes("store.apk") && !html.includes(".ipa"), "a mirror, store or iOS package is offered");
     assert.match(html, /data-age-rating="?[^>]*>12\+</);
     const footer = /<footer>[\s\S]*?<\/footer>/.exec(html)?.[0] ?? "";
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "source"]);
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "delete", "source"]);
     assert.match(footer, /data-age-rating/);
     assert.match(footer, /<a href="\/">OMOBA<\/a>/);
     assert.ok(!html.includes("https://omoba.io"), "the RU landing links the global website");
@@ -156,7 +158,7 @@ if (market === "ru") {
   });
 
   await run("ru: no donate, wallet, crypto or Ekza content on any RU page", RU, async ({ origin }) => {
-    for (const path of ["/", "/download", "/login", "/me", "/workshop", "/privacy", "/terms", "/offer", "/connect?code=ABCD2345", "/settings"]) {
+    for (const path of ["/", "/download", "/login", "/me", "/workshop", "/privacy", "/terms", "/offer", "/delete", "/connect?code=ABCD2345", "/settings"]) {
       const response = await get(origin, path);
       if (path === "/offer" && response.status === 404) continue;
       assert.equal(response.status, 200, path);
@@ -168,6 +170,32 @@ if (market === "ru") {
     const workshop = await (await get(origin, "/workshop")).text();
     assert.match(workshop, /data-experimental[^>]*>Эксперимент: мастерская классов — прототип/);
     assert.match(await (await get(origin, "/me")).text(), /href="\/workshop"[\s\S]{0,400}data-experimental/);
+  });
+
+  await run("ru: /delete describes the manual deletion procedure, public and without an account call", RU, async ({ origin }) => {
+    const before = calls;
+    const response = await get(origin, "/delete");
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.equal(calls, before, "/delete called the Account API");
+    assert.match(html, /<html lang="ru"/);
+    assert.ok(html.includes("<title>Удаление аккаунта OMOBA</title>"), "title");
+    assert.match(html, /<meta name="robots" content="noindex, nofollow"/);
+    assert.match(html, /data-deletion-page/);
+    const { text } = surface(html);
+    for (const claim of ["с темой «Персональные данные»", "ник с тегом", "ключи устройств аккаунта больше не принимаются", "не более 30 дней", "«Удалённый игрок»", "вручную по запросу"])
+      assert.ok(text.includes(claim), claim);
+    // No support e-mail yet (LR-21): a highlighted placeholder, and the policy section that sets the procedure.
+    assert.match(html, /data-deletion-contact="placeholder"[^>]*>адрес поддержки \(будет опубликован до запуска\)</);
+    assert.ok(!html.includes("mailto:"), "a mailto link without a support e-mail");
+    assert.match(html, /href="\/privacy#requests"/);
+    const footer = /<footer class="legal-page-footer">[\s\S]*?<\/footer>/.exec(html)?.[0] ?? "";
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "delete", "source"]);
+    // Every page language.
+    const english = surface(await (await get(origin, "/delete", { language: "en-US" })).text()).text;
+    assert.ok(english.includes("Delete your OMOBA account") && english.includes("within 30 days"), "English page");
+    const chinese = surface(await (await get(origin, "/delete", { language: "zh-CN" })).text()).text;
+    assert.ok(chinese.includes("删除 OMOBA 账号") && chinese.includes("30 天内"), "Chinese page");
   });
 
   await run("ru: English page, and an unavailable catalog keeps the landing", RU, async ({ origin }) => {
@@ -219,6 +247,7 @@ if (market === "ru") {
     assert.ok(!login.includes("data-experimental"));
     assert.match(login, /href="https:\/\/omoba\.io"[^>]*>OMOBA website/);
     assert.match(login, /<meta name="robots" content="noindex, nofollow"/);
+    assert.equal((await get(origin, "/delete")).status, 404, "a global build serves /delete");
   });
 }
 api.close();

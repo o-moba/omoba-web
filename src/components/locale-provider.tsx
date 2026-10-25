@@ -6,9 +6,10 @@ import { sponsorTranslations } from '@/lib/sponsor-translations';
 import { marketTranslations } from '@/lib/market-translations';
 import { legalTranslations } from '@/lib/legal-translations';
 import { landingTranslations } from '@/lib/landing-translations';
+import { deletionTranslations } from '@/lib/deletion-translations';
 import { localeCookie } from '@/lib/locale.mjs';
 
-const translations = { ...portalTranslations, ...creatorTranslations, ...marketTranslations, ...sponsorTranslations, ...legalTranslations, ...landingTranslations };
+const translations = { ...portalTranslations, ...creatorTranslations, ...marketTranslations, ...sponsorTranslations, ...legalTranslations, ...landingTranslations, ...deletionTranslations };
 type LocaleContextValue = { locale: Locale; setLocale: (value: Locale) => void; t: (source: string) => string };
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 

@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { MARKETS, MARKET_LEGAL, MARKET_PRESETS, marketLegal } from '../src/lib/market-profile.mjs';
-import { LEGAL_DIR, LEGAL_PAGES, legalDocumentFile, legalLinks, legalPlainText, legalSourceUrl, parseInline, parseLegalDocument, signInNotice } from '../src/lib/legal.mjs';
+import { DELETION_PAGE, LEGAL_DIR, LEGAL_PAGES, deletionPage, legalDocumentFile, legalLinks, legalPlainText, legalSourceUrl, parseInline, parseLegalDocument, signInNotice } from '../src/lib/legal.mjs';
 
 // Written out by hand from the game's scripts/markets.py `Legal` (ru), independent of the module.
 const RU_GAME_LEGAL = {
@@ -20,19 +20,21 @@ const RU_GAME_LEGAL = {
 const GAME_FIELDS = { version: 'version', privacy: 'privacy', terms: 'terms', source: 'source', supportEmail: 'support_email', communityVk: 'community_vk', communityTelegram: 'community_telegram', ageRating: 'age_rating' };
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
-const withoutOffer = ({ offer: _offer, ...rest }) => rest;
+// `offer` and `delete` are portal-only until the game table gains them (LR-67/LR-68, LR-69).
+const portalOnly = ({ offer: _offer, delete: _delete, ...rest }) => rest;
 
 test('the RU legal table mirrors scripts/markets.py; global and cn have none', () => {
-  assert.deepEqual(withoutOffer({ ...MARKET_LEGAL.ru }), RU_GAME_LEGAL);
-  // Portal-only until the game table gains it (LR-67/LR-68).
+  assert.deepEqual(portalOnly({ ...MARKET_LEGAL.ru }), RU_GAME_LEGAL);
   assert.equal(MARKET_LEGAL.ru.offer, 'https://omoba.ru/offer');
-  assert.deepEqual(Object.keys(withoutOffer(MARKET_LEGAL.ru)).sort(), Object.keys(GAME_FIELDS).sort());
+  assert.equal(MARKET_LEGAL.ru.delete, 'https://omoba.ru/delete');
+  assert.deepEqual(Object.keys(portalOnly(MARKET_LEGAL.ru)).sort(), Object.keys(GAME_FIELDS).sort());
   for (const market of ['global', 'cn']) assert.ok(Object.values(MARKET_LEGAL[market]).every(value => value === null), market);
   assert.ok(Object.isFrozen(MARKET_LEGAL) && Object.values(MARKET_LEGAL).every(Object.isFrozen));
   for (const market of MARKETS) assert.equal(marketLegal(market), MARKET_LEGAL[market]);
   assert.ok(Object.values(marketLegal('eu')).every(value => value === null), 'an unknown market has no legal table');
   // The portal serves the documents at the paths the table (and so the game) links.
   for (const name of ['privacy', 'terms', 'offer']) assert.equal(new URL(MARKET_LEGAL.ru[name]).pathname, LEGAL_PAGES[name], name);
+  assert.equal(new URL(MARKET_LEGAL.ru.delete).pathname, DELETION_PAGE);
 });
 
 // Optional cross-check against the game's file: OMOBA_GAME_MARKETS_PY=<path to scripts/markets.py>.
@@ -41,14 +43,15 @@ test('the RU legal table equals the game\'s markets.py when it is available', { 
   const entries = Object.fromEntries([...source.matchAll(/^ {4}"(global|ru|cn)": Market\(([\s\S]*?)(?=^ {4}"(?:global|ru|cn)": Market\(|^\}$)/gm)].map(m => [m[1], m[2]]));
   assert.deepEqual(Object.keys(entries).sort(), ['cn', 'global', 'ru']);
   for (const market of ['global', 'cn']) assert.ok(!/legal=Legal\(/.test(entries[market]), market + ' has a legal table in markets.py');
-  const block = /legal=Legal\(([\s\S]*?)\)\),?\s*$/m.exec(entries.ru)?.[1] ?? /legal=Legal\(([\s\S]*?)\)\)/.exec(entries.ru)?.[1];
+  // The Legal(...) arguments hold no parentheses; Market(...) may carry more fields after it (player_readme, LR-22).
+  const block = /legal=Legal\(([^()]*)\)/.exec(entries.ru)?.[1];
   assert.ok(block, 'ru legal table not found');
   const game = Object.fromEntries([...block.matchAll(/(\w+)="([^"]*)"/g)].map(m => [m[1], m[2]]));
   for (const [field, name] of Object.entries(GAME_FIELDS)) assert.equal(MARKET_LEGAL.ru[field], game[name] ?? null, field);
   assert.match(source, /portal="https:\/\/omoba\.ru"/);
 });
 
-test('footer links: privacy, terms and source in ru; nothing in global and cn', () => {
+test('footer links: privacy, terms, deletion and source in ru; nothing in global and cn', () => {
   const keys = (market, features = MARKET_PRESETS[market]) => legalLinks(marketLegal(market), features).map(link => link.key);
   assert.deepEqual(keys('global'), []);
   assert.deepEqual(keys('cn'), []);
@@ -56,14 +59,15 @@ test('footer links: privacy, terms and source in ru; nothing in global and cn', 
   assert.deepEqual(legalLinks(marketLegal('ru'), MARKET_PRESETS.ru), [
     { key: 'privacy', href: '/privacy', external: false },
     { key: 'terms', href: '/terms', external: false },
+    { key: 'delete', href: '/delete', external: false },
     { key: 'source', href: 'https://github.com/o-moba/omoba-bevy', external: true },
   ]);
-  // The offer follows the one Supporter switch (LR-67/LR-68).
-  assert.deepEqual(keys('ru', { ...MARKET_PRESETS.ru, supporter: true }), ['privacy', 'terms', 'offer', 'source']);
+  // The offer follows the one Supporter switch (LR-67/LR-68); the deletion page does not.
+  assert.deepEqual(keys('ru', { ...MARKET_PRESETS.ru, supporter: true }), ['privacy', 'terms', 'offer', 'delete', 'source']);
   // Support and community appear once the owner provides them (LR-21).
   const channels = { ...MARKET_LEGAL.ru, supportEmail: 'support@omoba.ru', communityVk: 'https://vk.com/omoba', communityTelegram: 'https://t.me/omoba' };
   assert.deepEqual(legalLinks(channels, MARKET_PRESETS.ru).map(link => [link.key, link.href]), [
-    ['privacy', '/privacy'], ['terms', '/terms'], ['support', 'mailto:support@omoba.ru'], ['source', 'https://github.com/o-moba/omoba-bevy'],
+    ['privacy', '/privacy'], ['terms', '/terms'], ['delete', '/delete'], ['support', 'mailto:support@omoba.ru'], ['source', 'https://github.com/o-moba/omoba-bevy'],
     ['vk', 'https://vk.com/omoba'], ['telegram', 'https://t.me/omoba'],
   ]);
 });
@@ -74,6 +78,39 @@ test('source links: a release tag with a version, the repository without', () =>
   assert.equal(legalSourceUrl(ru), 'https://github.com/o-moba/omoba-bevy');
   for (const bad of ['../main', '0.45.0 ', 'v/1', '']) assert.equal(legalSourceUrl(ru, bad), bad ? null : 'https://github.com/o-moba/omoba-bevy', JSON.stringify(bad));
   assert.equal(legalSourceUrl(marketLegal('global'), '0.45.0'), null);
+});
+
+test('the deletion page: ru only, its contact from the legal table, a placeholder until LR-21', () => {
+  assert.equal(DELETION_PAGE, '/delete');
+  // No support e-mail yet (LR-21): the page shows a placeholder; the policy section describes the procedure.
+  assert.deepEqual(deletionPage(marketLegal('ru')), { email: null, privacy: '/privacy#requests' });
+  assert.deepEqual(deletionPage({ ...MARKET_LEGAL.ru, supportEmail: 'support@omoba.ru' }), { email: 'support@omoba.ru', privacy: '/privacy#requests' });
+  assert.deepEqual(deletionPage({ ...MARKET_LEGAL.ru, privacy: null }), { email: null, privacy: null });
+  for (const market of ['global', 'cn']) assert.equal(deletionPage(marketLegal(market)), null, market);
+  assert.equal(deletionPage({ ...MARKET_LEGAL.ru, delete: null }), null);
+  assert.equal(deletionPage(marketLegal('eu')), null, 'an unknown market has no deletion page');
+});
+
+test('the deletion page describes the O-15 procedure in every language, without payment or Ekza text', async () => {
+  const { stripTypeScriptTypes } = await import('node:module');
+  const source = stripTypeScriptTypes(await read('src/lib/deletion-translations.ts'));
+  const { deletionTranslations } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+  const view = await read('src/components/deletion.tsx');
+  const used = [...view.matchAll(/\bt\((['"])([^'"\n]+)\1\)/g)].map(m => m[2]);
+  for (const key of used.filter(key => Object.hasOwn(deletionTranslations, key)))
+    for (const locale of ['ru', 'zh']) assert.ok(deletionTranslations[key][locale]?.trim(), locale + ': ' + key);
+  const texts = Object.entries(deletionTranslations).flatMap(([en, { ru, zh }]) => [en, ru, zh]);
+  // The privacy policy's procedure (section 9): e-mail with the subject, nickname and tag, owner check,
+  // the key refused at once, erasure within 30 days, «Удалённый игрок», anonymised results.
+  const ru = Object.values(deletionTranslations).map(entry => entry.ru).join('\n');
+  for (const pattern of [/с темой «Персональные данные»/, /ник с тегом/, /владелец аккаунта/, /ключи устройств аккаунта больше не принимаются/,
+    /не более 30 дней/, /«Удалённый игрок»/, /обезличенном виде/, /вручную по запросу/])
+    assert.match(ru, pattern);
+  assert.match(deletionTranslations['Write to {email} with the subject “Personal data”.'].zh, /\{email\}/);
+  assert.match(deletionTranslations['The procedure and how long each kind of data is kept are set out in {privacy}.'].zh, /\{privacy\}/);
+  for (const text of texts) assert.doesNotMatch(text, /ЮKassa|оплат|payment|支付|Apple|Solana|Ekza|crypto|криптовалют|wallet|кошел|donat|донат/i, text);
+  // The contact comes from the legal table, never a literal address in the page.
+  assert.doesNotMatch(view, /@[a-z0-9-]+\.[a-z]/i);
 });
 
 test('the sign-in notice needs both documents', () => {
@@ -232,7 +269,7 @@ test('terms and privacy carry no payment-method or Ekza details (they live in th
 });
 
 test('legal code reads market values only through the accessors (LR-68)', async () => {
-  for (const file of ['src/lib/legal.mjs', 'src/components/legal.tsx', 'src/components/legal-page.tsx'])
+  for (const file of ['src/lib/legal.mjs', 'src/components/legal.tsx', 'src/components/legal-page.tsx', 'src/components/deletion.tsx', 'src/app/delete/page.tsx'])
     // No market comparisons or hosts: values come from marketLegal / the market context.
     assert.doesNotMatch(await read(file), /market\s*[!=]==?|['"](global|cn)['"]|omoba\.ru|MARKET_LEGAL|marketName\(/, file);
 });

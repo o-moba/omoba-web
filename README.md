@@ -177,6 +177,8 @@ checks a global or ru build against a fake Account API.
 versioned Russian files in [`legal/`](legal/README.md) (now the `0-draft` drafts with a
 visible «Проект — требует проверки юристом» banner); the login card and `/connect` show a
 notice linking the user agreement and the privacy policy, and the footer links Privacy,
-Terms, Support and Source. `global` and `cn` have no legal table and are unchanged.
+Terms, account deletion, Support and Source. The public `/delete` page describes how to
+have an account deleted (the operator's e-mail procedure, O-15). `global` and `cn` have no
+legal table and are unchanged.
 
 See [Vercel deployment](docs/vercel.md) for the initial public guest mode, upload exclusions and the account-service boundary. The site root opens `/workshop`; the player account area remains `/me`.

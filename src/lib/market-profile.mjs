@@ -37,7 +37,7 @@ export const MARKET_LOCALES = Object.freeze({ global: null, ru: "ru", cn: "zh" }
 
 /** A market without legal documents, links or age sign (global, cn). */
 const NO_LEGAL = Object.freeze({
-  version: null, privacy: null, terms: null, offer: null, source: null,
+  version: null, privacy: null, terms: null, offer: null, delete: null, source: null,
   supportEmail: null, communityVk: null, communityTelegram: null, ageRating: null,
 });
 
@@ -51,7 +51,10 @@ const NO_LEGAL = Object.freeze({
  *
  * `offer` (the public offer for supporter cosmetics, LR-67) is portal-only for now:
  * the game links `/supporter`, which links the offer; the game table gains it with
- * LR-67/LR-68. RU support and community stay null until the owner provides them (LR-21).
+ * LR-67/LR-68. `delete` (the public account-deletion page, O-15; the URL for Play's
+ * Data safety form) is portal-only too; the game table gains it with the in-app
+ * deletion request (LR-69). RU support and community stay null until the owner
+ * provides them (LR-21).
  */
 export const MARKET_LEGAL = Object.freeze({
   global: NO_LEGAL,
@@ -60,6 +63,7 @@ export const MARKET_LEGAL = Object.freeze({
     privacy: "https://omoba.ru/privacy",
     terms: "https://omoba.ru/terms",
     offer: "https://omoba.ru/offer",
+    delete: "https://omoba.ru/delete",
     source: "https://github.com/o-moba/omoba-bevy/tree/v{version}-ru",
     supportEmail: null,
     communityVk: null,

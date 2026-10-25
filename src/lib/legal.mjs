@@ -6,6 +6,8 @@
 
 /** The documents this portal serves, each at a fixed page. */
 export const LEGAL_PAGES = Object.freeze({ privacy: "/privacy", terms: "/terms", offer: "/offer" });
+/** The public account-deletion page (O-15): a page of this portal, not a versioned document. */
+export const DELETION_PAGE = "/delete";
 /** A document version is also a folder name: lower case, digits, dots and dashes. */
 export const LEGAL_VERSION = /^[0-9a-z][0-9a-z.-]{0,31}$/;
 const STATUSES = new Set(["draft", "final"]);
@@ -49,7 +51,7 @@ export function legalSourceUrl(legal, version = null) {
  * with the Supporter feature (the one switch for Supporter links, LR-67/LR-68).
  * @param {MarketLegal} legal
  * @param {{supporter: boolean}} features
- * @returns {{key: "privacy" | "terms" | "offer" | "support" | "source" | "vk" | "telegram", href: string, external: boolean}[]}
+ * @returns {{key: "privacy" | "terms" | "offer" | "delete" | "support" | "source" | "vk" | "telegram", href: string, external: boolean}[]}
  */
 export function legalLinks(legal, features) {
   /** @type {{key: any, href: string, external: boolean}[]} */
@@ -57,6 +59,7 @@ export function legalLinks(legal, features) {
   if (legal.privacy) links.push({ key: "privacy", href: LEGAL_PAGES.privacy, external: false });
   if (legal.terms) links.push({ key: "terms", href: LEGAL_PAGES.terms, external: false });
   if (legal.offer && features.supporter) links.push({ key: "offer", href: LEGAL_PAGES.offer, external: false });
+  if (legal.delete) links.push({ key: "delete", href: DELETION_PAGE, external: false });
   if (legal.supportEmail) links.push({ key: "support", href: "mailto:" + legal.supportEmail, external: true });
   const source = legalSourceUrl(legal);
   if (source) links.push({ key: "source", href: source, external: true });
@@ -71,6 +74,21 @@ export function legalLinks(legal, features) {
  */
 export function signInNotice(legal) {
   return legal.terms && legal.privacy ? { terms: LEGAL_PAGES.terms, privacy: LEGAL_PAGES.privacy, version: legal.version } : null;
+}
+
+/**
+ * What the public deletion page (`/delete`) shows, or null where the market has none
+ * (global, cn: 404). Until account deletion ships in the game and the portal (LR-42,
+ * LR-69), deletion is the operator's manual e-mail procedure (O-15, the privacy policy's
+ * requests section): `email` is where the request goes, null while the owner has not
+ * provided the support e-mail (LR-21; the page shows a placeholder), and `privacy` is
+ * the policy section that describes the procedure, when the market has the policy.
+ * @param {MarketLegal} legal
+ * @returns {{email: string | null, privacy: string | null} | null}
+ */
+export function deletionPage(legal) {
+  if (!legal.delete) return null;
+  return { email: legal.supportEmail || null, privacy: legal.privacy ? LEGAL_PAGES.privacy + "#requests" : null };
 }
 
 // --- Document format -------------------------------------------------------------

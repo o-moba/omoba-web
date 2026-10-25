@@ -13,6 +13,7 @@ function useLinkLabel() {
       case 'privacy': return t('Privacy policy');
       case 'terms': return t('Terms of use');
       case 'offer': return t('Public offer');
+      case 'delete': return t('Delete account');
       case 'support': return t('Support');
       case 'source': return t('Source code');
       case 'vk': return t('VK community');
@@ -23,7 +24,7 @@ function useLinkLabel() {
 
 /**
  * The market's legal and channel links (footer): Privacy, Terms, the offer (with
- * Supporter), Support, Source and the community. Renders nothing in a market
+ * Supporter), account deletion, Support, Source and the community. Renders nothing in a market
  * without a legal table (global, cn), so their footers stay as they were.
  */
 export function LegalLinks({ className = '' }: { className?: string }) {

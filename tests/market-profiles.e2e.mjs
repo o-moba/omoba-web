@@ -270,7 +270,7 @@ if (market === "ru") {
     assert.deepEqual([...notice.matchAll(/href="([^"]+)"/g)].map((m) => m[1]), ["/terms", "/privacy"]);
     const footer = /<nav class="legal-links"[\s\S]*?<\/nav>/.exec(login)?.[0] ?? "";
     // Supporter is off in ru: no offer link; support and community wait for the owner (LR-21).
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "source"]);
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "delete", "source"]);
     assert.match(footer, /href="https:\/\/github.com\/o-moba\/omoba-bevy"/);
     assert.match(await (await get(origin, "/connect?code=" + CODE)).text(), /<p class="legal-notice"/);
     assert.match(await (await get(origin, "/workshop")).text(), /data-legal-links/);
@@ -290,6 +290,11 @@ if (market === "ru") {
       await page.locator("footer [data-legal-link=terms]").click();
       await page.waitForURL("**/terms");
       assert.equal(await page.locator("h1").innerText(), "Пользовательское соглашение");
+      await page.locator("footer [data-legal-link=delete]").click();
+      await page.waitForURL("**/delete");
+      assert.equal(await page.locator("h1").innerText(), "Удаление аккаунта OMOBA");
+      await page.locator("[data-deletion-page] [data-legal-link=privacy]").click();
+      await page.waitForURL("**/privacy#requests");
       await page.goto(origin + "/login");
       await page.locator("[data-legal-notice] [data-legal-link=privacy]").click();
       await page.waitForURL("**/privacy");
@@ -303,7 +308,7 @@ if (market === "ru") {
       phone.on("pageerror", (error) => errors.push(error.message));
       await phone.goto(origin + "/login");
       assert.ok(await phone.locator("footer [data-legal-links]").isVisible(), "legal links hidden on a phone");
-      for (const path of ["/login", "/privacy", "/terms", "/offer"]) {
+      for (const path of ["/login", "/privacy", "/terms", "/offer", "/delete"]) {
         await phone.goto(origin + path);
         await phone.locator("footer [data-legal-links]").waitFor();
         assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), path + " overflows on a phone");
@@ -333,7 +338,7 @@ if (market === "ru") {
     assert.equal((await get(origin, "/supporters")).status, 200);
   });
   await run("a global build has no legal pages, sign-in notice or legal links", {}, async ({ origin }) => {
-    for (const path of ["/privacy", "/terms", "/offer"]) assert.equal((await get(origin, path)).status, 404, path);
+    for (const path of ["/privacy", "/terms", "/offer", "/delete"]) assert.equal((await get(origin, path)).status, 404, path);
     for (const path of ["/login", "/workshop", "/connect?code=" + CODE, "/download"]) {
       const html = await (await get(origin, path)).text();
       for (const marker of ["data-legal-notice", "data-legal-links", "data-legal-link", "data-release-source"]) assert.ok(!html.includes(marker), path + " contains " + marker);
