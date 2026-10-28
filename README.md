@@ -182,3 +182,9 @@ have an account deleted (the operator's e-mail procedure, O-15). `global` and `c
 legal table and are unchanged.
 
 See [Vercel deployment](docs/vercel.md) for the initial public guest mode, upload exclusions and the account-service boundary. The site root opens `/workshop`; the player account area remains `/me`.
+
+## RU registration
+
+Website-first VK ID/OK/Mail.ru signup creates a regional profile; game-first linking
+preserves existing progress. See [registration](docs/registration.md) for the native
+bridge, schema10 requirement, isolated E2E proof and live rollout limits.

@@ -60,10 +60,10 @@ function Login({w,onConnected,returnTo}:{w:Words;onConnected:()=>void;returnTo:s
   // Markets with VK ID (ru): VK, OK and Mail.ru first; game pairing stays the secondary path.
   const pairing=<>{pair?<><div className="pair-code" aria-label={pair.code}>{pair.code.slice(0,4)}—{pair.code.slice(4)}</div><p>{w.pairHelp}</p><p role="status" className="accent">{w.awaiting}</p><time className="muted">{new Date(pair.expires_at).toLocaleTimeString(locale)}</time><div><button onClick={async()=>{try{await api('auth/pairings/cancel','POST',{});setPair(null);setState('cancelled');}catch(e){setError(e);}}}>{w.cancel}</button></div></>:<><p role="status">{state==='denied'?w.denied:['expired','cancelled'].includes(state)?w.expired:''}</p><button className={features.vkSignIn?'':'primary'} disabled={busy} onClick={start}>{w.createPair}</button></>}</>;
   return <Card className="login-card"><span className="eyebrow">{t("OMOBA ACCOUNT")}</span>{failure?<p role="alert" className="notice error" data-signin-failure>{failure}</p>:null}
-    {features.vkSignIn?<><h1>{t('Sign in to OMOBA')}</h1><p>{t('Use your VK, OK or Mail.ru account. The game confirms the first link to your profile.')}</p><VkSignInButtons returnTo={returnTo}/><SignInLegalNotice/>
+    {features.vkSignIn?<><h1>{t('Sign in to OMOBA')}</h1><p>{t('Use your VK, OK or Mail.ru account. New players get a profile here. If you already play, link your existing profile from the game first.')}</p><VkSignInButtons returnTo={returnTo}/><SignInLegalNotice/>
       <div className="login-secondary" data-pairing><h2>{t('Or connect your game')}</h2><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}</div></>
     :<><h1>{w.login}</h1><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}<SignInLegalNotice/></>}
-    <p className="muted separated">{w.newPlayer}</p><Link href="/download">{w.download} ↗</Link></Card>;
+    <p className="muted separated">{features.vkSignIn?t('After signing in, install OMOBA and open Profile → “Sign in with VK ID” in the game to use this account.'):w.newPlayer}</p><Link href="/download">{w.download} ↗</Link></Card>;
 }
 
 function FilterBar({w,stats=false}:{w:Words;stats?:boolean}){
@@ -132,7 +132,7 @@ function SocialLink({account,w,update}:{account:Account;w:Words;update:()=>void}
   // Older Account APIs omit `social`: treated as no linked account.
   const vk=(Array.isArray(account.social)?account.social:[]).find(entry=>entry.provider==='vk');
   async function unlink(){if(!window.confirm(t('Unlink this VK account? You can still sign in through the game.')))return;setBusy(true);setError(null);try{await api('me/social/vk','DELETE');setDone(true);update();}catch(e){setError(e);}finally{setBusy(false);}}
-  return <Card><h2>VK ID</h2>{error instanceof ApiFailure&&error.code==='fresh_confirmation_required'?<p role="alert" className="notice">{t('Sign in again to confirm this action: it needs a sign-in within the last 10 minutes.')}</p>:<Status error={error} busy={busy} w={w} retry={()=>setError(null)}/>}
+  return <Card><h2>VK ID</h2>{error instanceof ApiFailure&&error.code==='recovery_required_before_unlink'?<p role="alert" className="notice">{t('Connect a game device or create recovery codes before unlinking your only sign-in method.')}</p>:error instanceof ApiFailure&&error.code==='fresh_confirmation_required'?<p role="alert" className="notice">{t('Sign in again to confirm this action: it needs a sign-in within the last 10 minutes.')}</p>:<Status error={error} busy={busy} w={w} retry={()=>setError(null)}/>}
     {done?<p role="status" className="notice">{t('VK account unlinked.')}</p>:null}
     {vk?<div className="friend-row"><div className="grow"><strong>{methodLabel(vk.method)}</strong><small>{fill(t('Linked: {method} · {date}'),{method:methodLabel(vk.method),date:new Date(vk.linked_at).toLocaleDateString(locale,{timeZone:account.settings.timezone})})}</small></div><button disabled={busy} onClick={()=>void unlink()}>{t('Unlink VK')}</button></div>
       :<p className="muted">{t('No VK account is linked. Link one in the game: Profile → “Sign in with VK”.')}</p>}</Card>;
@@ -150,6 +150,15 @@ function SettingsView({account,w,update}:{account:Account;w:Words;update:()=>voi
 // Direct downloads only, sizes in MB and the status in the page language (LR-22); the
 // game's update button opens `?platform=<its platform>`, which is listed first.
 function Downloads({w}:{w:Words}){const{data,error,busy,refresh}=useData<unknown>('releases');const releases=data?pageReleases(data):null;const platform=useSearchParams().get('platform');return <><h1>{w.downloadsTitle}</h1><p>{w.downloadsHelp}</p><Status error={error} busy={busy} w={w} retry={refresh}/>{releases?.length===0?<Card><Empty text={w.noRelease}/></Card>:null}{releases?<ReleaseList releases={releases} platform={platform}/>:null}</>;}
+
+function GameNextStep() {
+  const { t } = useLocale();
+  return <section className="card" data-game-next-step>
+    <h2>{t('Continue in the game')}</h2>
+    <p>{t('Install OMOBA, select Russia, then open Profile → “Sign in with VK ID”. Use the same VK, OK or Mail.ru account you used here.')}</p>
+    <Link className="button primary" href="/download">{t('Download the game')} →</Link>
+  </section>;
+}
 
 /** `home`: the guest home's data, given only on `/` where the market's landing is this portal (LR-22). */
 export default function Portal({initialAccount,initiallyUnavailable,accountDisabled=false,siteUrl=DEFAULT_SITE_URL,socialTicket:initialTicket=null,home=null}:{initialAccount:Account|null;initiallyUnavailable:boolean;accountDisabled?:boolean;siteUrl?:string;socialTicket?:SocialTicket|null;home?:GuestHomeData|null}){
@@ -215,10 +224,10 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
         </figure>
       </Card>
     );
-  else if(path==='/connect')content=<ConnectView signedIn={Boolean(account)} socialTicket={socialTicket}/>;
+  else if(path==='/connect')content=<ConnectView signedIn={Boolean(account)} currentProfileId={account?.profile.profile_id??null} socialTicket={socialTicket} onAccountChanged={reload}/>;
+  else if(path==='/login')content=<Login w={w} onConnected={connected} returnTo={returnTo}/>;
   // A confirmed but unlinked VK ID: finish registration in the game (public pages stay as they are).
   else if(!account&&socialTicket&&path!=='/download'&&!path.startsWith('/players/'))content=<RegistrationView ticket={socialTicket} busy={signingOut} onSignOut={()=>void signOut()}><Downloads w={w}/></RegistrationView>;
-  else if(path==='/login')content=<Login w={w} onConnected={connected} returnTo={returnTo}/>;
   else if(path==='/download')content=<Downloads w={w}/>;
   else if(path.startsWith('/players/'))content=<PlayersView id={path.split('/')[2]} w={w} me={account?.profile.profile_id}/>;
   else if(!account)content=<><div className="hero"><span className="eyebrow">{t("OMOBA · PLAYER PORTAL")}</span><h1>{w.title}</h1><p>{w.intro}</p><Link className="button primary" href={loginHref}>{signInLabel} →</Link><Link className="button" href="/download">{w.download}</Link></div><div className="value-grid">{[[w.matches,w.historical],[w.stats,w.ratingHistory],[w.friends,w.friendCode]].map(([title,description])=><Card key={title}><h2>{title}</h2><p className="muted">{description}</p></Card>)}</div></>;
@@ -230,7 +239,7 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   else if(path==='/supporter'&&features.supporter)content=<SupporterView locale={locale} nickname={account.profile.nickname}/>;
   else if(path==='/devices')content=<DevicesView locale={locale} nickname={account.profile.nickname}/>;
   else if(path==='/settings')content=<SettingsView account={account} w={w} update={()=>void reload()}/>;
-  else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div><Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link>{features.supporter?<Link className="button" href="/supporter">✦ {t('Hero')}</Link>:null}<Link className="button" href="/devices">{t('Devices')}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
+  else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div>{path==='/me'&&features.vkSignIn&&account.profile.matches_played===0&&account.profile.progression_xp==='0'?<GameNextStep/>:null}<Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link>{features.supporter?<Link className="button" href="/supporter">✦ {t('Hero')}</Link>:null}<Link className="button" href="/devices">{t('Devices')}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
   else content=<Card><Empty text={w.private}/></Card>;
   return <div className="shell"><aside className="sidebar"><Link href={brandHref} className="brand"><Brand section={t("Player portal")} /></Link><nav aria-label={t("Main")}>{nav.map(([href,title])=><Link key={href} href={href} className={path===href?'active':''}><NavIcon href={href}/>{title}{experimental(href)}</Link>)}</nav><div className="sidebar-bottom">{ownLanding?null:<a className="button" href={siteUrl}>{t('OMOBA website')} ↗</a>}<Link className="button" href="/download">{w.download} ↗</Link><small>{t("OPEN SOURCE · OPEN MOBA")}</small></div></aside><div className="workspace"><header className="topbar"><Link href={brandHref} className="portal-mobile-brand" aria-label={t("OMOBA player portal")}><Brand section={t("Player portal")} /></Link><span className="beta">BETA</span><span className="muted">{w.account}</span><div className="grow"/><LanguageSelector />{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button></>:accountDisabled?<span className="muted">{t('Guest prototype')}</span>:socialTicket?<button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button>:<Link href={loginHref}>{signInLabel}</Link>}</header><main>{unavailable&&!accountDisabled?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer>{ownLanding?<Link href="/">OMOBA</Link>:<a href={siteUrl}>OMOBA · {t('Website')} ↗</a>}<LegalLinks/>{legal.ageRating?<span className="age-sign" title={t('Age rating')} aria-label={t('Age rating')+' '+legal.ageRating} data-age-rating>{legal.ageRating}</span>:null}<span>2026</span></footer></div><nav className="mobile-nav" aria-label={t("Mobile")}>{nav.filter(([p])=>mobileNav(features,landing).includes(p)).map(([href,title])=><Link href={href} key={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav></div>;
 }

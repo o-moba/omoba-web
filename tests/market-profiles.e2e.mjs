@@ -43,6 +43,9 @@ const api = createServer(async (req, res) => {
   }
   if (req.method === "POST" && path === "/v1/auth/social/ticket")
     return body?.social_ticket === TICKET ? send(200, { display_name: "Иван П.", expires_at: later() }) : send(404, { code: "not_found" });
+  if (req.method === "POST" && path === "/v1/auth/social/enrollment")
+    return body?.social_ticket === TICKET && body.code === CODE
+      ? send(200, { enrollment_id: "b".repeat(64), public_key: KEY, label: "Desktop", expires_at: later() }) : send(404, { code: "not_found" });
   if (req.method === "POST" && path === "/v1/auth/social/attach")
     return body?.social_ticket === TICKET && body.code === CODE ? send(200, { status: "social_pending", label: "Desktop", expires_at: later() }) : send(404, { code: "not_found" });
   if (req.method === "GET" && path === "/v1/me") return authed ? send(200, account) : send(401, { code: "unauthorized" });
@@ -154,7 +157,8 @@ if (market === "ru") {
     assert.equal(params.client_id, "12345");
     assert.equal(params.redirect_uri, origin + "/api/auth/vk/callback");
     assert.equal(params.provider, "ok_ru");
-    assert.equal(params.code_challenge_method, "S256");
+    assert.equal(params.code_challenge_method, "s256");
+    assert.equal(params.prompt, "login");
     assert.equal(params.scope, "vkid.personal_info");
     assert.equal(params.response_type, "code");
     assert.match(start.headers.get("cache-control"), /no-store/);
@@ -196,6 +200,11 @@ if (market === "ru") {
     assert.match(registration, /data-registration/);
     assert.match(registration, /Иван П\./);
     assert.ok(!registration.includes(TICKET), "the ticket reached the page");
+    const lookup = await post(origin, "/api/auth/social/enrollment", { code: CODE }, { "omoba-social": TICKET });
+    assert.equal(lookup.status, 200);
+    assert.equal((await lookup.json()).public_key, KEY);
+    assert.deepEqual(calls.at(-1).body, { code: CODE, social_ticket: TICKET });
+    for (const name of ["omoba-session", "omoba-pair", "omoba-csrf"]) assert.ok(setCookies(unlinked)[name].attributes.includes("Max-Age=0"));
     const attach = await post(origin, "/api/auth/social/attach", { code: CODE }, { "omoba-social": TICKET });
     assert.equal(attach.status, 200);
     assert.equal((await attach.json()).status, "social_pending");

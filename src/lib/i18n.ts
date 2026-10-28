@@ -683,6 +683,9 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
   // Markets (docs/markets.md): VK ID sign-in, registration and /connect.
   "Sign in": {"ru": "Войти", "zh": "登录"},
   "Sign in to OMOBA": {"ru": "Вход в OMOBA", "zh": "登录 OMOBA"},
+  "Use your VK, OK or Mail.ru account. New players get a profile here. If you already play, link your existing profile from the game first.": {"ru": "Войдите через VK, OK или Mail.ru. Новый профиль можно создать здесь. Если вы уже играете, сначала привяжите свой профиль в игре, чтобы сохранить прогресс.", "zh": "使用 VK、OK 或 Mail.ru 登录。新玩家可在这里创建资料。如果你已经玩过，请先在游戏中关联现有资料以保留进度。"},
+  "After signing in, install OMOBA and open Profile → “Sign in with VK ID” in the game to use this account.": {"ru": "После входа установите OMOBA и откройте в игре «Профиль → Войти через VK ID», чтобы играть с этим аккаунтом.", "zh": "登录后安装 OMOBA，并在游戏中打开“个人资料 → 使用 VK ID 登录”，即可使用此账号。"},
+  "Install OMOBA, select Russia, then open Profile → “Sign in with VK ID”. Use the same VK, OK or Mail.ru account you used here.": {"ru": "Установите OMOBA, выберите регион «Россия», затем откройте «Профиль → Войти через VK ID». Используйте тот же аккаунт VK, OK или Mail.ru, с которым вошли здесь.", "zh": "安装 OMOBA，选择“俄罗斯”地区，然后打开“个人资料 → 使用 VK ID 登录”。请使用在这里登录时使用的同一个 VK、OK 或 Mail.ru 账号。"},
   "Use your VK, OK or Mail.ru account. The game confirms the first link to your profile.": {"ru": "Войдите через аккаунт VK, OK или Mail.ru. Первую привязку к игровому профилю подтверждает игра.", "zh": "使用 VK、OK 或 Mail.ru 账号登录。首次与游戏资料关联需在游戏中确认。"},
   "Or connect your game": {"ru": "Или подключите игру", "zh": "或连接游戏账号"},
   "Sign in with VK ID": {"ru": "Войти через VK ID", "zh": "使用 VK ID 登录"},
@@ -711,8 +714,11 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
   "This code is already linked. Return to the game and confirm.": {"ru": "Этот код уже привязан. Вернитесь в игру и подтвердите.", "zh": "此代码已关联。请返回游戏并确认。"},
   "For your security, sign in with VK again to confirm this device.": {"ru": "Для безопасности войдите через VK ещё раз, чтобы подтвердить устройство.", "zh": "为了安全，请再次通过 VK 登录以确认此设备。"},
   "Checking the code…": {"ru": "Проверяем код…", "zh": "正在检查代码…"},
+  "The signed-in account changed. Review the account and device again before confirming.": {"ru": "Аккаунт входа изменился. Ещё раз проверьте аккаунт и устройство перед подтверждением.", "zh": "当前登录账号已更改。确认前请再次核对账号和设备。"},
   "Sign in as {nickname} on the device “{label}”?": {"ru": "Войти как {nickname} на устройстве «{label}»?", "zh": "以 {nickname} 身份登录设备“{label}”？"},
   "Key fingerprint": {"ru": "Отпечаток ключа", "zh": "密钥指纹"},
+  "Link VK “{name}” from the game on device “{label}”?": {"ru": "Привязать VK «{name}» из игры на устройстве «{label}»?", "zh": "从设备“{label}”上的游戏关联 VK“{name}”？"},
+  "Your current game profile and progress will be kept. Continue here, then confirm the link in the game.": {"ru": "Ваш текущий игровой профиль и прогресс сохранятся. Продолжите здесь, затем подтвердите привязку в игре.", "zh": "你当前的游戏资料和进度将保留。请在此继续，然后在游戏中确认关联。"},
   "Compare it with the fingerprint shown in the game.": {"ru": "Сравните его с отпечатком в игре.", "zh": "请与游戏中显示的指纹核对。"},
   "Confirm sign-in": {"ru": "Подтвердить вход", "zh": "确认登录"},
   "VK “{name}” is not linked to an OMOBA profile yet. Press “Continue” and confirm the link in the game.": {"ru": "VK «{name}» ещё не связан с профилем OMOBA. Нажмите «Продолжить» и подтвердите привязку в игре.", "zh": "VK“{name}”尚未关联 OMOBA 资料。请点击“继续”，然后在游戏中确认关联。"},
@@ -723,6 +729,7 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
   "VK account unlinked.": {"ru": "Аккаунт VK отвязан.", "zh": "VK 账号已解除关联。"},
   "Linked: {method} · {date}": {"ru": "Привязан: {method} · {date}", "zh": "已关联：{method} · {date}"},
   "Unlink VK": {"ru": "Отвязать VK", "zh": "解除 VK 关联"},
+  "Connect a game device or create recovery codes before unlinking your only sign-in method.": {"ru": "Подключите игровое устройство или создайте резервные коды, прежде чем отвязать единственный способ входа.", "zh": "请先连接游戏设备或生成恢复代码，再解除唯一登录方式的关联。"},
   "No VK account is linked. Link one in the game: Profile → “Sign in with VK”.": {"ru": "Аккаунт VK не привязан. Привяжите его в игре: «Профиль → Войти через VK».", "zh": "尚未关联 VK 账号。可在游戏中关联：“个人资料 → 通过 VK 登录”。"},
   "This site provides the class builder, browser drafts and JSON downloads. Sign-in, match history and account saves are currently disabled.": {"ru": "Здесь доступны редактор классов, черновики в браузере и выгрузка JSON. Вход, история матчей и сохранения в аккаунте сейчас отключены.", "zh": "本网站提供职业编辑器、浏览器草稿和 JSON 下载。登录、比赛记录和账号保存功能目前已停用。"}
 };

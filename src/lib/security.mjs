@@ -133,7 +133,7 @@ export function allowedPath(path, method, features = marketFeatures(process.env)
   if (/^me\/ekza-library(?:\/|$)/.test(path) && !features.ekza) return false;
   if ((/^me\/supporter(?:\/|$)/.test(path) || path === 'supporters') && !features.supporter) return false;
   if ((/^auth\/social(?:\/|$)/.test(path) || /^me\/social(?:\/|$)/.test(path)) && !features.vkSignIn) return false;
-  if (method === 'POST' && /^auth\/social\/(?:attach|ticket)$/.test(path)) return true;
+  if (method === 'POST' && /^auth\/social\/(?:attach|ticket|enrollment)$/.test(path)) return true;
   if (method === 'DELETE' && path === 'me/social/vk') return true;
   if (method === 'GET' && /^(me\/class-builds(?:\/[0-9a-f]{64})?|me\/ekza-library)$/.test(path)) return true;
   if (method === 'POST' && /^(me\/class-builds|me\/ekza-library\/(connect|poll))$/.test(path)) return true;
@@ -152,19 +152,19 @@ export const OPAQUE_SECRET = /^[a-f0-9]{64}$/;
  * The Account API body of a VK ID ticket route. The ticket comes only from the
  * HttpOnly cookie: a browser body may carry nothing but the enrollment code for
  * `attach` and nothing at all for `ticket`, so it can never name a ticket.
- * @param {'auth/social/attach' | 'auth/social/ticket'} path
+ * @param {'auth/social/attach' | 'auth/social/ticket' | 'auth/social/enrollment'} path
  * @param {Record<string, unknown> | undefined} body the parsed browser body
  * @param {string | undefined} ticket the social-ticket cookie
  * @returns {{body: Record<string, string>} | {code: string, status: number}}
  */
 export function socialTicketBody(path, body, ticket) {
   const keys = Object.keys(body || {});
-  if (path === 'auth/social/attach') {
+  if (path === 'auth/social/attach' || path === 'auth/social/enrollment') {
     if (keys.length !== 1 || keys[0] !== 'code' || typeof body?.code !== 'string' || !/^[A-Z2-9]{8}$/.test(body.code))
       return { code: 'invalid_request', status: 400 };
   } else if (keys.length) return { code: 'invalid_request', status: 400 };
   if (!ticket || !OPAQUE_SECRET.test(ticket)) return { code: 'social_ticket_expired', status: 404 };
-  return { body: path === 'auth/social/attach' ? { code: /** @type {string} */ (body?.code), social_ticket: ticket } : { social_ticket: ticket } };
+  return { body: path === 'auth/social/ticket' ? { social_ticket: ticket } : { code: /** @type {string} */ (body?.code), social_ticket: ticket } };
 }
 
 export function mutationAllowed(origin, expected, token, cookie) {

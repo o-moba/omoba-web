@@ -59,9 +59,11 @@ export function vkAuthorizeUrl({ clientId, redirectUri, state, verifier, method 
     redirect_uri: redirectUri,
     state,
     code_challenge: pkceChallenge(verifier),
-    code_challenge_method: 'S256',
+    // Match VK ID's SDK wire values; the challenge remains RFC 7636 SHA-256.
+    code_challenge_method: 's256',
     scope: VK_SCOPE,
     provider: method,
+    ...(method === 'ok_ru' || method === 'mail_ru' ? { prompt: 'login' } : {}),
   }).toString();
   return url.toString();
 }
@@ -197,6 +199,9 @@ export async function vkCallback({ api, origin, names, features, query, cookie, 
         device_id: deviceId,
         redirect_uri: vkRedirectUri(origin),
         state: attempt.state,
+        // A game enrollment must link to its current signed game profile. Only
+        // an ordinary website login may create a fresh profile for a new subject.
+        ...(attempt.returnTo.startsWith('/connect?') ? {} : { register: true }),
       }),
       cache: 'no-store',
       redirect: 'error',
@@ -215,6 +220,7 @@ export async function vkCallback({ api, origin, names, features, query, cookie, 
     // As pairing `complete`: a fresh session, the pre-login CSRF and pairing go.
     return { location: attempt.returnTo, cookies: { set: [[names.session, result.session_token, SESSION_MAX_AGE]], clear: [...clearAttempt, names.pair, names.csrf, names.social] } };
   if (result?.state === 'unlinked' && typeof result.social_ticket === 'string' && OPAQUE_SECRET.test(result.social_ticket))
-    return { location: attempt.returnTo, cookies: { set: [[names.social, result.social_ticket, ticketMaxAge(result.expires_at, now)]], clear: clearAttempt } };
+    // Choosing a new social identity must never continue as a previous account.
+    return { location: attempt.returnTo, cookies: { set: [[names.social, result.social_ticket, ticketMaxAge(result.expires_at, now)]], clear: [...clearAttempt, names.session, names.pair, names.csrf] } };
   return failure('unavailable');
 }
