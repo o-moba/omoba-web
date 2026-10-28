@@ -25,6 +25,12 @@ describe quotas, retries, revocation protection and deployment gates. The real V
 wire uses s256 and prompt=login for external methods; our direct BFF redirect follows
 those parameters without adding a client SDK dependency.
 
+The owner will create the real VK ID application later. `.env.example` intentionally
+leaves `OMOBA_VKID_CLIENT_ID` empty as the placeholder; social buttons and routes
+remain disabled until the numeric app id is supplied. The RU host templates retain
+`CHANGE_ME` and deployment preflight refuses them. The isolated E2E app id below is
+only a test fixture and must not be copied into public configuration.
+
 The targeted E2E `tests/vk-sign-in.e2e.mjs` needs a RU production build with the dummy
 public app id 51234567, a matching debug RU API binary, an explicitly task-owned
 loopback PostgreSQL database named omoba_test (not occupied 5432/55581), a psql wrapper
