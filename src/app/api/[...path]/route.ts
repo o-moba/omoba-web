@@ -84,7 +84,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
       body=pairing;
     }
   }
-  if (path === 'auth/social/attach' || path === 'auth/social/ticket') {
+  if (path === 'auth/social/attach' || path === 'auth/social/ticket' || path === 'auth/social/enrollment') {
     // The VK ID ticket is injected from its HttpOnly cookie, never taken from the browser body.
     const social=socialTicketBody(path, body, jar.get(names.social)?.value);
     if ('code' in social) return fail(social.code, social.status);

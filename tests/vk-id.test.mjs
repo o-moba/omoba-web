@@ -61,7 +61,8 @@ test('start redirects to VK ID with exactly the OAuth 2.1 + PKCE parameters', ()
     const saved = decodeVkCookie(value, RU);
     assert.deepEqual(params, {
       response_type: 'code', client_id: '54321', redirect_uri: ORIGIN + '/api/auth/vk/callback', state: saved.state,
-      code_challenge: pkceChallenge(saved.verifier), code_challenge_method: 'S256', scope: 'vkid.personal_info', provider: method,
+      code_challenge: pkceChallenge(saved.verifier), code_challenge_method: 's256', scope: 'vkid.personal_info', provider: method,
+      ...(method === 'vkid' ? {} : { prompt: 'login' }),
     });
     assert.equal(name, '__Host-omoba-vk');
     assert.equal(maxAge, 600);
@@ -152,8 +153,8 @@ test('an unlinked VK ID leaves only an HttpOnly ticket, bounded by its expiry', 
   const a = attempt('/me', 'vkid');
   const stub = api(200, { state: 'unlinked', social_ticket: TICKET, display_name: 'Иван П.', expires_at: '2026-10-23T10:10:00Z' });
   const result = await callback(a, { code: 'c', state: a.state, device_id: 'd' }, stub.fetch);
-  assert.deepEqual(result, { location: '/me', cookies: { set: [[NAMES.social, TICKET, 600]], clear: [NAMES.vk] } });
-  const [, ticket] = setCookieLines(result.cookies);
+  assert.deepEqual(result, { location: '/me', cookies: { set: [[NAMES.social, TICKET, 600]], clear: [NAMES.vk, NAMES.session, NAMES.pair, NAMES.csrf] } });
+  const ticket = setCookieLines(result.cookies).find(line => line.startsWith(NAMES.social + '='));
   const attributes = ticket.split('; ');
   assert.equal(attributes[0], '__Host-omoba-social=' + TICKET);
   for (const required of ['Path=/', 'Max-Age=600', 'HttpOnly', 'SameSite=lax', 'Secure']) assert.ok(attributes.includes(required), required);
@@ -162,6 +163,27 @@ test('an unlinked VK ID leaves only an HttpOnly ticket, bounded by its expiry', 
   assert.equal((await callback(a, { code: 'c', state: a.state, device_id: 'd' }, later.fetch)).cookies.set[0][2], 1800);
   // The display name is never put into a cookie or URL by the callback.
   assert.doesNotMatch(JSON.stringify(result), /Иван/);
+});
+
+test('website sign-in registers a profile but game enrollment never requests registration', async () => {
+  for (const method of VK_METHODS) {
+    for (const destination of ['/me', '/settings', '/connect?code=ABCD2345']) {
+      const a = attempt(destination, method);
+      const stub = api(200, { state: 'signed_in', session_token: TOKEN });
+      await callback(a, { code: 'c', state: a.state, device_id: 'd' }, stub.fetch);
+      assert.equal(stub.calls[0].body.register, destination.startsWith('/connect?') ? undefined : true);
+      assert.equal(stub.calls[0].body.method, method);
+    }
+  }
+});
+
+test('an unlinked identity replaces all previous browser account and pairing authority', async () => {
+  const a = attempt();
+  const result = await callback(a, { code: 'c', state: a.state, device_id: 'd' }, api(200, { state: 'unlinked', social_ticket: TICKET }).fetch);
+  const lines = setCookieLines(result.cookies);
+  for (const name of [NAMES.session, NAMES.pair, NAMES.csrf, NAMES.vk])
+    assert.ok(lines.some(line => line.startsWith(name + '=;') && line.includes('Max-Age=0') && line.includes('Secure')), name);
+  assert.ok(!result.cookies.set.some(([name]) => name === NAMES.session));
 });
 
 test('Account API errors become friendly sign-in messages; malformed replies set nothing', async () => {
@@ -184,12 +206,14 @@ test('Account API errors become friendly sign-in messages; malformed replies set
 });
 
 test('VK ID ticket routes inject the ticket from its cookie and never trust the browser body', () => {
+  assert.deepEqual(socialTicketBody('auth/social/enrollment', { code: 'ABCD2345' }, TICKET), { body: { code: 'ABCD2345', social_ticket: TICKET } });
   assert.deepEqual(socialTicketBody('auth/social/attach', { code: 'ABCD2345' }, TICKET), { body: { code: 'ABCD2345', social_ticket: TICKET } });
   assert.deepEqual(socialTicketBody('auth/social/ticket', {}, TICKET), { body: { social_ticket: TICKET } });
   assert.deepEqual(socialTicketBody('auth/social/ticket', undefined, TICKET), { body: { social_ticket: TICKET } });
   // A browser-supplied ticket (or anything else) is refused, not merged.
   for (const body of [{ code: 'ABCD2345', social_ticket: 'd'.repeat(64) }, { social_ticket: 'd'.repeat(64) }, { code: 'abcd2345' }, { code: 'ABCD1345' }, { code: 12345678 }, {}, { code: 'ABCD2345', extra: 1 }])
-    assert.deepEqual(socialTicketBody('auth/social/attach', body, TICKET), { code: 'invalid_request', status: 400 }, JSON.stringify(body));
+    for (const path of ['auth/social/attach', 'auth/social/enrollment'])
+      assert.deepEqual(socialTicketBody(path, body, TICKET), { code: 'invalid_request', status: 400 }, JSON.stringify(body));
   assert.deepEqual(socialTicketBody('auth/social/ticket', { social_ticket: 'd'.repeat(64) }, TICKET), { code: 'invalid_request', status: 400 });
   for (const cookie of [undefined, '', 'C'.repeat(64), TICKET + '0', 'c'.repeat(63)])
     assert.deepEqual(socialTicketBody('auth/social/attach', { code: 'ABCD2345' }, cookie), { code: 'social_ticket_expired', status: 404 }, String(cookie));

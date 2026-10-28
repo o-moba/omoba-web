@@ -40,6 +40,10 @@ export const landingTranslations: Record<string, { ru: string; zh: string }> = {
   },
   'All downloads': { ru: 'Все загрузки', zh: '全部下载' },
   'Your progress': { ru: 'Ваш прогресс', zh: '你的进度' },
+  'Sign in here with VK, OK or Mail.ru to create your profile, then use the same account in the game: Profile → Sign in with VK ID. Already playing? Link your existing profile from the game first to keep your progress.': {
+    ru: 'Войдите здесь через VK, OK или Mail.ru, чтобы создать профиль. Затем войдите с тем же аккаунтом в игре: «Профиль» → «Войти через VK ID». Уже играете? Сначала привяжите существующий профиль в игре, чтобы сохранить прогресс.',
+    zh: '在这里使用 VK、OK 或 Mail.ru 登录以创建资料，然后在游戏中使用同一账号：“资料” → “使用 VK ID 登录”。已经玩过？请先在游戏中关联现有资料以保留进度。',
+  },
   'The game creates your profile when you first start it. To see your matches here and to play on other devices, sign in with VK ID in the game: Profile → Sign in with VK ID.': {
     ru: 'Игра создаёт ваш профиль при первом запуске. Чтобы видеть здесь свои матчи и играть на других устройствах, войдите через VK ID в игре: «Профиль» → «Войти через VK ID».',
     zh: '游戏首次启动时会创建你的资料。若要在这里查看比赛并在其他设备上游戏，请在游戏中使用 VK ID 登录：“资料” → “使用 VK ID 登录”。',

@@ -7,42 +7,57 @@
 //
 //   OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=51234567 npm run build
 //   OMOBA_ACCOUNT_API_BIN=…/omoba-account-api \           # built with OMOBA_MARKET=ru
-//   OMOBA_E2E_DATABASE_URL=postgres://owner@127.0.0.1:55581/vk_e2e \
+//   OMOBA_E2E_DATABASE_URL=postgres://owner@127.0.0.1:<task-port>/omoba_test \
 //   OMOBA_PSQL=/Applications/Postgres.app/Contents/Versions/18/bin/psql \
 //   npm run test:vk-sign-in
 //
-// The database must be a disposable, empty loopback database: the script migrates it.
+// The task-owned disposable loopback database must be omoba_test; the script migrates it.
+// Ports 5432/55581 are refused. OMOBA_E2E_PORT and OMOBA_E2E_API_PORT override local ports.
+// Optional OMOBA_NATIVE_JOURNEY_FIXTURE exports synthetic keys to a private .agent file.
 // Screenshots go to .agent/vk-sign-in/.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { createPrivateKey, createPublicKey, randomBytes, sign } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash, createPrivateKey, createPublicKey, randomBytes, sign } from "node:crypto";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { chromium } from "@playwright/test";
 
 const required = JSON.parse(await readFile(new URL("../.next/required-server-files.json", import.meta.url), "utf8"));
-assert.equal(required.config?.env?.OMOBA_BUILT_MARKET, "ru (ekza off, supporter off, vk_sign_in on)", "run after a ru build");
+const built = required.config?.env?.OMOBA_BUILT_MARKET;
+const buildFeatures = /^ru \(ekza off, supporter (on|off), vk_sign_in on\)$/.exec(built || "");
+assert.ok(buildFeatures, "run after a RU build with VK ID enabled (got " + built + ")");
 const binary = process.env.OMOBA_ACCOUNT_API_BIN, database = process.env.OMOBA_E2E_DATABASE_URL;
 assert.ok(binary && database, "set OMOBA_ACCOUNT_API_BIN and OMOBA_E2E_DATABASE_URL");
 const db = new URL(database);
-assert.ok(db.hostname === "127.0.0.1" && db.port === "55581", "only the disposable loopback cluster on 55581");
+assert.ok(db.hostname === "127.0.0.1" && db.port && !["5432", "55581"].includes(db.port) && db.pathname === "/omoba_test", "only the explicit task-owned loopback database omoba_test, never ports 5432/55581");
+if (process.env.OMOBA_E2E_DATABASE_PORT) assert.equal(db.port, process.env.OMOBA_E2E_DATABASE_PORT);
 const psql = process.env.OMOBA_PSQL || "psql";
-const CLIENT_ID = "51234567", origin = "http://127.0.0.1:3010", out = ".agent/vk-sign-in";
+const portalPort = Number(process.env.OMOBA_E2E_PORT || "3010");
+assert.ok(Number.isInteger(portalPort) && portalPort > 1024 && portalPort < 65536);
+const CLIENT_ID = "51234567", origin = "http://127.0.0.1:" + portalPort, out = ".agent/vk-sign-in";
 await mkdir(out, { recursive: true });
 
 // --- VK ID stand-in: code `user-<id>` is VK user <id>, named Иван Петров.
 const vkCalls = [];
+const grants = new Map(), children = [];
+let browser;
+let providerDown = false;
 const vk = createServer(async (req, res) => {
   let raw = "";
   for await (const chunk of req) raw += chunk;
   const form = Object.fromEntries(new URLSearchParams(raw));
   vkCalls.push({ path: req.url, form });
   const send = (status, value) => { res.writeHead(status, { "Content-Type": "application/json" }); res.end(JSON.stringify(value)); };
+  if (providerDown) return send(503, { error: "temporarily_unavailable" });
   if (req.url === "/oauth2/auth") {
+    const grant = grants.get(form.code);
     const ok = form.grant_type === "authorization_code" && form.client_id === CLIENT_ID && form.device_id && form.state
-      && form.code_verifier?.length >= 43 && form.redirect_uri === origin + "/api/auth/vk/callback" && !("client_secret" in form);
-    const id = form.code?.startsWith("user-") ? form.code.slice(5) : null;
-    return ok && id ? send(200, { access_token: "token-" + id, expires_in: 3600 }) : send(400, { error: "invalid_grant" });
+      && form.code_verifier?.length >= 43 && form.redirect_uri === origin + "/api/auth/vk/callback" && !("client_secret" in form)
+      && grant && !grant.used && grant.state === form.state && grant.device === form.device_id
+      && grant.challenge === createHash("sha256").update(form.code_verifier).digest("base64url");
+    const id = ok ? grant.subject : null;
+    if (ok) grant.used = true;
+    return ok && id ? send(200, { access_token: "token-" + id, expires_in: 3600, state: form.state }) : send(400, { error: "invalid_grant" });
   }
   if (req.url === "/oauth2/user_info") {
     const id = form.access_token?.startsWith("token-") ? form.access_token.slice(6) : null;
@@ -50,21 +65,23 @@ const vk = createServer(async (req, res) => {
   }
   send(404, {});
 });
-await new Promise((resolve) => vk.listen(0, "127.0.0.1", resolve));
+try {
+await new Promise((resolve, reject) => { vk.once("error", reject); vk.listen(0, "127.0.0.1", resolve); });
 const vkOrigin = "http://127.0.0.1:" + vk.address().port;
 
 // --- Account API (RU build) and the RU portal.
 const hex32 = () => randomBytes(32).toString("hex");
 const clean = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("OMOBA_") && !key.startsWith("VERCEL")));
 execFileSync(binary, ["migrate"], { env: { ...clean, OMOBA_DATABASE_URL: database }, stdio: "inherit" });
-const apiPort = 40600 + Math.floor(Math.random() * 200), apiOrigin = "http://127.0.0.1:" + apiPort;
-const children = [];
+const apiPort = Number(process.env.OMOBA_E2E_API_PORT || "40550"), apiOrigin = "http://127.0.0.1:" + apiPort;
+assert.ok(Number.isInteger(apiPort) && apiPort > 1024 && apiPort < 65536 && apiPort !== portalPort);
 function start(command, args, env, name) {
   const child = spawn(command, args, { env: { ...clean, ...env }, stdio: ["ignore", "pipe", "pipe"], detached: true });
   child.log = "";
   child.stdout.on("data", (c) => (child.log += c));
   child.stderr.on("data", (c) => (child.log += c));
   child.name = name;
+  child.on("error", error => { child.startupError = error; });
   children.push(child);
   return child;
 }
@@ -74,11 +91,12 @@ const api = start(binary, [], {
   OMOBA_VKID_LOCAL_FIXTURE_ORIGIN: vkOrigin, OMOBA_ACCOUNT_BIND: "127.0.0.1:" + apiPort,
 }, "account-api");
 const portal = start(process.execPath, ["scripts/start.mjs"], {
-  OMOBA_MARKET: "ru", OMOBA_VKID_CLIENT_ID: CLIENT_ID, OMOBA_ACCOUNT_MODE: "enabled", OMOBA_ALLOW_INSECURE_LOCAL: "1",
-  OMOBA_PORTAL_ORIGIN: origin, OMOBA_ACCOUNT_API_URL: apiOrigin, PORT: "3010",
+  OMOBA_MARKET: "ru", OMOBA_FEATURE_SUPPORTER: buildFeatures[1], OMOBA_VKID_CLIENT_ID: CLIENT_ID, OMOBA_ACCOUNT_MODE: "enabled", OMOBA_ALLOW_INSECURE_LOCAL: "1",
+  OMOBA_PORTAL_ORIGIN: origin, OMOBA_ACCOUNT_API_URL: apiOrigin, PORT: String(portalPort),
 }, "portal");
 async function ready(url, child) {
   for (let i = 0; i < 120; i++) {
+    if (child.startupError) throw child.startupError;
     if (child.exitCode !== null) throw new Error(child.name + " exited:\n" + child.log);
     try { if ((await fetch(url, { signal: AbortSignal.timeout(2000) })).status < 500) return; } catch {}
     await new Promise((r) => setTimeout(r, 250));
@@ -102,140 +120,245 @@ const enrollmentTuple = (e, action, target = null) =>
 const device = (key, e, action, target = null) =>
   native("auth/devices/" + action, { enrollment: e, action, target_profile: target, recovery_code: null, signature: signed(key, enrollmentTuple(e, action, target)) });
 function register(nickname) {
-  const key = keyOf(randomBytes(32)), profile = hex32();
+  const seed = randomBytes(32), key = keyOf(seed), profile = hex32();
   execFileSync(psql, [database, "-v", "ON_ERROR_STOP=1", "-qc",
     `INSERT INTO career_profiles(profile_id,nickname) VALUES('${profile}','${nickname}'); INSERT INTO career_keys(public_key,profile_id) VALUES('${publicOf(key)}','${profile}');`]);
-  return { key, profile };
+  return { key, profile, seed };
 }
 const sql = (query) => execFileSync(psql, [database, "-qtAc", query]).toString().trim();
 
-const vkUser = String(100000 + Math.floor(Math.random() * 1e8));
-const checks = [];
-const browser = await chromium.launch({ channel: "chrome", headless: true });
-try {
+
+// The root gameplay proof consumes this private, task-local fixture. It contains
+// only newly generated synthetic keys; it must never enter committed evidence.
+const nativeFixtures = [], profiles = [], checks = [], browserAccounts = [];
+let vkUser = "", behavior = "success", callbackUrl = "";
   await ready(apiOrigin + "/health/ready", api);
   await ready(origin + "/login", portal);
-  const context = await browser.newContext({ locale: "ru-RU", viewport: { width: 1280, height: 900 } });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
+  const context = await browser.newContext({ locale: "ru-RU", viewport: { width: 852, height: 393 } });
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
   const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  // VK ID: the portal's real start response (attempt cookie + authorize URL) is taken,
-  // the authorize URL is checked, and VK's redirect back to the callback is played
-  // without loading id.vk.ru (a route never sees the hop after a server redirect).
+  page.on("pageerror", e => errors.push(e.message));
   const authorize = [];
-  await context.route((url) => url.pathname === "/api/auth/vk/start", async (route) => {
+  await context.route(url => url.pathname === "/api/auth/vk/start", async route => {
     const response = await route.fetch({ maxRedirects: 0 });
     assert.equal(response.status(), 302);
-    const url = new URL(response.headers().location);
+    const url = new URL(response.headers().location), params = Object.fromEntries(url.searchParams);
     assert.equal(url.origin + url.pathname, "https://id.vk.ru/authorize");
-    authorize.push(Object.fromEntries(url.searchParams));
-    const back = new URL(url.searchParams.get("redirect_uri"));
-    back.search = new URLSearchParams({ code: "user-" + vkUser, state: url.searchParams.get("state"), device_id: "vk-device-1", type: "code_v2" });
-    const headers = Object.fromEntries(response.headersArray().filter((h) => !["location", "content-length", "content-type"].includes(h.name.toLowerCase())).map((h) => [h.name, h.value]));
-    const cookies = response.headersArray().filter((h) => h.name.toLowerCase() === "set-cookie").map((h) => h.value);
+    assert.equal(params.client_id, CLIENT_ID);
+    assert.equal(params.code_challenge_method, "s256");
+    assert.equal(params.prompt, params.provider === "vkid" ? undefined : "login");
+    assert.equal(params.scope, "vkid.personal_info");
+    assert.equal(params.redirect_uri, origin + "/api/auth/vk/callback");
+    authorize.push(params);
+    const code = "fixture-" + hex32();
+    grants.set(code, { subject: vkUser, state: params.state, challenge: params.code_challenge, device: "vk-device-1", used: false });
+    const back = new URL(params.redirect_uri);
+    back.search = behavior === "cancelled"
+      ? new URLSearchParams({ state: params.state, error: "access_denied" })
+      : new URLSearchParams({ code, state: behavior === "foreign" ? "0".repeat(64) : params.state, device_id: "vk-device-1", type: "code_v2" });
+    callbackUrl = back.toString();
+    const headers = Object.fromEntries(response.headersArray().filter(h => !["location", "content-length", "content-type", "set-cookie"].includes(h.name.toLowerCase())).map(h => [h.name, h.value]));
+    const cookies = response.headersArray().filter(h => h.name.toLowerCase() === "set-cookie").map(h => h.value);
     await route.fulfill({ status: 200, contentType: "text/html", headers: { ...headers, "set-cookie": cookies.join("\n") },
-      body: `<!doctype html><script>location.replace(${JSON.stringify(back.toString())})</script>` });
+      body: "<!doctype html><script>location.replace(" + JSON.stringify(back.toString()) + ")</script>" });
   });
-  // start -> id.vk.ru (answered above) -> callback -> returnTo (/me by default).
-  async function vkSignIn(button = "Войти через VK ID") {
+  async function signIn(method, target = "/me") {
     await Promise.all([
-      page.waitForURL((url) => url.pathname === "/me"),
-      page.getByRole("link", { name: button }).first().click(),
+      page.waitForURL(url => url.pathname + url.search === target),
+      page.locator('[data-vk-method="' + method + '"]').first().click(),
     ]);
+    assert.equal(authorize.at(-1).provider, method);
+  }
+  const me = () => page.evaluate(async () => { const r = await fetch("/api/me"); return { status: r.status, body: await r.json() }; });
+  async function enrollment(key) {
+    const e = enrollmentFor(key), created = await device(key, e, "create");
+    assert.equal(created.status, 200, JSON.stringify(created.body));
+    return { e, code: created.body.code };
+  }
+  const profilesBefore = Number(sql("SELECT count(*) FROM career_profiles"));
+  // Independent subjects prove each method creates its own profile and that a
+  // previous browser session A is replaced by the chosen B, never auto-merged.
+  for (const method of ["vkid", "ok_ru", "mail_ru"]) {
+    vkUser = String(100000000 + Math.floor(Math.random() * 700000000));
+    await page.goto(origin + "/login");
+    await signIn(method);
+    const first = await me();
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    const profile = first.body.profile;
+    assert.match(profile.profile_id, /^[a-f0-9]{64}$/);
+    assert.ok(!profiles.some(p => p.profile_id === profile.profile_id), "a new subject must replace the previous browser account");
+    assert.equal(profile.rating, 1000);
+    for (const field of ["rated_matches", "matches_played", "wins", "losses"]) assert.equal(profile[field], 0, field);
+    assert.equal(profile.progression_xp, "0");
+    assert.equal(profile.level, "1");
+    assert.equal(first.body.social[0].method, method);
+    const nextStep = page.locator('[data-game-next-step]');
+    await nextStep.waitFor();
+    assert.equal(await nextStep.getByRole('link', { name: 'Скачать игру' }).getAttribute('href'), '/download');
+    assert.match(await nextStep.innerText(), /Россия/);
+    assert.match(await nextStep.innerText(), /Профиль → Войти через VK ID/);
+    assert.match(await nextStep.innerText(), /тот же аккаунт VK, OK или Mail\.ru/);
+    assert.ok((await context.cookies()).find(c => c.name === "omoba-session")?.httpOnly);
+    assert.equal((await context.cookies()).some(c => c.name === "omoba-social"), false);
+    await page.goto(origin + "/login");
+    await signIn(method);
+    assert.equal((await me()).body.profile.profile_id, profile.profile_id, "repeat login keeps the profile");
+    browserAccounts.push({ account: first.body, cookie: (await context.cookies()).find(c => c.name === "omoba-session") });
+    assert.equal(Number(sql("SELECT count(*) FROM career_profiles")), profilesBefore + profiles.length + 1);
+    await page.screenshot({ path: out + "/" + method + "-registered.png", fullPage: true });
+    const seed = randomBytes(32), key = keyOf(seed), { e, code } = await enrollment(key);
+    await page.goto(origin + "/connect?code=" + code);
+    const review = page.locator("[data-connect-review]");
+    await review.waitFor();
+    assert.match(await review.innerText(), new RegExp(e.public_key.slice(0, 8) + "…" + e.public_key.slice(-8)));
+    await page.getByRole("button", { name: "Подтвердить вход", exact: true }).click();
+    await page.locator("[data-connect-done]").waitFor();
+    const approved = await device(key, e, "status");
+    assert.equal(approved.body.state, "approved");
+    assert.equal(approved.body.profile_id, profile.profile_id);
+    const complete = await device(key, e, "complete", profile.profile_id);
+    assert.equal(complete.status, 200, JSON.stringify(complete.body));
+    assert.equal(sql("SELECT profile_id FROM career_keys WHERE public_key='" + e.public_key + "' AND revoked_at IS NULL"), profile.profile_id);
+    profiles.push({ method, profile_id: profile.profile_id, public_key: e.public_key });
+    nativeFixtures.push({ method, profile_id: profile.profile_id, seed: seed.toString("hex") });
+    checks.push(method + ": website first/repeat registration and native device use the same profile");
   }
 
-  // 1. The player has played: the install key owns a game profile.
-  const home = register("Лиса");
-  const nickname = sql(`SELECT nickname FROM career_profiles WHERE profile_id='${home.profile}'`);
-
-  // 2. Registration on the website: an unknown VK account signs nobody in.
-  await page.goto(origin + "/login");
-  await vkSignIn();
-  const first = authorize[0];
-  assert.equal(first.client_id, CLIENT_ID);
-  assert.equal(first.provider, "vkid");
-  assert.equal(first.code_challenge_method, "S256");
-  assert.equal(first.scope, "vkid.personal_info");
-  assert.equal(first.redirect_uri, origin + "/api/auth/vk/callback");
-  assert.equal((await context.cookies()).some((c) => c.name === "omoba-session"), false, "no session for an unlinked VK account");
-  assert.ok((await context.cookies()).find((c) => c.name === "omoba-social")?.httpOnly, "an httpOnly registration ticket");
-  await page.getByText("Иван П.").first().waitFor();
-  await page.screenshot({ path: out + "/1-registered.png", fullPage: true });
-  checks.push("website VK registration creates no game profile and no session");
-  assert.match(sql("SELECT count(*) FROM portal.social_identities WHERE profile_id IS NULL"), /^[1-9]/);
-  assert.equal(sql(`SELECT count(*) FROM portal.social_identities WHERE subject_hash LIKE '%${vkUser}%'`), "0");
-
-  // 3. The game asks to sign in: a pending key and its code; the browser opens /connect.
-  const pending = keyOf(randomBytes(32)), e = enrollmentFor(pending);
-  const created = await device(pending, e, "create");
-  assert.equal(created.status, 200, JSON.stringify(created.body));
-  const code = created.body.code;
-  await page.goto(origin + "/connect?code=" + code);
-  await page.getByRole("button", { name: "Продолжить" }).click();
+  // A second tab changes the shared session after A's preview. Delay background
+  // /me refresh to exercise the actual stale-preview mutation, not just focus.
+  const [accountA, accountB] = browserAccounts;
+  await context.addCookies([accountA.cookie]);
+  const racingKey = keyOf(randomBytes(32)), race = await enrollment(racingKey);
+  let holdAccountRefresh = true;
+  const accountRefreshMatcher = url => url.pathname === "/api/me";
+  const approvalMatcher = url => url.pathname === "/api/me/devices/approve";
+  await page.route(accountRefreshMatcher, async route => {
+    if (holdAccountRefresh) await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(accountA.account) });
+    else await route.continue();
+  });
+  await page.goto(origin + "/connect?code=" + race.code);
+  await page.locator("[data-connect-review]").waitFor();
+  assert.ok((await page.locator("[data-connect-review]").innerText()).includes(accountA.account.profile.nickname));
+  const otherTab = await context.newPage();
+  await otherTab.goto(origin + "/me");
+  await context.addCookies([accountB.cookie]);
+  await otherTab.reload();
+  const attemptedProfiles = [];
+  await page.route(approvalMatcher, async route => {
+    attemptedProfiles.push(route.request().postDataJSON().profile_id);
+    const response = await route.fetch();
+    if (attemptedProfiles.length === 1) {
+      assert.equal(response.status(), 409);
+      assert.equal((await response.json()).code, "account_changed");
+      holdAccountRefresh = false;
+    }
+    await route.fulfill({ response });
+  });
+  await page.getByRole("button", { name: "Подтвердить вход", exact: true }).click();
+  await page.locator("[data-connect-account-changed]").waitFor();
+  await page.getByRole("heading", { name: "Войти как " + accountB.account.profile.nickname + " на устройстве «Desktop»?", exact: true }).waitFor();
+  assert.deepEqual(attemptedProfiles, [accountA.account.profile.profile_id]);
+  assert.equal((await device(racingKey, race.e, "status")).body.state, "pending", "stale A review cannot bind B");
+  assert.equal(await page.locator("[data-connect-done]").count(), 0);
+  await page.getByRole("button", { name: "Подтвердить вход", exact: true }).click();
   await page.locator("[data-connect-done]").waitFor();
-  await page.screenshot({ path: out + "/2-connect-attached.png", fullPage: true });
-  const status = await device(pending, e, "status");
-  assert.equal(status.body.state, "social_pending");
-  assert.equal(status.body.social.display_name, "Иван П.");
-  checks.push("the game sees the waiting VK sign-in (social_pending)");
+  const rereviewed = await device(racingKey, race.e, "status");
+  assert.equal(rereviewed.body.state, "approved");
+  assert.equal(rereviewed.body.profile_id, accountB.account.profile.profile_id);
+  assert.deepEqual(attemptedProfiles, [accountA.account.profile.profile_id, accountB.account.profile.profile_id]);
+  await otherTab.close();
+  await page.unroute(accountRefreshMatcher);
+  await page.unroute(approvalMatcher);
+  checks.push("cross-tab A preview cannot approve B until the new account is reviewed and explicitly confirmed");
 
-  // 4. The player confirms in the game: the active key signs the link.
-  const link = { enrollment_id: e.enrollment_id, enrollment_key: e.public_key, public_key: publicOf(home.key), origin, expires_at: e.expires_at };
-  const stranger = keyOf(randomBytes(32));
-  const refused = await native("auth/social/link", { link: { ...link, public_key: publicOf(stranger) }, signature: signed(stranger, ["omoba.social.link.v1", origin, link.enrollment_id, link.enrollment_key, publicOf(stranger), link.expires_at]) });
-  assert.equal(refused.status, 404, "an unregistered key cannot link");
-  const linked = await native("auth/social/link", { link, signature: signed(home.key, ["omoba.social.link.v1", origin, link.enrollment_id, link.enrollment_key, link.public_key, link.expires_at]) });
+  // The game-created profile owns its existing progress. Unknown B selected from
+  // a game link must stay unlinked until that active game's key signs the link.
+  const home = register("Старый профиль");
+  sql("UPDATE career_profiles SET rating=1234,progression_xp=7000 WHERE profile_id='" + home.profile + "'");
+  const pending = keyOf(randomBytes(32)), game = await enrollment(pending), target = "/connect?code=" + game.code;
+  vkUser = String(800000000 + Math.floor(Math.random() * 100000000));
+  const before = Number(sql("SELECT count(*) FROM career_profiles"));
+  await page.goto(origin + "/login?returnTo=" + encodeURIComponent(target));
+  await signIn("vkid", target);
+  assert.equal((await context.cookies()).some(c => c.name === "omoba-session"), false, "unknown B clears existing A session");
+  assert.equal((await me()).status, 401);
+  assert.equal(Number(sql("SELECT count(*) FROM career_profiles")), before, "game login does not create a blank profile");
+  const socialReview = page.locator("[data-connect-review]");
+  await socialReview.waitFor();
+  assert.match(await socialReview.innerText(), new RegExp(game.e.public_key.slice(0, 8) + "…" + game.e.public_key.slice(-8)));
+  assert.match(await socialReview.innerText(), /Desktop/);
+  assert.equal((await device(pending, game.e, "status")).body.state, "pending", "lookup does not attach");
+  await page.screenshot({ path: out + "/game-social-review.png", fullPage: true });
+  await page.getByRole("button", { name: "Продолжить", exact: true }).click();
+  await page.locator("[data-connect-done]").waitFor();
+  assert.equal((await device(pending, game.e, "status")).body.state, "social_pending");
+  const link = { enrollment_id: game.e.enrollment_id, enrollment_key: game.e.public_key, public_key: publicOf(home.key), origin, expires_at: game.e.expires_at };
+  const linkBy = key => native("auth/social/link", {
+    link: { ...link, public_key: publicOf(key) },
+    signature: signed(key, ["omoba.social.link.v1", origin, link.enrollment_id, link.enrollment_key, publicOf(key), link.expires_at]),
+  });
+  assert.equal((await linkBy(keyOf(randomBytes(32)))).status, 404, "unregistered keys cannot link");
+  const linked = await linkBy(home.key);
   assert.equal(linked.status, 200, JSON.stringify(linked.body));
   assert.equal(linked.body.profile_id, home.profile);
-  checks.push("only the game's active key links the VK sign-in to its profile");
-
-  // 5. VK now signs the browser into that account.
+  assert.equal(sql("SELECT rating||':'||progression_xp FROM career_profiles WHERE profile_id='" + home.profile + "'"), "1234:7000");
   await page.goto(origin + "/login");
-  await vkSignIn("Одноклассники");
-  assert.equal(authorize.at(-1).provider, "ok_ru");
-  assert.ok((await context.cookies()).find((c) => c.name === "omoba-session")?.httpOnly);
-  const me = await page.evaluate(async () => (await fetch("/api/me")).json());
-  assert.equal(me.profile.profile_id, home.profile);
-  assert.equal(me.profile.nickname, nickname);
-  assert.equal(me.social[0].method, "ok_ru");
-  await page.goto(origin + "/me");
-  await page.getByText(nickname).first().waitFor();
-  await page.screenshot({ path: out + "/3-signed-in.png", fullPage: true });
-  checks.push("VK (via OK) signs the website into the linked game account");
+  await signIn("vkid");
+  assert.equal((await me()).body.profile.profile_id, home.profile);
+  nativeFixtures.push({ method: "game-first", profile_id: home.profile, seed: home.seed.toString("hex") });
+  checks.push("game-first link clears old browser identity, reviews device and preserves signed current profile/progress");
 
-  // 6. A second computer: the website approves its code as the account; the game switches.
-  register("Guest");
-  const laptop = keyOf(randomBytes(32)), e2 = enrollmentFor(laptop);
-  const code2 = (await device(laptop, e2, "create")).body.code;
-  await page.goto(origin + "/connect?code=" + code2);
-  await page.locator("[data-connect-review]").waitFor();
-  await page.screenshot({ path: out + "/4-connect-review.png", fullPage: true });
-  await page.getByRole("button", { name: "Подтвердить вход" }).click();
-  await page.locator("[data-connect-done]").waitFor();
-  const approved = await device(laptop, e2, "status");
-  assert.equal(approved.body.state, "approved");
-  assert.equal(approved.body.profile_id, home.profile);
-  const completed = await device(laptop, e2, "complete", home.profile);
-  assert.equal(completed.status, 200, JSON.stringify(completed.body));
-  assert.equal(sql(`SELECT profile_id FROM career_keys WHERE public_key='${publicOf(laptop)}' AND revoked_at IS NULL`), home.profile);
-  checks.push("a new device signs in through VK and is enrolled into the account");
-
-  // 7. What is stored, and what the Account API was asked.
-  assert.equal(sql("SELECT count(*) FROM portal.social_identities WHERE provider='vk' AND profile_id IS NOT NULL AND method='ok_ru'"), "1");
-  assert.ok(vkCalls.every((c) => !("client_secret" in c.form)));
-  assert.ok(vkCalls.some((c) => c.path === "/oauth2/auth" && c.form.device_id === "vk-device-1"), "the callback's device_id reaches the token exchange");
+  await context.clearCookies();
+  for (const [mode, reason] of [["cancelled", "cancelled"], ["foreign", "failed"], ["success", "provider_unavailable"]]) {
+    behavior = mode;
+    providerDown = reason === "provider_unavailable";
+    const callsBefore = vkCalls.length;
+    await page.goto(origin + "/login?returnTo=" + encodeURIComponent(target));
+    await signIn("mail_ru", "/login?signin=" + reason + "&returnTo=" + encodeURIComponent(target));
+    await page.locator("[data-signin-failure]").waitFor();
+    assert.equal((await context.cookies()).some(c => ["omoba-session", "omoba-social", "omoba-vk"].includes(c.name)), false);
+    if (mode !== "success") assert.equal(vkCalls.length, callsBefore, "invalid state/cancel never calls provider");
+    const retry = new URL(await page.locator('[data-vk-method="mail_ru"]').first().getAttribute("href"), origin);
+    assert.equal(retry.searchParams.get("returnTo"), target);
+  }
+  providerDown = false;
+  const callsBeforeReplay = vkCalls.length;
+  await page.goto(callbackUrl);
+  await page.waitForURL(origin + "/login?signin=failed");
+  assert.equal(vkCalls.length, callsBeforeReplay, "replayed callback without attempt cookie never calls provider");
+  checks.push("cancel, mismatched state, provider outage and replay reject identity changes and preserve retry destinations");
   assert.deepEqual(errors, []);
-  await writeFile(out + "/result.json", JSON.stringify({ passed: true, checks, limitations: [
-    "VK ID is a loopback stand-in; the real id.vk.ru app is not exercised.",
-    "The game is a synthetic signer of the same native requests; the Bevy UI is covered by client tests.",
+  const privateFixture = process.env.OMOBA_NATIVE_JOURNEY_FIXTURE;
+  if (privateFixture) {
+    assert.ok(privateFixture.startsWith("/") && privateFixture.includes("/.agent/"), "native fixture must be an absolute ignored .agent task path");
+    await writeFile(privateFixture, JSON.stringify(nativeFixtures, null, 2), { mode: 0o600 });
+    await chmod(privateFixture, 0o600);
+  }
+  await writeFile(out + "/result.json", JSON.stringify({ passed: true, profiles, checks, viewport: { locale: "ru-RU", width: 852, height: 393 }, limitations: [
+    "VK ID is a loopback stand-in; real VK, OK and Mail.ru app/accounts are not exercised.",
+    "The game is a synthetic Ed25519 signer; physical device input and key storage are not exercised.",
   ] }, null, 2));
-  console.log("PASS VK ID sign-in end to end:\n- " + checks.join("\n- "));
+  console.log("PASS RU registration and native identity:\n- " + checks.join("\n- "));
 } catch (error) {
-  for (const child of children) console.error("--- " + child.name + " log\n" + child.log.slice(-4000));
+  for (const child of children) console.error(child.name + " log\n" + child.log.slice(-4000));
   throw error;
 } finally {
-  await browser.close();
-  vk.close();
-  for (const child of children) { try { process.kill(-child.pid, "SIGTERM"); } catch {} }
+  await browser?.close().catch(() => {});
+  await Promise.all(children.map(async child => {
+    if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
+    const exited = new Promise(resolve => child.once("exit", resolve));
+    try { process.kill(-child.pid, "SIGTERM"); } catch { return; }
+    const timer = setTimeout(() => { try { process.kill(-child.pid, "SIGKILL"); } catch {} }, 3000);
+    await exited;
+    clearTimeout(timer);
+  }));
+  // Stop the API before its provider mock: its HTTP pool may keep a connection
+  // alive. Only this test's server and process groups are closed here.
+  if (vk.listening) await new Promise(resolve => {
+    const timer = setTimeout(() => { vk.closeAllConnections(); resolve(); }, 3000);
+    vk.close(() => { clearTimeout(timer); resolve(); });
+    vk.closeAllConnections();
+  });
 }

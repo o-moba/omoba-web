@@ -62,7 +62,7 @@ export function GuestHome({ home, loginHref, signInLabel }: { home: GuestHomeDat
     <section className="card landing-section" aria-labelledby="landing-account">
       <h2 id="landing-account">{t('Your progress')}</h2>
       <p className="muted">{features.vkSignIn
-        ? t('The game creates your profile when you first start it. To see your matches here and to play on other devices, sign in with VK ID in the game: Profile → Sign in with VK ID.')
+        ? t('Sign in here with VK, OK or Mail.ru to create your profile, then use the same account in the game: Profile → Sign in with VK ID. Already playing? Link your existing profile from the game first to keep your progress.')
         : t('The game creates your profile when you first start it. To see your matches here, connect the game to this site: Profile → Link or recover account.')}</p>
       <Link className="button" href={loginHref}>{signInLabel} →</Link>
     </section>
