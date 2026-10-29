@@ -19,7 +19,7 @@ All server-only; none is a `NEXT_PUBLIC_` variable. Client components receive th
 | `OMOBA_MARKET` | `global` (default when unset or empty), `ru`, `cn` | The market. Exact, lower case; `RU`, `ru `, `eu` fail. |
 | `OMOBA_FEATURE_EKZA` | empty (preset), `on`, `off` | Override the market's Ekza feature. |
 | `OMOBA_FEATURE_SUPPORTER` | empty (preset), `on`, `off` | Override paid Hero Supporter. |
-| `OMOBA_FEATURE_VK_SIGN_IN` | empty (preset), `on`, `off` | Override Sign in with VK ID. |
+| `OMOBA_FEATURE_VK_SIGN_IN` | empty (preset), `on`, `off` | Enable/disable VK within RU. `on` outside `ru` is rejected. |
 | `OMOBA_VKID_CLIENT_ID` | empty, or the numeric VK ID app id | Needed for VK ID buttons and routes; a non-numeric value fails. |
 
 Names, values and semantics equal `market.rs` (`Market::parse`, `Features::resolve`): `on`/`off` are exact; anything else (`yes`, `OFF`, `1`) is an error. The presets:
@@ -81,6 +81,8 @@ Mutations use the usual CSRF proof. The only value in the URL is the enrollment 
 
 One VK ID **web** app in the VK ID developer cabinet covers VK, OK and Mail.ru:
 
+- RU OneTap uses the owner's app `54863720`, exact portal root `https://omoba.ru`,
+  callback mode and server-owned PKCE/code exchange. See [OneTap setup](vk-one-tap.md).
 - trusted redirect URL: `${OMOBA_PORTAL_ORIGIN}/api/auth/vk/callback`, exactly (for example `https://<ru portal>/api/auth/vk/callback`);
 - scope: `vkid.personal_info`;
 - no client secret is used by the portal. The app id goes into `OMOBA_VKID_CLIENT_ID` on the portal; the Account API holds its own VK ID settings for the exchange.

@@ -7,6 +7,7 @@ export const VK_SCOPE: 'vkid.personal_info';
 export const VK_METHODS: readonly VkMethod[];
 export const VK_CALLBACK_PATH: '/api/auth/vk/callback';
 export const VK_ATTEMPT_MAX_AGE: number;
+export const VK_ONE_TAP_COOKIE_PREFIX: 'one-tap.';
 export const SOCIAL_TICKET_MAX_AGE: number;
 export const SESSION_MAX_AGE: number;
 export const SIGNIN_FAILURES: readonly string[];
@@ -25,7 +26,9 @@ export function vkStart(options: {
   method: string | null; returnTo: string | null; random?: (size: number) => Buffer;
 }): { location: string; cookies: CookieChanges } | { code: string; status: number };
 export function signinFailure(status: number, code: unknown): string;
+export type VkOneTapConfiguration = { app: number; redirectUrl: string; state: string; codeChallenge: string; scope: string };
+export function vkOneTapStart(options: { clientId: string; origin: string; names: CookieNames; features: RouteFeatures; returnTo: string | null; random?: (size: number) => Buffer }): { configuration: VkOneTapConfiguration; cookies: CookieChanges };
 export function vkCallback(options: {
   api: string; origin: string; names: CookieNames; features: RouteFeatures; query: URLSearchParams;
-  cookie: string | undefined; headers: Record<string, string>; fetch?: typeof fetch; now?: number; timeoutMs?: number;
+  cookie: string | undefined; headers: Record<string, string>; fetch?: typeof fetch; now?: number; timeoutMs?: number; flow?: 'redirect' | 'one-tap';
 }): Promise<{ location: string; cookies: CookieChanges }>;

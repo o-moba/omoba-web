@@ -231,6 +231,9 @@ if (market === "ru") {
     const browser = await chromium.launch({ channel: "chrome", headless: true });
     try {
       const context = await browser.newContext({ locale: "ru-RU", viewport: { width: 1440, height: 1000 } });
+      // This market fixture exercises the ordinary sign-in fallback. The real
+      // SDK/provider-frame rehearsal belongs to test:vk-sign-in.
+      await context.route('**/api/auth/vk/one-tap/prepare', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{"code":"unavailable"}' }));
       const page = await context.newPage();
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));

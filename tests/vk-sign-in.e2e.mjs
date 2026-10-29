@@ -34,7 +34,7 @@ if (process.env.OMOBA_E2E_DATABASE_PORT) assert.equal(db.port, process.env.OMOBA
 const psql = process.env.OMOBA_PSQL || "psql";
 const portalPort = Number(process.env.OMOBA_E2E_PORT || "3010");
 assert.ok(Number.isInteger(portalPort) && portalPort > 1024 && portalPort < 65536);
-const CLIENT_ID = "51234567", origin = "http://127.0.0.1:" + portalPort, out = ".agent/vk-sign-in";
+const CLIENT_ID = process.env.OMOBA_E2E_VK_APP_ID || "51234567", origin = "http://127.0.0.1:" + portalPort, out = ".agent/vk-sign-in";
 await mkdir(out, { recursive: true });
 
 // --- VK ID stand-in: code `user-<id>` is VK user <id>, named Иван Петров.
@@ -52,7 +52,7 @@ const vk = createServer(async (req, res) => {
   if (req.url === "/oauth2/auth") {
     const grant = grants.get(form.code);
     const ok = form.grant_type === "authorization_code" && form.client_id === CLIENT_ID && form.device_id && form.state
-      && form.code_verifier?.length >= 43 && form.redirect_uri === origin + "/api/auth/vk/callback" && !("client_secret" in form)
+      && form.code_verifier?.length >= 43 && [origin, origin + "/api/auth/vk/callback"].includes(form.redirect_uri) && !("client_secret" in form)
       && grant && !grant.used && grant.state === form.state && grant.device === form.device_id
       && grant.challenge === createHash("sha256").update(form.code_verifier).digest("base64url");
     const id = ok ? grant.subject : null;
@@ -136,6 +136,36 @@ let vkUser = "", behavior = "success", callbackUrl = "";
   await ready(origin + "/login", portal);
   browser = await chromium.launch({ channel: "chrome", headless: true });
   const context = await browser.newContext({ locale: "ru-RU", viewport: { width: 852, height: 393 } });
+  // No vendor analytics, frame or authorization request leaves this test.
+  await context.route(url => url.origin !== origin, route => {
+    const url = new URL(route.request().url());
+    assert.ok(!['/oauth2/auth', '/oauth2/user_info'].includes(url.pathname), 'the browser must never exchange provider tokens');
+    if (route.request().resourceType() === 'script') return route.fulfill({ contentType: 'text/javascript', body: '' });
+    if (url.pathname === '/domain.txt') return route.fulfill({ contentType: 'text/plain', body: 'vk.ru' });
+    // Stub SDK telemetry as a successful no-op, without making a real request.
+    return route.fulfill({ contentType: 'application/json', body: '{"response":1}' });
+  });
+  let widgetFrameError = false;
+  await context.route(url => url.origin === 'https://id.vk.ru' && url.pathname === '/button_one_tap_auth', route => route.fulfill({
+    contentType: 'text/html', body: '<!doctype html><script>parent.postMessage({type:"vk-sak-sdk",handler:' + JSON.stringify(widgetFrameError ? 'error' : 'onetap: not authorized') + ',params:{}},' + JSON.stringify(origin) + ')</script>',
+  }));
+  const widgetAuthorize = [];
+  let widgetPayload;
+  await context.route(url => url.origin === 'https://id.vk.ru' && url.pathname === '/authorize', async route => {
+    const params = Object.fromEntries(new URL(route.request().url()).searchParams);
+    assert.equal(params.client_id, CLIENT_ID);
+    assert.equal(params.redirect_uri, origin);
+    assert.equal(params.code_challenge_method, 's256');
+    assert.equal(params.scope, 'vkid.personal_info');
+    assert.ok(!params.code_verifier);
+    widgetAuthorize.push(params);
+    const code = 'widget-' + hex32();
+    grants.set(code, { subject: vkUser, state: params.state, challenge: params.code_challenge, device: 'vk-device-1', used: false });
+    const message = { action: 'oauth2_authorize_response' + params.state,
+      payload: { type: 'code_v2', code, state: params.state, device_id: 'vk-device-1', expires_in: 60 } };
+    widgetPayload = { code, state: params.state, device_id: 'vk-device-1' };
+    await route.fulfill({ contentType: 'text/html', body: '<!doctype html><script>setTimeout(()=>opener.postMessage(' + JSON.stringify(message) + ',' + JSON.stringify(origin) + '),50)</script>' });
+  });
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
   const errors = [];
@@ -165,6 +195,8 @@ let vkUser = "", behavior = "success", callbackUrl = "";
       body: "<!doctype html><script>location.replace(" + JSON.stringify(back.toString()) + ")</script>" });
   });
   async function signIn(method, target = "/me") {
+    const fallback = page.locator('[data-vk-fallback]').first();
+    if (await fallback.count() && await fallback.getAttribute('open') === null) await fallback.locator('summary').click();
     await Promise.all([
       page.waitForURL(url => url.pathname + url.search === target),
       page.locator('[data-vk-method="' + method + '"]').first().click(),
@@ -183,6 +215,66 @@ let vkUser = "", behavior = "success", callbackUrl = "";
     assert.match(await page.locator("[data-progress-follows-vk]").innerText(), progressNote, path);
   }
   checks.push("guest home and sign-in explain progress recovery through the linked VK account");
+  // Real pinned SDK, real BFF/API/PostgreSQL, only the provider is a stand-in.
+  const widgetProfiles = [];
+  // Actual POST endpoints reject CSRF, foreign claims and oversized bodies.
+  await page.goto(origin + '/login');
+  await page.locator('[data-vk-one-tap="ready"]').waitFor();
+  const widgetCsrf = (await (await page.request.get(origin + '/api/csrf')).json()).token;
+  const widgetHeaders = { Origin: origin, 'X-CSRF-Token': widgetCsrf };
+  const denied = await page.request.post(origin + '/api/auth/vk/one-tap/prepare', { headers: { Origin: 'https://evil.example' }, data: { returnTo: '/me' } });
+  assert.equal(denied.status(), 403);
+  assert.equal((await page.request.get(origin + '/api/auth/vk/one-tap/prepare')).status(), 405);
+  assert.equal((await page.request.post(origin + '/api/auth/vk/one-tap/complete', { headers: widgetHeaders, data: { access_token: 'forged', user_id: '1' } })).status(), 400);
+  assert.equal((await page.request.post(origin + '/api/auth/vk/one-tap/complete', { headers: widgetHeaders, data: { code: 'x'.repeat(9000) } })).status(), 413);
+  const providerCallsBeforeForeign = vkCalls.length;
+  const foreignWidget = await page.request.post(origin + '/api/auth/vk/one-tap/complete', { headers: widgetHeaders,
+    data: { code: 'forged', device_id: 'forged-device', state: '0'.repeat(64) } });
+  assert.match((await foreignWidget.json()).location, /^\/login\?signin=failed/);
+  assert.equal(vkCalls.length, providerCallsBeforeForeign);
+  checks.push('OneTap POST: CSRF, unknown token/user claims, oversized body and foreign state rejected');
+  for (const method of ['vkid', 'ok_ru', 'mail_ru']) {
+    vkUser = String(100000000 + Math.floor(Math.random() * 700000000));
+    await page.goto(origin + '/login');
+    await page.locator('[data-vk-one-tap="ready"]').waitFor();
+    const button = method === 'vkid' ? page.locator('[data-vk-one-tap] button[class*="VkIdWebSdk__button_"]').first()
+      : page.locator('[data-vk-one-tap] [data-oauth="' + method + '"]');
+    await button.waitFor();
+    if (method === 'vkid') {
+      await page.locator('[data-vk-one-tap] [data-state="not_loaded"]').first().waitFor();
+      await page.screenshot({ path: out + '/one-tap-login.png', fullPage: true });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    }
+    await Promise.all([page.waitForURL(origin + '/me'), button.click()]);
+    const account = await me();
+    assert.equal(account.status, 200);
+    assert.equal(account.body.profile.rating, 1000);
+    assert.equal(account.body.profile.matches_played, 0);
+    assert.ok((await context.cookies()).find(c => c.name === 'omoba-session')?.httpOnly);
+    assert.equal(widgetAuthorize.at(-1).provider || 'vkid', method);
+    widgetProfiles.push(account.body.profile.profile_id);
+    const callsBeforeWidgetReplay = vkCalls.length;
+    const replayCsrf = (await (await page.request.get(origin + '/api/csrf')).json()).token;
+    const replay = await page.request.post(origin + '/api/auth/vk/one-tap/complete', {
+      headers: { Origin: origin, 'X-CSRF-Token': replayCsrf }, data: widgetPayload });
+    assert.match((await replay.json()).location, /^\/login\?signin=failed/);
+    assert.equal(vkCalls.length, callsBeforeWidgetReplay);
+    assert.equal((await me()).body.profile.profile_id, account.body.profile.profile_id);
+    checks.push('real OneTap ' + method + ': server PKCE exchange, default account and HttpOnly session');
+  }
+  assert.equal(new Set(widgetProfiles).size, 3);
+  // A blocked/unavailable fast-profile frame must retain the SDK's ordinary
+  // root-callback buttons, independently of the legacy redirect fallback.
+  widgetFrameError = true;
+  vkUser = String(100000000 + Math.floor(Math.random() * 700000000));
+  await page.goto(origin + '/login');
+  await page.locator('[data-vk-one-tap="failed"]').waitFor();
+  const sdkFallbackButton = page.locator('[data-vk-one-tap] button[class*="VkIdWebSdk__button_"]').first();
+  await sdkFallbackButton.waitFor();
+  await Promise.all([page.waitForURL(origin + '/me'), sdkFallbackButton.click()]);
+  assert.equal((await me()).status, 200);
+  widgetFrameError = false;
+  checks.push('OneTap frame failure retains working SDK authorization with the registered root callback');
   const profilesBefore = Number(sql("SELECT count(*) FROM career_profiles"));
   // Independent subjects prove each method creates its own profile and that a
   // previous browser session A is replaced by the chosen B, never auto-merged.
@@ -327,7 +419,14 @@ let vkUser = "", behavior = "success", callbackUrl = "";
     await page.goto(origin + "/login?returnTo=" + encodeURIComponent(target));
     await signIn("mail_ru", "/login?signin=" + reason + "&returnTo=" + encodeURIComponent(target));
     await page.locator("[data-signin-failure]").waitFor();
-    assert.equal((await context.cookies()).some(c => ["omoba-session", "omoba-social", "omoba-vk"].includes(c.name)), false);
+    const afterFailure = await context.cookies();
+    assert.equal(afterFailure.some(c => ["omoba-session", "omoba-social"].includes(c.name)), false);
+    // The retry page may already have prepared a fresh widget attempt.
+    const nextAttempt = afterFailure.find(c => c.name === 'omoba-vk');
+    if (nextAttempt) {
+      assert.ok(nextAttempt.value.startsWith('one-tap.'));
+      assert.ok(!nextAttempt.value.includes(authorize.at(-1).state));
+    }
     if (mode !== "success") assert.equal(vkCalls.length, callsBefore, "invalid state/cancel never calls provider");
     const retry = new URL(await page.locator('[data-vk-method="mail_ru"]').first().getAttribute("href"), origin);
     assert.equal(retry.searchParams.get("returnTo"), target);
@@ -338,6 +437,12 @@ let vkUser = "", behavior = "success", callbackUrl = "";
   await page.waitForURL(origin + "/login?signin=failed");
   assert.equal(vkCalls.length, callsBeforeReplay, "replayed callback without attempt cookie never calls provider");
   checks.push("cancel, mismatched state, provider outage and replay reject identity changes and preserve retry destinations");
+  await context.route(url => url.pathname === '/api/auth/vk/one-tap/prepare', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{"code":"unavailable"}' }));
+  await page.goto(origin + '/login');
+  await page.locator('[data-vk-one-tap="failed"]').waitFor();
+  assert.equal(await page.locator('[data-vk-method]:visible').count(), 3);
+  await page.screenshot({ path: out + '/one-tap-unavailable.png', fullPage: true });
+  checks.push('OneTap failure exposes the ordinary server sign-in paths and retry');
   assert.deepEqual(errors, []);
   const privateFixture = process.env.OMOBA_NATIVE_JOURNEY_FIXTURE;
   if (privateFixture) {

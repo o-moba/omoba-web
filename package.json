@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@ekza/avatar-renderer": "git+https://github.com/ekza-space/ekza-avatar-renderer.git#f4e0f63f3d0a149d12ae06b97f07f48899bf57e4",
+    "@vkid/sdk": "2.6.1",
     "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
