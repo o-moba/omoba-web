@@ -8,6 +8,8 @@ import { useLocale } from '@/components/locale-provider';
 import { useMarket } from '@/components/market-profile';
 import { ProgressFollowsVk, VkSignInButtons, fill, type SocialTicket } from '@/components/social';
 import { SignInLegalNotice } from '@/components/legal';
+import { useContour } from '@/components/contour';
+import { canOfferIosReturn, iosReturnUrl } from '@/lib/ios-universal-links.mjs';
 
 type Enrollment = { enrollment_id: string; public_key: string; label: string; expires_at: string; nickname?: string; profile_id?: string };
 type Phase =
@@ -23,12 +25,17 @@ const fingerprint = (key: string) => key.slice(0, 8) + '…' + key.slice(-8);
  */
 export default function ConnectView({ signedIn, currentProfileId, socialTicket, onAccountChanged }: { signedIn: boolean; currentProfileId: string | null; socialTicket: SocialTicket | null; onAccountChanged: () => Promise<void> }) {
   const { t, locale } = useLocale();
-  const { features } = useMarket();
+  const { features, market } = useMarket();
+  const contour = useContour();
   const raw = useSearchParams().get('code') || '';
   const code = CONNECT_CODE.test(raw) ? raw : null;
   const here = code ? '/connect?code=' + code : '/me';
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' }), [busy, setBusy] = useState(false), [revision, setRevision] = useState(0);
   const [accountChanged, setAccountChanged] = useState(false);
+  const [offerReturn, setOfferReturn] = useState(false);
+  useEffect(() => {
+    setOfferReturn(canOfferIosReturn(market, phase.kind, navigator.userAgent, navigator.platform, navigator.maxTouchPoints));
+  }, [market, phase.kind]);
   useEffect(() => { setAccountChanged(false); }, [code]);
   function failed(error: unknown): Phase {
     if (error instanceof ApiFailure) {
@@ -106,6 +113,7 @@ export default function ConnectView({ signedIn, currentProfileId, socialTicket, 
     {code ? <p className="pair-code connect-code" aria-label={code}>{code.slice(0, 4)}—{code.slice(4)}</p> : null}
     {accountChanged ? <p role="status" className="notice" data-connect-account-changed>{t('The signed-in account changed. Review the account and device again before confirming.')}</p> : null}
     {body}
+    {offerReturn ? <p><a className="button primary" href={iosReturnUrl(contour)} data-ios-open>{t('Return to OMOBA on this device')}</a></p> : null}
     <SignInLegalNotice />
   </section>;
 }
