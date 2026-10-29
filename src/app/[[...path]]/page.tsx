@@ -38,6 +38,9 @@ export default async function Page({params}:{params:Promise<{path?:string[]}>}) 
     const [facts, releases] = await Promise.all([landingFacts(), landingReleases()]);
     return <Portal siteUrl={contourSiteUrl()} initialAccount={null} initiallyUnavailable={initial.unavailable} accountDisabled={initial.disabled === true} home={{facts, ...releases}}/>;
   }
+  // Existing public/game files are served before this dynamic route. A missing
+  // game asset must be a 404, never portal HTML masquerading as an image/JSON.
+  if (path[0] === 'game') notFound();
   // Supporter pages exist only in markets that sell Hero (not ru, cn).
   if (!routeEnabled('/'+path.join('/'), marketFeatures())) notFound();
   const initial=await initialAccount();

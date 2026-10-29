@@ -3,7 +3,7 @@ import { MARKET_LANDING, MARKET_PRESETS, marketLanding, marketName, navForMarket
 
 export const DEFAULT_SITE_URL = CONTOURS.production.site;
 
-const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/workshop', '/friends', '/players', '/devices', '/supporter', '/supporters', '/settings', '/download', '/creators', '/market', '/sponsor']);
+const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/play', '/workshop', '/friends', '/players', '/devices', '/supporter', '/supporters', '/settings', '/download', '/creators', '/market', '/sponsor']);
 
 /** The device-confirmation page the game opens: exactly one 8-character enrollment code. */
 export const CONNECT_CODE = /^[A-Z2-9]{8}$/;

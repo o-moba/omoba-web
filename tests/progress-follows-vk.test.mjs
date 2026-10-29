@@ -38,7 +38,7 @@ test('the progress note shows only with VK ID sign-in and is translated', async 
 test('guest home, sign-in, /connect and Devices carry the note', async () => {
   const portal = await source('components/portal.tsx');
   assert.match(between(portal, 'else if(!account)content=', '\n'), /<ProgressFollowsVk\/>/, 'guest home');
-  assert.match(between(portal, 'function Login(', 'function FilterBar('), /<VkSignInButtons returnTo=\{returnTo\}\/><ProgressFollowsVk\/>/, 'sign-in');
+  assert.match(between(portal, 'function Login(', 'function FilterBar('), /<VkSignInButtons returnTo=\{returnTo\}\/><SignInLegalNotice\/><ProgressFollowsVk\/>/, 'sign-in');
   assert.match(between(await source('components/connect.tsx'), 'const signIn = <>', '</>;'), /<ProgressFollowsVk \/>/, '/connect sign-in step');
   assert.match(between(await source('components/devices.tsx'), '{t("Account recovery")}', '</section>'), /<ProgressFollowsVk \/>/, 'Devices → Account recovery');
 });
