@@ -1,0 +1,44 @@
+export type Market = "global" | "ru" | "cn";
+export type MarketFeatures = Readonly<{ ekza: boolean; supporter: boolean; vkSignIn: boolean }>;
+export type MarketProfile = { market: Market; features: MarketFeatures };
+export type FeatureName = "ekza" | "supporter" | "vkSignIn";
+/** scripts/markets.py `Legal` (camelCase) plus the portal-only `offer` and `delete`; null = not provided. */
+export type MarketLegal = Readonly<{
+  version: string | null;
+  privacy: string | null;
+  terms: string | null;
+  offer: string | null;
+  delete: string | null;
+  source: string | null;
+  supportEmail: string | null;
+  communityVk: string | null;
+  communityTelegram: string | null;
+  ageRating: string | null;
+}>;
+/** Where the market's landing lives and how the workshop is offered (LR-22). */
+export type MarketLanding = Readonly<{ home: "site" | "portal"; workshop: "listed" | "experimental" }>;
+export const MARKET_VARIABLE: "OMOBA_MARKET";
+export const DEFAULT_MARKET: "global";
+export const MARKETS: readonly Market[];
+export const VKID_CLIENT_VARIABLE: "OMOBA_VKID_CLIENT_ID";
+export const FEATURES: readonly Readonly<{ name: FeatureName; key: "ekza" | "supporter" | "vk_sign_in"; env: string }>[];
+export const MARKET_PRESETS: Readonly<Record<Market, MarketFeatures>>;
+export const MARKET_LOCALES: Readonly<Record<Market, "ru" | "zh" | null>>;
+export const MARKET_LEGAL: Readonly<Record<Market, MarketLegal>>;
+export const MARKET_LANDING: Readonly<Record<Market, MarketLanding>>;
+export const FEATURE_ROUTES: Readonly<Record<string, "ekza" | "supporter">>;
+export function marketName(env?: Record<string, string | undefined>): Market;
+export function marketFeatures(env?: Record<string, string | undefined>): MarketFeatures;
+export function marketProfile(env?: Record<string, string | undefined>): MarketProfile;
+export function describeMarket(profile: { market: string; features: Record<string, boolean> }): string;
+export function vkIdClientId(env?: Record<string, string | undefined>): string | null;
+export function vkSignInClientId(env?: Record<string, string | undefined>): string | null;
+export function marketProblems(env?: Record<string, string | undefined>): string[];
+export function assertMarket(env?: Record<string, string | undefined>): MarketProfile;
+export function assertBuiltMarket(built: string | undefined, running: { market: string; features: Record<string, boolean> }): void;
+export function routeFeature(pathname: string): "ekza" | "supporter" | null;
+export function routeEnabled(pathname: string, features: { ekza: boolean; supporter: boolean }): boolean;
+export function navForMarket<T extends string | readonly [string, ...unknown[]]>(items: readonly T[], features: { ekza: boolean; supporter: boolean }): T[];
+export function marketLocale(market: Market): "ru" | "zh" | null;
+export function marketLegal(market: Market): MarketLegal;
+export function marketLanding(market: Market): MarketLanding;

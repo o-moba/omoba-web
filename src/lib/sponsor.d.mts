@@ -1,0 +1,16 @@
+import type { OwnPlacement, Placement, PlacementRequest, Sculpture, Slot } from './sponsor-types';
+export const PLACEMENT_SCOPE: 'map-placement';
+export const SCULPTURE_PROFILE: 'map-prop-glb-v1';
+export const MAX_SCULPTURE_BYTES: number;
+export const SCULPTURE_CATALOG_PATH: string;
+export const PLACEMENT_SLOTS_PATH: string;
+export function sculptureFile(value: unknown, registry: string, sha: string | null, thumbnail?: boolean): string | null;
+export function parseSculptures(value: unknown, registry: string): { items: Sculpture[]; skipped: number };
+export function parsePlacement(value: unknown, registry: string, own: true): OwnPlacement;
+export function parsePlacement(value: unknown, registry: string, own?: false): Placement;
+export function parseOwnPlacements(value: unknown, registry: string): OwnPlacement[];
+export function parseSlots(value: unknown, registry: string): { serverNow: string; slots: Slot[] };
+export function parsePlacementRequest(value: unknown): PlacementRequest;
+export function sponsorCookieNames(secure: boolean): { link: string; device: string; csrf: string };
+export function sponsorRoute(path: string, method: string): { action: string; id?: string } | null;
+export function sculptureDraftUrl(studio: string): string;

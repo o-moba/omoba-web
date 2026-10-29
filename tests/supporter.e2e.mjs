@@ -24,7 +24,7 @@ try {
   const bytes = JSON.stringify(['omoba.web.pair.v1',c.origin,c.pair_id,c.nonce,c.public_key,c.browser_binding,'approve',c.scopes,c.expires_at]);
   await native('auth/pairings/approve', {challenge:c,decision:'approve',signature:sign(null,Buffer.from(bytes),key).toString('hex')});
   await page.waitForURL('**/me');
-  await page.goto(origin + '/supporter'); await page.getByText('Supporter активен', {exact:true}).waitFor();
+  await page.goto(origin + '/supporter'); await page.getByText('Hero активен', {exact:true}).waitFor();
   await page.getByRole('button',{name:'Луна',exact:true}).click(); await page.getByRole('button',{name:'Применить в игре'}).click();
   await page.getByRole('status').filter({hasText:'Аура выбрана'}).waitFor();
   assert.equal((await call('me/supporter')).data.supporter.equipped_aura,'lunar');

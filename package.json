@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "node tests/browser.e2e.mjs",
+    "game:import": "node scripts/import-browser-game.mjs",
+    "game:check": "node scripts/import-browser-game.mjs --check",
     "test:app-loop": "node tests/app-loop.e2e.mjs",
     "test:load": "node tests/load.mjs",
     "catalog:import": "node scripts/import-asset-catalog.mjs",
@@ -18,12 +20,25 @@
     "workshop:check": "node scripts/import-workshop.mjs --check",
     "test:workshop": "node tests/workshop.e2e.mjs",
     "test:guest-deployment": "node tests/guest-deployment.e2e.mjs",
-    "test:first-paint": "node tests/first-paint.e2e.mjs"
+    "test:first-paint": "node tests/first-paint.e2e.mjs",
+    "test:market": "node tests/market.e2e.mjs",
+    "test:https-cookies": "node tests/https-cookies.e2e.mjs",
+    "test:contour": "node tests/contour.e2e.mjs",
+    "test:market-profiles": "node tests/market-profiles.e2e.mjs",
+    "test:vk-sign-in": "node tests/vk-sign-in.e2e.mjs",
+    "test:ru-topology": "node tests/ru-topology.e2e.mjs",
+    "test:vercel-cli": "node tests/vercel-cli.e2e.mjs",
+    "test:market-preview": "node tests/market-preview.e2e.mjs",
+    "test:sponsor": "node tests/sponsor.e2e.mjs",
+    "test:ru-landing": "node tests/ru-landing.e2e.mjs"
   },
   "dependencies": {
+    "@ekza/avatar-renderer": "git+https://github.com/ekza-space/ekza-avatar-renderer.git#f4e0f63f3d0a149d12ae06b97f07f48899bf57e4",
+    "@vkid/sdk": "2.6.1",
     "next": "16.3.8",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

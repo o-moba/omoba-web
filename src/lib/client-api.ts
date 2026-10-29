@@ -3,17 +3,17 @@ export class ApiFailure extends Error {
 }
 
 /** Credentials remain in HttpOnly cookies; every mutation gets an origin-bound CSRF proof. */
-export async function api<T>(path: string, method = 'GET', body?: unknown, operationId?: string): Promise<T> {
+export async function api<T>(path: string, method = 'GET', body?: unknown, operationId?: string, signal?: AbortSignal): Promise<T> {
   const headers: Record<string, string> = {};
   if (method !== 'GET') {
-    const csrf = await fetch('/api/csrf', { cache: 'no-store' });
+    const csrf = await fetch('/api/csrf', { cache: 'no-store', signal });
     if (!csrf.ok) throw new ApiFailure('unavailable', 503);
     headers['X-CSRF-Token'] = (await csrf.json()).token;
     headers['Content-Type'] = 'application/json';
     headers['Idempotency-Key'] = operationId || crypto.randomUUID();
   }
   const response = await fetch('/api/' + path, {
-    method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store',
+    method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', signal,
   });
   const value = await response.json();
   if (!response.ok) throw new ApiFailure(value.code || 'failed', response.status);

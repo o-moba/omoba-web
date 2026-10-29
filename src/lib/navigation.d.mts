@@ -1,4 +1,12 @@
+type NavFeatures = { ekza: boolean; supporter: boolean };
 export const DEFAULT_SITE_URL: string;
-export function portalReturnTo(value: unknown): string;
-export function portalLoginHref(destination: unknown): string;
-export function publicSiteUrl(raw: string | undefined, environment: string | undefined): string;
+export const CONNECT_CODE: RegExp;
+export const PORTAL_NAV: readonly string[];
+export const MOBILE_NAV: readonly string[];
+export const GUEST_LINKS: readonly string[];
+export function portalNav(list: readonly string[], features?: NavFeatures): string[];
+export function mobileNav(features?: NavFeatures, landing?: { workshop: 'listed' | 'experimental' }): string[];
+export function portalReturnTo(value: unknown, features?: NavFeatures): string;
+export function portalLoginHref(destination: unknown, features?: NavFeatures): string;
+export function publicSiteUrl(raw: string | undefined, environment: string | undefined, fallback?: string): string;
+export function contourSiteUrl(env?: Record<string, string | undefined>): string;

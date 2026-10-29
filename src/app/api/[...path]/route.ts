@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
-import { isIP } from 'node:net';
-import { allowedPath, cookieNames, mutationAllowed, portalConfig } from '@/lib/security.mjs';
+import { accountUpstreamHeaders, allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig, socialTicketBody } from '@/lib/security.mjs';
+import { marketFeatures } from '@/lib/market-profile.mjs';
+import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,27 +12,33 @@ const noStore = { 'Cache-Control': 'private, no-store', 'Vary': 'Cookie' };
 function fail(code: string, status: number) { return NextResponse.json({ code }, { status, headers: noStore }); }
 
 async function handle(request: NextRequest, context: { params: Promise<{path:string[]}> }) {
-  let config: ReturnType<typeof portalConfig>;
-  try { config = portalConfig(); } catch { return fail('configuration_unavailable', 503); }
+  let config: ReturnType<typeof portalConfig>, features: ReturnType<typeof marketFeatures>;
+  try { config = portalConfig(); features = marketFeatures(); } catch { return fail('configuration_unavailable', 503); }
+  // A request under the other contour's host never reaches this contour's Account API.
+  if (contourHostProblem(contourName(), requestHostname(request.headers.get('host')))) return fail('configuration_unavailable', 503);
   const path = (await context.params).path.join('/');
+  // Routes of a feature this market does not serve (Ekza library, Supporter, VK ID) are 404.
+  const allowed = allowedPath(path, request.method, features);
   if (!config.accountEnabled) return fail(
-    (path === 'csrf' && request.method === 'GET') || allowedPath(path, request.method) ? 'account_service_disabled' : 'not_found',
-    (path === 'csrf' && request.method === 'GET') || allowedPath(path, request.method) ? 503 : 404,
+    (path === 'csrf' && request.method === 'GET') || allowed ? 'account_service_disabled' : 'not_found',
+    (path === 'csrf' && request.method === 'GET') || allowed ? 503 : 404,
   );
   const jar = await cookies();
   const names = cookieNames(config.secure);
-  const options = { httpOnly:true, secure:config.secure, sameSite:'lax' as const, path:'/' };
+  const options = cookieOptions(config.secure);
+  // Expiry keeps Secure: a browser ignores a `__Host-` deletion without it.
+  const clear = (...list:string[]) => { for (const name of list) expireCookie(jar, name, config.secure); };
   if (path === 'csrf' && request.method === 'GET') {
     const token = jar.get(names.csrf)?.value || randomBytes(32).toString('hex');
     jar.set(names.csrf, token, {...options, maxAge:86400});
     return NextResponse.json({ token }, {headers:noStore});
   }
-  if (!allowedPath(path, request.method)) return fail('not_found',404);
+  if (!allowed) return fail('not_found',404);
   if (request.method !== 'GET' && !mutationAllowed(request.headers.get('origin'), config.origin,
     request.headers.get('x-csrf-token'), jar.get(names.csrf)?.value)) return fail('csrf_rejected',403);
   if (request.nextUrl.search.length > 2048) return fail('invalid_query',400);
   let body: Record<string,unknown> | undefined;
-  let rawClassBuildBody: string | undefined;
+  let rawStrictBody: string | undefined;
   if (request.method === 'POST' || request.method === 'PATCH') {
     if (!request.headers.get('content-type')?.startsWith('application/json')) return fail('json_required',400);
     if (Number(request.headers.get('content-length') || 0) > MAX_BODY) return fail('body_too_large',413);
@@ -47,14 +54,14 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (!body || Array.isArray(body) || typeof body !== 'object') return fail('invalid_json',400);
     // Preserve duplicate fields and numeric spellings for the authoritative
     // Rust parser; normalizing here would silently accept an invalid document.
-    if (/^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawClassBuildBody=raw;
+    if (path === 'me/supporter/recognition' || /^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawStrictBody=raw;
   }
   const token = jar.get(names.session)?.value;
-  const headers: Record<string,string> = {'Content-Type':'application/json'};
+  // Ingress key (non-loopback API only) and the player's X-Real-IP from the portal's own ingress.
+  const headers = accountUpstreamHeaders(request.headers.get('x-real-ip'));
+  if (!headers) return fail('trusted_ingress_required',503);
+  headers['Content-Type']='application/json';
   if (token) headers.Authorization='Bearer '+token;
-  if(process.env.OMOBA_TRUST_LOOPBACK_PROXY==='1'){
-    const ip=request.headers.get('x-real-ip');if(!ip||!isIP(ip))return fail('trusted_ingress_required',503);headers['X-Real-IP']=ip;
-  }
   const operation = request.headers.get('idempotency-key');
   if (operation && /^[A-Za-z0-9_-]{16,128}$/.test(operation)) headers['Idempotency-Key']=operation;
   // No browser-controlled actor, API URL, forwarding header or service token is forwarded.
@@ -68,7 +75,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (path === 'auth/pairings') {
       if (pairing) {
         try { await fetch(config.api+'/v1/auth/pairings/cancel', {method:'POST',headers,
-          body:JSON.stringify(pairing),cache:'no-store',signal:AbortSignal.timeout(5000)}); }
+          body:JSON.stringify(pairing),cache:'no-store',redirect:'error',signal:AbortSignal.timeout(5000)}); }
         catch { return fail('account_service_unavailable',503); }
       }
       body={};
@@ -77,9 +84,15 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
       body=pairing;
     }
   }
+  if (path === 'auth/social/attach' || path === 'auth/social/ticket' || path === 'auth/social/enrollment') {
+    // The VK ID ticket is injected from its HttpOnly cookie, never taken from the browser body.
+    const social=socialTicketBody(path, body, jar.get(names.social)?.value);
+    if ('code' in social) return fail(social.code, social.status);
+    body=social.body;
+  }
   try {
     const upstream=await fetch(config.api+'/v1/'+target+request.nextUrl.search, {
-      method:request.method, headers, body:rawClassBuildBody ?? (body ? JSON.stringify(body):undefined),
+      method:request.method, headers, body:rawStrictBody ?? (body ? JSON.stringify(body):undefined),
       cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000),
     });
     const content=await upstream.text();
@@ -95,12 +108,13 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (upstream.ok && path === 'auth/pairings/complete') {
       if(typeof result.session_token!=='string'||!/^[a-f0-9]{64}$/.test(result.session_token)) return fail('invalid_service_response',502);
       jar.set(names.session,result.session_token,{...options,maxAge:7*86400});
-      jar.delete(names.pair); jar.delete(names.csrf);
+      clear(names.pair, names.csrf);
       result={status:'connected'};
     }
-    if(upstream.ok && path==='auth/pairings/cancel') jar.delete(names.pair);
+    if(upstream.ok && path==='auth/pairings/cancel') clear(names.pair);
+    if(upstream.status===404 && path==='auth/social/ticket') clear(names.social);
     if(path==='auth/logout' && (upstream.ok||upstream.status===401)) {
-      jar.delete(names.session); jar.delete(names.csrf); jar.delete(names.pair);
+      clear(names.session, names.csrf, names.pair, names.social, names.vk);
       if(upstream.status===401)return NextResponse.json({status:'revoked'},{headers:noStore});
     }
     const response=NextResponse.json(result,{status:upstream.status,headers:noStore});
