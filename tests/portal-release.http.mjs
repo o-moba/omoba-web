@@ -18,13 +18,14 @@ const signedPlay=await get('/play',signed);const signedHtml=await signedPlay.tex
 
 for(const [code,expected] of [['preview-linked',PREVIEW_ACCOUNT.profile.nickname],['preview-new','Preview VK']]) {
  const start=await get('/api/auth/vk/start?method=vkid&returnTo=%2Fplay');assert.equal(start.status,302);
- const auth=new URL(start.headers.get('location'));assert.equal(auth.origin,'https://id.vk.ru');assert.equal(auth.searchParams.get('code_challenge_method'),'S256');
+ const auth=new URL(start.headers.get('location'));assert.equal(auth.origin,'https://id.vk.ru');assert.equal(auth.searchParams.get('code_challenge_method'),'s256');
  assert.ok(start.headers.getSetCookie().some(value=>value.includes('HttpOnly')));
  const callback='/api/auth/vk/callback?'+new URLSearchParams({state:auth.searchParams.get('state'),code,device_id:'preview-browser'});
  const result=await get(callback,cookieOf(start));assert.equal(result.status,302);assert.equal(new URL(result.headers.get('location')).pathname,'/play');
+ if(code==='preview-new') {assert.ok(result.headers.getSetCookie().some(value=>value.startsWith('omoba-session=')&&!value.includes('Max-Age=0')));assert.ok(!cookieOf(result).includes('omoba-social='));}
  const cookie=cookieOf(result);assert.ok(cookie);assert.ok(result.headers.getSetCookie().filter(value=>!value.includes('Max-Age=0')).every(value=>value.includes('HttpOnly')));
  const html=await (await get('/play',cookie)).text();assert.ok(html.includes(expected));assert.ok(!html.includes(PREVIEW_SESSION));
- checks.push(`VK ${code==='preview-linked'?'linked account':'new account ticket'} callback returns to /play with HttpOnly state`);
+ checks.push(`VK ${code==='preview-linked'?'linked account':'newly registered account'} callback returns to /play with HttpOnly state`);
 }
 const start=await get('/api/auth/vk/start?method=vkid&returnTo=%2Fplay');
 const rejected=await get('/api/auth/vk/callback?state=foreign-state&code=preview-linked&device_id=preview-browser',cookieOf(start));

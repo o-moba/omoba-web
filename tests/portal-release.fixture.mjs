@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 export const PREVIEW_SESSION='f'.repeat(64);
 export const PREVIEW_SOCIAL='e'.repeat(64);
+export const PREVIEW_NEW_SESSION='9'.repeat(64);
 export const PREVIEW_ACCOUNT={profile:{profile_id:'a'.repeat(64),nickname:'Preview Ranger#2048',rating:1042,rated_matches:12,matches_played:12,wins:7,losses:5,progression_xp:'5400',level:'11'},settings:{public_profile_enabled:true,public_stats_enabled:true,discoverable:true,locale:'en',timezone:'UTC',version:'1'},rules:{newcomer_matches:10},session:{session_id:'c'.repeat(64)},social:[{provider:'vk',method:'vkid',linked_at:'2026-10-20T10:00:00Z'}]};
 const stats=(i,team)=>({kills:(team==='blue'?[8,4,3,2,1]:[3,2,1,2,1])[i],deaths:(team==='blue'?[1,2,1,3,2]:[5,4,4,3,2])[i],assists:8-i,damage_to_heroes:12840-i*1500+(team==='red'?-1800:0),damage_to_structures:1800-i*240,damage_to_creeps:5200-i*500,damage_taken:6400+i*400,minion_last_hits:70-i*6,jungle_last_hits:12-i,structures_destroyed:i===0?2:0,final_level:11-i});
 const participants=['blue','red'].flatMap(team=>Array.from({length:5},(_,i)=>({player_id:`${team}-${i}`,profile_id:team==='blue'&&i===0?PREVIEW_ACCOUNT.profile.profile_id:(team==='blue'?'b':'d').repeat(63)+i,nickname:team==='blue'&&i===0?PREVIEW_ACCOUNT.profile.nickname:['Nova','Eclipse','Thorn','Aster','Haze'][i]+'#'+(3000+i+(team==='blue'?10:20)),team,hero_class:['Ranger','Warrior','Mage','Cleric','Warrior'][i],avatar:null,sprite_character:null,is_bot:false,disconnected:false,stats:stats(i,team),rating:{before:1023,after:team==='blue'?1042:1007,delta:team==='blue'?19:-16},progression_xp_gained:team==='blue'?250:120})));
@@ -22,12 +23,12 @@ export function previewApi() {
   if(url.pathname==='/v1/auth/pairings/status')return send(200,{state:'approved'});
   if(url.pathname==='/v1/auth/pairings/complete')return send(200,{session_token:PREVIEW_SESSION});
   if(url.pathname==='/v1/auth/pairings/cancel')return send(200,{status:'cancelled'});
-  if(url.pathname==='/v1/auth/social/vk')return body.code==='preview-new'?send(200,{state:'unlinked',social_ticket:PREVIEW_SOCIAL,expires_at:new Date(Date.now()+300000).toISOString()}):send(200,{state:'signed_in',session_token:PREVIEW_SESSION});
+  if(url.pathname==='/v1/auth/social/vk')return body.code==='preview-new'?(body.register===true?send(200,{state:'signed_in',session_token:PREVIEW_NEW_SESSION}):send(200,{state:'unlinked',social_ticket:PREVIEW_SOCIAL,expires_at:new Date(Date.now()+300000).toISOString()})):send(200,{state:'signed_in',session_token:PREVIEW_SESSION});
   if(url.pathname==='/v1/auth/social/ticket')return send(200,{display_name:'Preview VK',expires_at:new Date(Date.now()+300000).toISOString()});
   if(url.pathname==='/v1/releases')return send(200,{releases:[]});
-  if(req.headers.authorization!=='Bearer '+PREVIEW_SESSION)return send(401,{code:'unauthorized'});
+  if(![PREVIEW_SESSION,PREVIEW_NEW_SESSION].some(token=>req.headers.authorization==='Bearer '+token))return send(401,{code:'unauthorized'});
   if(url.pathname==='/v1/auth/logout')return send(200,{status:'revoked'});
-  if(url.pathname==='/v1/me')return send(200,PREVIEW_ACCOUNT);
+  if(url.pathname==='/v1/me')return send(200,req.headers.authorization==='Bearer '+PREVIEW_NEW_SESSION?{...PREVIEW_ACCOUNT,profile:{...PREVIEW_ACCOUNT.profile,profile_id:'8'.repeat(64),nickname:'Preview VK',matches_played:0,progression_xp:'0'}}:PREVIEW_ACCOUNT);
   if(url.pathname==='/v1/me/matches'){
    let matches=history;const hero=url.searchParams.get('hero_class'),outcome=url.searchParams.get('outcome');
    // Deterministic slow filter for verifying stale-row transitions in the UI.
