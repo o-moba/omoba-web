@@ -1,6 +1,6 @@
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
-import { accountUpstreamHeaders, cookieNames, portalConfig } from './security.mjs';
+import { accountUpstreamHeaders, cookieNames, portalConfig, mutationAllowed } from './security.mjs';
 import { contourHostProblem, contourName, requestHostname } from './contour.mjs';
 import { marketFeatures, vkSignInClientId } from './market-profile.mjs';
 import { applyCookies, type CookieChanges } from './vk-id.mjs';
@@ -40,4 +40,26 @@ export function redirectWith(location: string, origin: string, cookies: CookieCh
   applyCookies(response.cookies, cookies, secure);
   for (const [key, value] of Object.entries(noStore)) response.headers.set(key, value);
   return response;
+}
+
+/** The widget's two POSTs use the same origin/CSRF proof as all portal mutations. */
+export async function vkJsonBody(request: NextRequest, context: VkContext, keys: readonly string[]) {
+  if (!mutationAllowed(request.headers.get('origin'), context.config.origin,
+    request.headers.get('x-csrf-token'), request.cookies.get(context.names.csrf)?.value)) return fail('csrf_rejected', 403);
+  if (request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return fail('json_required', 400);
+  if (Number(request.headers.get('content-length') || 0) > 8192) return fail('body_too_large', 413);
+  const reader = request.body?.getReader(), chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    if (reader) for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > 8192) { await reader.cancel(); return fail('body_too_large', 413); }
+      chunks.push(value);
+    }
+    const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
+    if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !keys.includes(key))) return fail('invalid_json', 400);
+    return value as Record<string, unknown>;
+  } catch { return fail('invalid_json', 400); }
 }

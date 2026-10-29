@@ -81,6 +81,8 @@ Mutations use the usual CSRF proof. The only value in the URL is the enrollment 
 
 One VK ID **web** app in the VK ID developer cabinet covers VK, OK and Mail.ru:
 
+- RU OneTap uses the owner's app `54863720`, exact portal root `https://omoba.ru`,
+  callback mode and server-owned PKCE/code exchange. See [OneTap setup](vk-one-tap.md).
 - trusted redirect URL: `${OMOBA_PORTAL_ORIGIN}/api/auth/vk/callback`, exactly (for example `https://<ru portal>/api/auth/vk/callback`);
 - scope: `vkid.personal_info`;
 - no client secret is used by the portal. The app id goes into `OMOBA_VKID_CLIENT_ID` on the portal; the Account API holds its own VK ID settings for the exchange.
