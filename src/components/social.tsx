@@ -25,9 +25,10 @@ export function useMethodLabel() {
 
 /** VK, OK and Mail.ru are one VK ID app; `provider` picks the account type. */
 export function VkSignInButtons({ returnTo }: { returnTo: string }) {
-  const { market } = useMarket();
+  const { market, features } = useMarket();
+  if (market !== 'ru' || !features.vkSignIn) return null;
   const buttons = <RedirectSignInButtons returnTo={returnTo} />;
-  return market === 'ru' ? <VkOneTap returnTo={returnTo}>{buttons}</VkOneTap> : buttons;
+  return <VkOneTap returnTo={returnTo}>{buttons}</VkOneTap>;
 }
 
 function RedirectSignInButtons({ returnTo }: { returnTo: string }) {

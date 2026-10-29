@@ -47,7 +47,8 @@ test('feature overrides have the game\'s names and on/off semantics and refuse t
   for (const f of FEATURES) assert.equal(f.env, 'OMOBA_FEATURE_' + f.key.toUpperCase());
   assert.deepEqual({ ...marketFeatures({ OMOBA_MARKET: 'ru', OMOBA_FEATURE_EKZA: 'on', OMOBA_FEATURE_VK_SIGN_IN: '' }) }, { ekza: true, supporter: false, vkSignIn: true });
   assert.deepEqual({ ...marketFeatures({ OMOBA_FEATURE_SUPPORTER: 'off' }) }, { ekza: true, supporter: false, vkSignIn: false });
-  assert.deepEqual({ ...marketFeatures({ OMOBA_MARKET: 'cn', OMOBA_FEATURE_VK_SIGN_IN: 'on' }) }, { ekza: false, supporter: false, vkSignIn: true });
+  for (const market of ['global', 'cn'])
+    assert.throws(() => marketFeatures({ OMOBA_MARKET: market, OMOBA_FEATURE_VK_SIGN_IN: 'on' }), /requires OMOBA_MARKET=ru/);
   assert.deepEqual({ ...marketFeatures({ OMOBA_MARKET: 'ru', OMOBA_FEATURE_VK_SIGN_IN: 'off' }) }, CN);
   for (const [variable, value] of [['OMOBA_FEATURE_EKZA', 'yes'], ['OMOBA_FEATURE_SUPPORTER', 'OFF'], ['OMOBA_FEATURE_VK_SIGN_IN', '1'], ['OMOBA_FEATURE_EKZA', 'true'], ['OMOBA_FEATURE_EKZA', ' on']])
     assert.throws(() => marketFeatures({ OMOBA_MARKET: 'ru', [variable]: value }), new RegExp(variable + ' must be empty, "on" or "off"'), variable + '=' + value);
@@ -85,7 +86,11 @@ test('VK ID is offered only with the feature and a numeric app id', () => {
   assert.equal(vkSignInClientId({ OMOBA_MARKET: 'ru' }), null);
   assert.equal(vkSignInClientId({ OMOBA_VKID_CLIENT_ID: '12345' }), null);
   assert.equal(vkSignInClientId({ OMOBA_MARKET: 'ru', OMOBA_FEATURE_VK_SIGN_IN: 'off', OMOBA_VKID_CLIENT_ID: '12345' }), null);
-  assert.equal(vkSignInClientId({ OMOBA_MARKET: 'cn', OMOBA_FEATURE_VK_SIGN_IN: 'on', OMOBA_VKID_CLIENT_ID: '12345' }), '12345');
+  for (const market of ['global', 'cn']) {
+    const env = { OMOBA_MARKET: market, OMOBA_FEATURE_VK_SIGN_IN: 'on', OMOBA_VKID_CLIENT_ID: '54863720' };
+    assert.equal(vkSignInClientId(env), null);
+    assert.throws(() => assertMarket(env), /OMOBA_FEATURE_VK_SIGN_IN=on requires OMOBA_MARKET=ru/);
+  }
 });
 
 test('pages belong to their feature; nested paths follow their page', () => {

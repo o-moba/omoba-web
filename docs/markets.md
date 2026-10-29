@@ -19,7 +19,7 @@ All server-only; none is a `NEXT_PUBLIC_` variable. Client components receive th
 | `OMOBA_MARKET` | `global` (default when unset or empty), `ru`, `cn` | The market. Exact, lower case; `RU`, `ru `, `eu` fail. |
 | `OMOBA_FEATURE_EKZA` | empty (preset), `on`, `off` | Override the market's Ekza feature. |
 | `OMOBA_FEATURE_SUPPORTER` | empty (preset), `on`, `off` | Override paid Hero Supporter. |
-| `OMOBA_FEATURE_VK_SIGN_IN` | empty (preset), `on`, `off` | Override Sign in with VK ID. |
+| `OMOBA_FEATURE_VK_SIGN_IN` | empty (preset), `on`, `off` | Enable/disable VK within RU. `on` outside `ru` is rejected. |
 | `OMOBA_VKID_CLIENT_ID` | empty, or the numeric VK ID app id | Needed for VK ID buttons and routes; a non-numeric value fails. |
 
 Names, values and semantics equal `market.rs` (`Market::parse`, `Features::resolve`): `on`/`off` are exact; anything else (`yes`, `OFF`, `1`) is an error. The presets:

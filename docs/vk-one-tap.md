@@ -9,6 +9,32 @@ script or literal `csp_nonce` placeholder is inserted.
 
 ## Account integration
 
+The widget and all VK sign-in routes belong only to `OMOBA_MARKET=ru`.
+`OMOBA_FEATURE_VK_SIGN_IN=off` disables them within RU; trying to enable VK in
+`global` or `cn` fails configuration validation. A Russian interface language
+does not select the RU account region or enable VK on the international portal.
+
+Market and environment are separate settings. A Russian dev portal needs:
+
+```text
+OMOBA_CONTOUR=dev
+OMOBA_MARKET=ru
+OMOBA_FEATURE_VK_SIGN_IN=on
+OMOBA_PORTAL_ORIGIN=https://dev.omoba.ru
+OMOBA_ACCOUNT_API_URL=https://account.dev.omoba.ru
+OMOBA_VKID_CLIENT_ID=<separately registered dev app id>
+```
+
+Build and start with the same market/features. Leave `OMOBA_SITE_URL` unset for
+RU. The separate international dev portal keeps `OMOBA_MARKET=global`, VK off
+and no VK app id. Production app 54863720 is registered for `https://omoba.ru`;
+merging code into `dev` does not register a new provider redirect or deploy a site.
+
+This boundary uses the account/service region. It does not currently geofence
+players by IP: someone abroad can deliberately open the RU portal. A country
+allowlist requires trusted ingress geolocation; browser language and arbitrary
+request country headers must not be used as access control.
+
 1. The client obtains the existing origin-bound CSRF proof and posts the intended
    local destination to `/api/auth/vk/one-tap/prepare`.
 2. The BFF generates secure state and PKCE. The verifier and destination remain in

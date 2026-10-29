@@ -141,11 +141,14 @@ function featureSwitch(raw, preset, variable) {
  * @returns {{ekza: boolean, supporter: boolean, vkSignIn: boolean}}
  */
 export function marketFeatures(env = process.env) {
-  const preset = MARKET_PRESETS[marketName(env)];
+  const market = marketName(env);
+  const preset = MARKET_PRESETS[market];
   /** @type {Record<string, boolean>} */
   const features = {};
   for (const feature of FEATURES)
     features[feature.name] = featureSwitch(env[feature.env], preset[/** @type {"ekza"} */ (feature.name)], feature.env);
+  if (market !== "ru" && features.vkSignIn)
+    throw new Error("OMOBA_FEATURE_VK_SIGN_IN=on requires OMOBA_MARKET=ru");
   return /** @type {{ekza: boolean, supporter: boolean, vkSignIn: boolean}} */ (Object.freeze(features));
 }
 
@@ -180,10 +183,11 @@ export function vkIdClientId(env = process.env) {
 }
 
 /**
- * Sign in with VK ID is offered only when the feature is on AND the app id is set.
+ * VK ID belongs to the RU account region only, with the feature on and an app id.
  * @param {Record<string, string | undefined>} [env]
  */
 export function vkSignInClientId(env = process.env) {
+  if (marketName(env) !== "ru") return null;
   return marketFeatures(env).vkSignIn ? vkIdClientId(env) : null;
 }
 
@@ -210,6 +214,12 @@ export function marketProblems(env = process.env) {
     } catch (error) {
       problems.push(message(error));
     }
+  }
+  try {
+    if (marketName(env) !== "ru" && env.OMOBA_FEATURE_VK_SIGN_IN === "on")
+      problems.push("OMOBA_FEATURE_VK_SIGN_IN=on requires OMOBA_MARKET=ru");
+  } catch {
+    // An invalid market is reported above.
   }
   try {
     vkIdClientId(env);
