@@ -14,7 +14,9 @@ Cosmetic/NFT loadout editing and passkeys are P1, not shipped in this implementa
 
 ## Local run
 
-Node 22.9+ supported by Next.js; verified here with Node 25.6.1. PostgreSQL 15+;
+Use an official Node.js 24 LTS build; verified with 24.22.2 on Linux and 25.6.1 on
+macOS. The tests use TypeScript stripping, which some distribution Node packages
+omit. PostgreSQL 15+;
 verified with PostgreSQL 18. Use the exact package lock and Rust Cargo.lock.
 
 1. Follow [Account API operations](../omoba-bevy/account-api/README.md)
@@ -32,8 +34,10 @@ verified with PostgreSQL 18. Use the exact package lock and Rust Cargo.lock.
 Production build: `npm run build`, then `npm start`. The start script copies generated
 static files into Next’s standalone output and binds to loopback. For an explicit
 local production-mode check, set `OMOBA_ALLOW_INSECURE_LOCAL=1`; real deployments
-require the trusted HTTPS origin and TLS ingress. Deployment is not performed by
-this repository. Do not expose the database or raw Account API publicly.
+require the trusted HTTPS origin and TLS ingress. [RU self-hosting](docs/ru-nginx.md)
+documents the single-VPS Nginx/systemd deployment and its guest-mode boundaries;
+templates are in `ops/ru-nginx/`. There is no automatic deploy-on-push trigger.
+Do not expose the database or raw Account API publicly.
 
 ## Configuration
 
