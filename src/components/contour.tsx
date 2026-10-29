@@ -4,6 +4,7 @@ import { useLocale } from '@/components/locale-provider';
 
 type Contour = 'production' | 'dev';
 const ContourContext = createContext<Contour>('production');
+export function useContour(): Contour { return useContext(ContourContext); }
 
 /** The server's contour (root layout), so every header can mark a dev deployment. */
 export function ContourProvider({ contour, children }: { contour: Contour; children: React.ReactNode }) {
