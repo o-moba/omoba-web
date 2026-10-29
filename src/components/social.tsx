@@ -1,5 +1,7 @@
 'use client';
 import { useLocale } from '@/components/locale-provider';
+import { useMarket } from '@/components/market-profile';
+import VkOneTap from '@/components/vk-one-tap';
 
 export type SocialTicket = { display_name: string; expires_at: string };
 export type VkMethod = 'vkid' | 'ok_ru' | 'mail_ru';
@@ -23,6 +25,13 @@ export function useMethodLabel() {
 
 /** VK, OK and Mail.ru are one VK ID app; `provider` picks the account type. */
 export function VkSignInButtons({ returnTo }: { returnTo: string }) {
+  const { market, features } = useMarket();
+  if (market !== 'ru' || !features.vkSignIn) return null;
+  const buttons = <RedirectSignInButtons returnTo={returnTo} />;
+  return <VkOneTap returnTo={returnTo}>{buttons}</VkOneTap>;
+}
+
+function RedirectSignInButtons({ returnTo }: { returnTo: string }) {
   const label = useMethodLabel();
   return <div className="vk-buttons">{METHODS.map(({ method, mark }) =>
     <a key={method} className={'button vk-button vk-' + method} data-vk-method={method}

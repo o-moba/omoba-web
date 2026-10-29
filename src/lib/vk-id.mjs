@@ -14,6 +14,7 @@ export const VK_SCOPE = 'vkid.personal_info';
 export const VK_METHODS = Object.freeze(['vkid', 'ok_ru', 'mail_ru']);
 export const VK_CALLBACK_PATH = '/api/auth/vk/callback';
 export const VK_ATTEMPT_MAX_AGE = 600;
+export const VK_ONE_TAP_COOKIE_PREFIX = 'one-tap.';
 export const SOCIAL_TICKET_MAX_AGE = 1800;
 export const SESSION_MAX_AGE = 7 * 86400;
 /** The only `?signin=` values the portal shows (each has a localized message). */
@@ -137,6 +138,17 @@ export function vkStart({ clientId, origin, names, features, method, returnTo, r
   };
 }
 
+/** Server-owned PKCE; the SDK receives only the public challenge and state. */
+export function vkOneTapStart({ clientId, origin, names, features, returnTo, random }) {
+  if (!Number.isSafeInteger(Number(clientId)) || Number(clientId) <= 0) throw new Error('Invalid VK ID app');
+  const destination = portalReturnTo(returnTo || '/me', features);
+  const { state, verifier } = newVkAttempt(random);
+  return {
+    configuration: { app: Number(clientId), redirectUrl: origin, state, codeChallenge: pkceChallenge(verifier), scope: VK_SCOPE },
+    cookies: { set: [[names.vk, VK_ONE_TAP_COOKIE_PREFIX + encodeVkCookie({ state, verifier, method: 'vkid', returnTo: destination }), VK_ATTEMPT_MAX_AGE]], clear: [] },
+  };
+}
+
 /** @param {unknown} value @param {number} max */
 function printable(value, max) {
   return typeof value === 'string' && value.length > 0 && value.length <= max && /^[\x21-\x7e]+$/.test(value);
@@ -169,11 +181,12 @@ function ticketMaxAge(expiresAt, now) {
  * The attempt cookie is single use: every outcome clears it.
  * @param {{api: string, origin: string, names: CookieNames, features: {ekza: boolean, supporter: boolean},
  *   query: URLSearchParams, cookie: string | undefined, headers: Record<string, string>,
- *   fetch?: typeof fetch, now?: number, timeoutMs?: number}} options
+ *   fetch?: typeof fetch, now?: number, timeoutMs?: number, flow?: 'redirect' | 'one-tap'}} options
  * @returns {Promise<{location: string, cookies: CookieChanges}>}
  */
-export async function vkCallback({ api, origin, names, features, query, cookie, headers, fetch: request = fetch, now = Date.now(), timeoutMs = 12000 }) {
-  const attempt = decodeVkCookie(cookie, features);
+export async function vkCallback({ api, origin, names, features, query, cookie, headers, fetch: request = fetch, now = Date.now(), timeoutMs = 12000, flow = 'redirect' }) {
+  const raw = flow === 'one-tap' ? (cookie?.startsWith(VK_ONE_TAP_COOKIE_PREFIX) ? cookie.slice(VK_ONE_TAP_COOKIE_PREFIX.length) : undefined) : cookie;
+  const attempt = decodeVkCookie(raw, features);
   const clearAttempt = cookie === undefined ? [] : [names.vk];
   const failure = (/** @type {string} */ reason) => ({
     location: vkFailureLocation(reason, attempt?.returnTo ?? '/me'),
@@ -197,7 +210,7 @@ export async function vkCallback({ api, origin, names, features, query, cookie, 
         code,
         code_verifier: attempt.verifier,
         device_id: deviceId,
-        redirect_uri: vkRedirectUri(origin),
+        redirect_uri: flow === 'one-tap' ? origin : vkRedirectUri(origin),
         state: attempt.state,
         // A game enrollment must link to its current signed game profile. Only
         // an ordinary website login may create a fresh profile for a new subject.
