@@ -25,7 +25,14 @@ const config: NextConfig = {
       { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
       // The dev contour is public but never indexed, including API routes and assets.
       ...(contour === 'dev' ? [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] : []),
-    ] }];
+    ] }, {
+      // Only the locally compiled game may be embedded by this portal.
+      // Account and other pages retain DENY above.
+      source: '/game/:path*', headers: [
+        { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+        { key: 'Content-Security-Policy', value: "frame-ancestors 'self'; object-src 'none'; base-uri 'self'" },
+      ],
+    }];
   },
 };
 export default config;

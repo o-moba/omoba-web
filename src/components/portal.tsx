@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { api, ApiFailure } from '@/lib/client-api';
 import DevicesView from './devices';
 import ConnectView from './connect';
-import { RegistrationView, VkSignInButtons, fill, useMethodLabel, useSigninFailure, type SocialTicket } from './social';
+import { ProgressFollowsVk, RegistrationView, VkSignInButtons, fill, useMethodLabel, useSigninFailure, type SocialTicket } from './social';
 import { useMarket } from './market-profile';
 import { LegalLinks, SignInLegalNotice } from './legal';
 import { GuestHome, type GuestHomeData } from './guest-home';
@@ -19,6 +19,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { dictionaries, type Words } from '@/lib/i18n';
 import { useLocale, LanguageSelector } from '@/components/locale-provider';
+import { classArtwork, classDisplayName, meterPercent, playerResult, presentationWords, ratingBounds, recordRate, resultTone, teamSummaries, teamDisplayName } from '@/lib/portal-presentation.mjs';
+import './portal-polish.css';
 import type {Account,Profile,History,Friends,Match,Analytics,Sessions,Settings} from '@/lib/types';
 
 function errorText(error:unknown,w:Words) {
@@ -28,27 +30,34 @@ function errorText(error:unknown,w:Words) {
   return w.loadError;
 }
 function useData<T>(path:string|null) {
-  const [data,setData]=useState<T|null>(null),[error,setError]=useState<unknown>(null),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
-  useEffect(()=>{if(!path){setData(null);return;} let live=true;setBusy(true);setError(null);
-    api<T>(path).then(value=>{if(live)setData(value);}).catch(e=>{if(live){setError(e);setData(null);}}).finally(()=>{if(live)setBusy(false);});
+  const [data,setData]=useState<T|null>(null),[loadedPath,setLoadedPath]=useState<string|null>(null),[error,setError]=useState<unknown>(null),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
+  useEffect(()=>{if(!path){setData(null);setLoadedPath(null);setError(null);setBusy(false);return;} let live=true;setBusy(true);setError(null);
+    api<T>(path).then(value=>{if(live){setData(value);setLoadedPath(path);}}).catch(e=>{if(live){setError(e);setData(null);setLoadedPath(path);}}).finally(()=>{if(live)setBusy(false);});
     return ()=>{live=false;};},[path,revision]);
   useEffect(()=>{if(!path)return;const refresh=()=>{if(document.visibilityState==='visible')setRevision(n=>n+1);};const timer=setInterval(refresh,path.startsWith('me/matches')?5000:30000);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);};},[path]);
-  return {data,error,busy,refresh:()=>setRevision(n=>n+1)};
+  // Never label one request's results with another request's filters/report URL.
+  // Same-path background refreshes keep their already loaded content.
+  return {data:loadedPath===path?data:null,error:loadedPath===path?error:null,busy:busy||!!path&&loadedPath!==path,refresh:()=>setRevision(n=>n+1)};
 }
 function Card({children,className=''}:{children:React.ReactNode;className?:string}) {return <section className={'card '+className}>{children}</section>;}
 function Empty({text}:{text:string}){return <div className="empty"><span aria-hidden="true">◇</span><p>{text}</p></div>;}
-function Status({error,busy,w,retry}:{error:unknown;busy:boolean;w:Words;retry:()=>void}){return <>{error?<div role="alert" className="notice error">{errorText(error,w)} <button onClick={retry}>{w.retry}</button></div>:null}{busy?<p role="status" className="muted">{w.loading}</p>:null}</>;}
+function Status({error,busy,w,retry}:{error:unknown;busy:boolean;w:Words;retry:()=>void}){return <>{error?<div role="alert" className="notice error">{errorText(error,w)} <button onClick={retry}>{w.retry}</button></div>:null}{busy?<p role="status" className="muted portal-loading"><span aria-hidden="true"/>{w.loading}</p>:null}</>;}
 const formatNumber=(n:number|string|null|undefined,locale:string)=>n==null?'—':typeof n==='string'?BigInt(n).toLocaleString(locale):new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(n);
 const duration=(ms:string)=>`${Math.floor(Number(ms)/60000)}:${String(Math.floor(Number(ms)/1000)%60).padStart(2,'0')}`;
 function time(value:string,tz:string,locale:string){return new Date(value).toLocaleString(locale,{timeZone:tz,dateStyle:'medium',timeStyle:'short'});}
 function outcome(won:boolean|null,state:string,w:Words){return state==='interrupted'?w.interrupted:state==='abandoned'?w.abandoned:won===null?w.outcome:won?w.victory:w.defeat;}
-function ClassIcon({name}:{name:string}){return <span className={'class-icon '+name.toLowerCase()} aria-hidden="true">{name.slice(0,1)}</span>;}
+function ClassIcon({name}:{name:string}){const image=classArtwork(name);return <span className={'class-icon '+name.toLowerCase()} aria-hidden="true">{image?<img src={image} width={32} height={32} alt=""/>:<NavIcon href="/workshop"/>}</span>;}
 function Metric({label,value,accent=false}:{label:string;value:React.ReactNode;accent?:boolean}){return <div className="metric"><span>{label}</span><strong className={accent?'accent':''}>{value}</strong></div>;}
-function ProfileMetrics({p,w}:{p:Profile;w:Words}) {const {locale}=useLocale(); const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale); return <div className="metrics"><Metric label={w.rating} value={number(p.rating)} accent/><Metric label={w.level} value={number(p.level)}/><Metric label={w.wins} value={number(p.wins)}/><Metric label={w.winRate} value={p.wins!=null&&p.losses!=null&&p.wins+p.losses>0?number(100*p.wins/(p.wins+p.losses))+'%':'—'}/></div>;}
+function ProfileMetrics({p,w}:{p:Profile;w:Words}) {
+  const {locale}=useLocale(),c=presentationWords(locale);
+  const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale),rate=recordRate(p.wins,p.losses);
+  return <div className="metrics career-metrics"><Metric label={w.rating} value={number(p.rating)} accent/><Metric label={c.matches} value={number(p.matches_played)}/><Metric label={c.record} value={<><span className="record-wins">{number(p.wins)}</span><i> / </i><span className="record-losses">{number(p.losses)}</span></>}/><Metric label={w.winRate} value={rate===null?'—':number(rate*100)+'%'}/></div>;
+}
 function Copy({value,w}:{value:string;w:Words}){const[done,setDone]=useState(false);return <button onClick={()=>navigator.clipboard.writeText(value).then(()=>setDone(true)).catch(()=>setDone(false))}>{done?w.copied:w.copy}</button>;}
 
 function Login({w,onConnected,returnTo}:{w:Words;onConnected:()=>void;returnTo:string}) {
   const { t, locale } = useLocale();
+  const c=presentationWords(locale);
   const { features } = useMarket();const failure=useSigninFailure()(useSearchParams().get('signin'));
   const[pair,setPair]=useState<{code:string;expires_at:string}|null>(null),[state,setState]=useState(''),[error,setError]=useState<unknown>(null),[busy,setBusy]=useState(false);
   useEffect(()=>{if(!pair)return;let live=true,active=false;const poll=async()=>{if(active)return;active=true;try {
@@ -59,11 +68,11 @@ function Login({w,onConnected,returnTo}:{w:Words;onConnected:()=>void;returnTo:s
   async function start(){setBusy(true);setError(null);try{setPair(await api('auth/pairings','POST',{}));setState('pending');}catch(e){setError(e);}finally{setBusy(false);}}
   // Markets with VK ID (ru): VK, OK and Mail.ru first; game pairing stays the secondary path.
   const pairing=<>{pair?<><div className="pair-code" aria-label={pair.code}>{pair.code.slice(0,4)}—{pair.code.slice(4)}</div><p>{w.pairHelp}</p><p role="status" className="accent">{w.awaiting}</p><time className="muted">{new Date(pair.expires_at).toLocaleTimeString(locale)}</time><div><button onClick={async()=>{try{await api('auth/pairings/cancel','POST',{});setPair(null);setState('cancelled');}catch(e){setError(e);}}}>{w.cancel}</button></div></>:<><p role="status">{state==='denied'?w.denied:['expired','cancelled'].includes(state)?w.expired:''}</p><button className={features.vkSignIn?'':'primary'} disabled={busy} onClick={start}>{w.createPair}</button></>}</>;
-  return <Card className="login-card"><span className="eyebrow">{t("OMOBA ACCOUNT")}</span>{failure?<p role="alert" className="notice error" data-signin-failure>{failure}</p>:null}
-    {features.vkSignIn?<><h1>{t('Sign in to OMOBA')}</h1><p>{t('Use your VK, OK or Mail.ru account. New players get a profile here. If you already play, link your existing profile from the game first.')}</p><VkSignInButtons returnTo={returnTo}/><SignInLegalNotice/>
+  return <div className="portal-login-layout"><section className="portal-login-story"><span className="eyebrow">{c.signIn}</span><h2>{c.signInIntro}</h2><div className="login-benefits"><span><NavIcon href="/me/matches"/>{w.matches}</span><span><NavIcon href="/me/stats"/>{w.stats}</span><span><NavIcon href="/friends"/>{w.friends}</span></div><Link className="button" href="/play">{c.play} <span aria-hidden="true">→</span></Link></section><Card className="login-card"><span className="eyebrow">{t("OMOBA ACCOUNT")}</span>{failure?<p role="alert" className="notice error" data-signin-failure>{failure}</p>:null}
+    {features.vkSignIn?<><h1>{t('Sign in to OMOBA')}</h1><p>{t('Use your VK, OK or Mail.ru account. New players get a profile here. If you already play, link your existing profile from the game first.')}</p><VkSignInButtons returnTo={returnTo}/><SignInLegalNotice/><ProgressFollowsVk/>
       <div className="login-secondary" data-pairing><h2>{t('Or connect your game')}</h2><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}</div></>
     :<><h1>{w.login}</h1><p>{w.pairingIntro}</p><Status error={error} busy={busy} w={w} retry={start}/>{pairing}<SignInLegalNotice/></>}
-    <p className="muted separated">{features.vkSignIn?t('After signing in, install OMOBA and open Profile → “Sign in with VK ID” in the game to use this account.'):w.newPlayer}</p><Link href="/download">{w.download} ↗</Link></Card>;
+    <p className="muted separated">{features.vkSignIn?t('After signing in, install OMOBA and open Profile → “Sign in with VK ID” in the game to use this account.'):w.newPlayer}</p><Link href="/download">{w.download} ↗</Link></Card></div>;
 }
 
 function FilterBar({w,stats=false}:{w:Words;stats?:boolean}){
@@ -76,35 +85,124 @@ function FilterBar({w,stats=false}:{w:Words;stats?:boolean}){
     {!stats?<label>{w.outcome}<select value={params.get('outcome')||''} onChange={e=>update('outcome',e.target.value)}><option value="">{w.all}</option><option value="win">{w.victory}</option><option value="loss">{w.defeat}</option><option value="interrupted">{w.interrupted}</option><option value="abandoned">{w.abandoned}</option></select></label>:null}</div>;
 }
 function query(params:URLSearchParams,stats=false){const q=new URLSearchParams(params);if(!q.has('days'))q.set('days','30');if(!q.has('rated'))q.set('rated',stats?'true':'all');return q.toString();}
-function HistoryView({w,tz,locale,compact=false}:{w:Words;tz:string;locale:string;compact?:boolean}){
-  const { t } = useLocale();
+function HistoryView({w,tz,locale,compact=false}:{w:Words;tz:string;locale:string;compact?:boolean}) {
+  const {t}=useLocale(),c=presentationWords(locale);
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
-  const params=useSearchParams(),router=useRouter(),path=usePathname();const {data,error,busy,refresh}=useData<History>('me/matches?'+(compact?'limit=5&days=all':query(new URLSearchParams(params.toString()))));
-  return <Card><div className="section-heading"><h2>{compact?w.latest:w.matches}</h2>{compact?<Link href="/me/matches">{w.allMatches} →</Link>:<button onClick={refresh}>{w.refresh}</button>}</div>{!compact?<FilterBar w={w}/>:null}<Status error={error} busy={busy} w={w} retry={refresh}/>
-    {data?.matches.length===0?<Empty text={w.noMatches}/>:null}<div className="match-list">{data?.matches.map(m=><Link className={'match-row '+(m.won===true?'won':m.won===false?'lost':'neutral')} key={m.result_id} href={'/matches/'+encodeURIComponent(m.result_id)}>
-      <ClassIcon name={m.hero_class}/><div><strong>{outcome(m.won,m.outcome,w)}</strong><small>{t(m.hero_class)} · {duration(m.duration_ms)}</small></div><div><b>{m.kills} / {m.deaths} / {m.assists}</b><small>K / D / A</small></div><div className="damage-cell"><b>{number(m.damage_to_heroes)}</b><small>{w.damage}</small></div><div className="match-end"><b>{m.rating?(m.rating.delta>0?'+':'')+m.rating.delta+' MMR':w.unrated}</b><small>{time(m.ended_at,tz,locale)}</small></div><span aria-hidden="true">↗</span></Link>)}</div>
-    {data?.next_cursor&&!compact?<button className="separated" onClick={()=>{const q=new URLSearchParams(params);q.set('cursor',data.next_cursor!);router.push(path+'?'+q);}}>{w.next} →</button>:null}</Card>;
+  const params=useSearchParams(),router=useRouter(),path=usePathname();
+  const {data,error,busy,refresh}=useData<History>('me/matches?'+(compact?'limit=5&days=all':query(new URLSearchParams(params.toString()))));
+  return <>
+    {!compact?<div className="page-heading portal-page-heading"><div><span className="eyebrow">{c.career}</span><h1>{w.matches}</h1><p>{c.historyIntro}</p></div><Link className="button" href="/play">{c.play} →</Link></div>:null}
+    <Card className={'history-card'+(compact?' is-compact':'')}>
+      <div className="section-heading"><div><span className="section-kicker">{compact?c.career:c.allResults}</span><h2>{compact?w.latest:w.allMatches}</h2></div>{compact?<Link href="/me/matches">{w.allMatches} →</Link>:<button onClick={refresh}>{w.refresh}</button>}</div>
+      {!compact?<FilterBar w={w}/>:null}
+      <Status error={error} busy={busy&&!data} w={w} retry={refresh}/>
+      {data?.matches.length===0?<Empty text={w.noMatches}/>:null}
+      <div className="match-list">{data?.matches.map(m=>{
+        const tone=resultTone(m.won,m.outcome);
+        return <Link className={'match-row '+tone} key={m.result_id} href={'/matches/'+encodeURIComponent(m.result_id)} data-result={tone}>
+          <ClassIcon name={m.hero_class}/>
+          <div className="match-identity"><strong className="outcome-label"><span className="outcome-indicator" aria-hidden="true"/>{outcome(m.won,m.outcome,w)}</strong><small>{t(classDisplayName(m.hero_class))} · {duration(m.duration_ms)}</small></div>
+          <div className="match-kda"><b>{m.kills}<i> / </i>{m.deaths}<i> / </i>{m.assists}</b><small>K / D / A</small></div>
+          <div className="damage-cell"><b>{number(m.damage_to_heroes)}</b><small>{w.damage}</small></div>
+          <div className="match-end"><b className={m.rating&&m.rating.delta!==0?(m.rating.delta>0?'rating-up':'rating-down'):''}>{m.rating?(m.rating.delta>0?'+':'')+number(m.rating.delta)+' MMR':w.unrated}</b><small>{time(m.ended_at,tz,locale)}</small></div>
+          <span className="match-open" aria-hidden="true">→</span>
+        </Link>;
+      })}</div>
+      {data?.next_cursor&&!compact?<div className="history-pagination"><button onClick={()=>{const q=new URLSearchParams(params);q.set('cursor',data.next_cursor!);router.push(path+'?'+q);}}>{w.next} →</button></div>:null}
+    </Card>
+  </>;
 }
 
 function MatchView({id,w,tz,locale,me}:{id:string;w:Words;tz:string;locale:string;me:string}) {
-  const { t } = useLocale();
+  const {t}=useLocale(),c=presentationWords(locale);
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
-  const {data,error,busy,refresh}=useData<{match:Match}>('matches/'+encodeURIComponent(id));const m=data?.match;
-  return <><Status error={error} busy={busy} w={w} retry={refresh}/>{m?<><div className="page-heading"><span className="eyebrow">{t("MATCH REPORT")}</span><h1>{outcome(m.winner===null?null:m.participants.some(p=>p.profile_id===me&&p.team===m.winner),m.outcome,w)}</h1><p>{time(m.ended_at,tz,locale)} · {duration(m.duration_ms)} · {m.rated?w.rated:w.unrated}</p></div>{!m.rated?<div className="notice">{w.noReward}{m.unrated_reason?' · '+m.unrated_reason:''}</div>:null}
-    {Array.from(new Set(m.participants.map(p=>p.team))).map(team=><Card key={team}><h2>{w.team} {team} {m.winner===team?'· '+w.victory:''}</h2><div className="scoreboard">{m.participants.filter(p=>p.team===team).map(p=><details key={p.player_id} className={p.profile_id===me?'mine':''}><summary><ClassIcon name={p.hero_class}/><div><strong>{p.nickname}{p.is_bot?' · '+w.bot:''}</strong><small>{t(p.hero_class)} · {p.avatar||p.sprite_character||t('Default')}</small></div><b>{p.stats.kills} / {p.stats.deaths} / {p.stats.assists}</b><span>{number(p.stats.damage_to_heroes)} <small>{w.damage}</small></span></summary><div className="detail-grid">
-    {([['structures','damage_to_structures'],['creeps','damage_to_creeps'],['taken','damage_taken'],['minions','minion_last_hits'],['jungle','jungle_last_hits'],['towers','structures_destroyed'],['finalLevel','final_level']] as const).map(([label,key])=><Metric key={key} label={w[label]} value={number(p.stats[key])}/>)}<Metric label="MMR" value={p.rating?(p.rating.delta>0?'+':'')+p.rating.delta:'—'}/><Metric label="XP" value={p.progression_xp_gained}/>{p.disconnected?<span>{w.disconnected}</span>:null}{p.profile_id?<Link href={'/players/'+p.profile_id}>{w.profile} ↗</Link>:null}</div></details>)}</div></Card>)}<p className="muted">{w.historical}</p></>:null}</>;
+  const {data,error,busy,refresh}=useData<{match:Match}>('matches/'+encodeURIComponent(id)),m=data?.match;
+  const teams=m?teamSummaries(m):[],ownResult=m?playerResult(m,me):null,tone=m?resultTone(ownResult,m.outcome):'neutral';
+  return <>
+    <div className="match-back"><Link href="/me/matches">← {w.allMatches}</Link></div>
+    <Status error={error} busy={busy&&!data} w={w} retry={refresh}/>
+    {m?<>
+      <section className={'match-banner '+tone}>
+        <div className="match-banner-copy"><span className="eyebrow">{c.report}</span><h1>{outcome(ownResult,m.outcome,w)}</h1><div className="match-meta"><span>{time(m.ended_at,tz,locale)}</span><span>{duration(m.duration_ms)}</span><span className="tag">{m.rated?w.rated:w.unrated}</span></div></div>
+        <div className="match-score" aria-label={c.score} data-match-team-summary>{teams.map((team,index)=><div className={'score-team '+team.result} key={team.id}><span>{w.team} {teamDisplayName(team.id,locale)}</span><strong>{number(team.kills)}</strong><small>{team.result==='won'?w.victory:team.result==='lost'?w.defeat:c.undecided}</small>{index<teams.length-1?<i aria-hidden="true">:</i>:null}</div>)}</div>
+      </section>
+      {!m.rated?<div className="notice">{w.noReward}{m.unrated_reason?' · '+m.unrated_reason:''}</div>:null}
+      {teams.length>0&&teams.every(team=>team.result==='neutral')?<p className="muted">{c.noResult}</p>:null}
+      <div className="team-panels">{teams.map((team,index)=><Card key={team.id} className={'team-card team-'+index+' '+team.result}>
+        <div className="team-heading"><div><span className="section-kicker">{team.result==='won'?c.winner:team.result==='lost'?c.loser:c.undecided}</span><h2>{w.team} {teamDisplayName(team.id,locale)}</h2></div><div className="team-kills"><strong>{number(team.kills)}</strong><span>{c.kills}</span></div></div>
+        <div className="team-totals"><span><b>{number(team.damage)}</b> {c.teamDamage}</span><span><b>{number(team.structures)}</b> {c.structures}</span></div>
+        <div className="scoreboard-cols" aria-hidden="true"><span>{w.players}</span><span>K / D / A</span><span>{w.damage}</span></div>
+        <div className="scoreboard">{team.participants.map(p=><details key={p.player_id} className={p.profile_id===me?'mine':''}>
+          <summary>
+            <ClassIcon name={p.hero_class}/>
+            <div className="score-player"><strong>{p.nickname}{p.profile_id===me?<em className="self-badge">{c.you}</em>:null}{p.is_bot?<em className="bot-badge">{w.bot}</em>:null}</strong><small>{t(classDisplayName(p.hero_class))} · {p.avatar||p.sprite_character||t('Default')}</small></div>
+            <b className="score-kda">{p.stats.kills}<i> / </i>{p.stats.deaths}<i> / </i>{p.stats.assists}</b>
+            <div className="score-damage"><b>{number(p.stats.damage_to_heroes)}</b><span className="damage-meter" aria-hidden="true"><span style={{width:(team.damage?100*p.stats.damage_to_heroes/team.damage:0)+'%'}}/></span></div>
+            <span className="detail-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div className="detail-grid"><span className="player-detail-heading">{c.details}</span>
+            {([['structures','damage_to_structures'],['creeps','damage_to_creeps'],['taken','damage_taken'],['minions','minion_last_hits'],['jungle','jungle_last_hits'],['towers','structures_destroyed'],['finalLevel','final_level']] as const).map(([label,key])=><Metric key={key} label={w[label]} value={number(p.stats[key])}/>)}
+            <Metric label="MMR" value={p.rating?(p.rating.delta>0?'+':'')+number(p.rating.delta):'—'}/><Metric label="XP" value={number(p.progression_xp_gained)}/>
+            {p.disconnected?<span className="notice error">{w.disconnected}</span>:null}{p.profile_id?<Link className="button player-profile-link" href={'/players/'+p.profile_id}>{w.profile} ↗</Link>:null}
+          </div>
+        </details>)}</div>
+      </Card>)}</div>
+      <p className="muted match-historical">{w.historical}</p>
+    </>:null}
+  </>;
 }
 
-function StatsView({w,tz,locale}:{w:Words;tz:string;locale:string}){
-  const { t } = useLocale();
+function StatsView({w,tz,locale}:{w:Words;tz:string;locale:string}) {
+  const {t}=useLocale(),c=presentationWords(locale);
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
-  const params=useSearchParams();const {data,error,busy,refresh}=useData<Analytics>('me/statistics?'+query(new URLSearchParams(params.toString()),true));
-  const points=data?.rating||[];const min=Math.min(...points.map(p=>p.after),1000)-20,max=Math.max(...points.map(p=>p.after),1000)+20;
-  return <><div className="page-heading"><span className="eyebrow">{t("YOUR PROGRESS")}</span><h1>{w.stats}</h1></div><FilterBar w={w} stats/><Status error={error} busy={busy} w={w} retry={refresh}/>{data?<>
-    {data.pending_results>0?<div className="notice">{w.updating} · {data.pending_results}</div>:null}
-    <Card><div className="metrics"><Metric label={w.sample} value={data.summary.matches}/><Metric label={w.winRate} value={data.summary.win_rate==null?'—':number(data.summary.win_rate*100)+'%'}/><Metric label="KDA" value={number(data.summary.kda)}/><Metric label={w.dmgMinute} value={number(data.summary.damage_per_minute)} accent/></div><p className="muted">{w.kdaHelp}</p>{data.summary.matches<5?<p className="notice">{w.smallSample}</p>:null}</Card>
-    <Card><h2>{w.ratingHistory}</h2>{data.rating_truncated?<p className="muted">{t('Showing the latest 1000 rating changes.')}</p>:null}{points.length?<><svg viewBox="0 0 640 180" role="img" aria-label={w.ratingHistory} className="rating-chart"><text x="0" y="15">{max}</text><text x="0" y="170">{min}</text><line x1="48" y1="160" x2="630" y2="160" stroke="currentColor" opacity=".2"/><polyline fill="none" stroke="var(--mint)" strokeWidth="3" points={points.map((p,i)=>`${48+i*570/Math.max(1,points.length-1)},${160-(p.after-min)*140/(max-min)}`).join(' ')}/>{points.map((p,i)=><circle key={p.result_id} cx={48+i*570/Math.max(1,points.length-1)} cy={160-(p.after-min)*140/(max-min)} r="3" fill="var(--mint)"/>)}</svg><details><summary>{w.ratingHistory} · {w.matches}</summary><ul>{points.map(p=><li key={p.result_id}><Link href={'/matches/'+p.result_id}>{time(p.ended_at,tz,locale)}</Link> · {p.before} → {p.after} ({p.delta>0?'+':''}{p.delta})</li>)}</ul></details></>:<Empty text={w.empty}/>}</Card>
-    <Card><h2>{w.byClass}</h2>{data.classes.map(c=><div className="class-row" key={c.hero_class}><ClassIcon name={c.hero_class}/><strong>{t(c.hero_class)}</strong><span>{c.matches} {w.matches.toLowerCase()}</span><span>{c.win_rate==null?'—':number(c.win_rate*100)+'%'} · {w.winRate}</span><span>{number(c.kda)} KDA</span></div>)}</Card>{data.data_as_of?<p className="muted">{w.asOf} {time(data.data_as_of,tz,locale)}</p>:null}</>:null}</>;
+  const params=useSearchParams();
+  const {data,error,busy,refresh}=useData<Analytics>('me/statistics?'+query(new URLSearchParams(params.toString()),true));
+  const points=data?.rating||[],bounds=ratingBounds(points);
+  const chartX=(index:number)=>58+(index+1)*552/Math.max(1,points.length),chartY=(rating:number)=>bounds?174-(rating-bounds.min)*142/(bounds.max-bounds.min):174;
+  return <>
+    <div className="page-heading portal-page-heading"><div><span className="eyebrow">{t('YOUR PROGRESS')}</span><h1>{w.stats}</h1><p>{c.statsIntro}</p></div></div>
+    <div className="card stats-filters"><FilterBar w={w} stats/></div>
+    <Status error={error} busy={busy&&!data} w={w} retry={refresh}/>
+    {data?<>
+      {data.pending_results>0?<div className="notice">{w.updating} · {data.pending_results}</div>:null}
+      <Card className="stats-overview"><div className="metrics"><Metric label={w.sample} value={number(data.summary.matches)}/><Metric label={w.winRate} value={data.summary.win_rate==null?'—':number(data.summary.win_rate*100)+'%'}/><Metric label="KDA" value={number(data.summary.kda)}/><Metric label={w.dmgMinute} value={number(data.summary.damage_per_minute)} accent/></div>
+        <div className="stats-record"><span className="record-wins">{number(data.summary.wins)} {w.wins}</span><span className="record-losses">{number(data.summary.losses)} {w.losses}</span><small>{w.kdaHelp}</small></div>
+        {data.summary.matches<5?<p className="notice sample-notice">{w.smallSample}</p>:null}
+      </Card>
+      <div className="stats-detail-layout">
+        <Card className="rating-card"><div className="section-heading"><div><span className="section-kicker">MMR</span><h2>{w.ratingHistory}</h2></div>{points.length?<strong className="latest-rating">{number(points[points.length-1].after)}</strong>:null}</div>
+          {data.rating_truncated?<p className="muted">{t('Showing the latest 1000 rating changes.')}</p>:null}
+          {bounds&&points.length?<><svg viewBox="0 0 640 214" role="img" aria-label={w.ratingHistory} className="rating-chart">
+            <defs><linearGradient id="portal-rating-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--omoba-cobalt)" stopOpacity=".28"/><stop offset="100%" stopColor="var(--omoba-cobalt)" stopOpacity="0"/></linearGradient></defs>
+            {[0,.5,1].map(tick=>{const value=bounds.min+(bounds.max-bounds.min)*tick,y=chartY(value);return <g key={tick}><text x="0" y={y+4}>{number(value)}</text><line x1="58" y1={y} x2="610" y2={y} stroke="currentColor" opacity=".14" strokeDasharray="3 5"/></g>;})}
+            <polygon fill="url(#portal-rating-fill)" points={'58,174 58,'+chartY(points[0].before)+' '+points.map((p,i)=>chartX(i)+','+chartY(p.after)).join(' ')+' 610,174'}/>
+            <polyline fill="none" stroke="var(--omoba-crystal)" strokeWidth="2.5" strokeLinejoin="round" points={'58,'+chartY(points[0].before)+' '+points.map((p,i)=>chartX(i)+','+chartY(p.after)).join(' ')}/>
+            <circle cx="58" cy={chartY(points[0].before)} r="3.5" fill="var(--panel)" stroke="var(--omoba-crystal)" strokeWidth="2"/>
+            {points.map((p,i)=><circle key={p.result_id} cx={chartX(i)} cy={chartY(p.after)} r={i===points.length-1?4:2.5} fill="var(--omoba-crystal)"/>)}
+            <text x="58" y="204">{new Date(points[0].ended_at).toLocaleDateString(locale,{timeZone:tz,month:'short',day:'numeric'})}</text><text x="610" y="204" textAnchor="end">{new Date(points[points.length-1].ended_at).toLocaleDateString(locale,{timeZone:tz,month:'short',day:'numeric'})}</text>
+          </svg><details className="rating-table"><summary>{w.ratingHistory} · {w.matches}</summary><ul>{points.map(p=><li key={p.result_id}><Link href={'/matches/'+p.result_id}>{time(p.ended_at,tz,locale)}</Link><span>{number(p.before)} → {number(p.after)}</span><strong className={p.delta>0?'rating-up':p.delta<0?'rating-down':''}>{p.delta>0?'+':''}{number(p.delta)}</strong></li>)}</ul></details></>:<Empty text={c.ratingEmpty}/>}
+        </Card>
+        <Card className="class-performance"><div className="section-heading"><div><span className="section-kicker">{c.performance}</span><h2>{w.byClass}</h2></div></div>
+          {!data.classes.length?<Empty text={c.classesEmpty}/>:data.classes.map(row=><div className="class-row" key={row.hero_class}><ClassIcon name={row.hero_class}/><div className="class-performance-copy"><div><strong>{t(classDisplayName(row.hero_class))}</strong><span>{number(row.matches)} {w.matches.toLowerCase()}</span></div><div className="class-win-rate"><span className="win-rate-track" aria-hidden="true"><span style={{width:(meterPercent(row.win_rate)??0)+'%'}}/></span><b>{row.win_rate==null?'—':number(row.win_rate*100)+'%'}</b></div><small>{number(row.kda)} KDA <span>·</span> {w.winRate}</small></div></div>)}
+        </Card>
+      </div>
+      {data.data_as_of?<p className="muted stats-asof">{w.asOf} {time(data.data_as_of,tz,locale)}</p>:null}
+    </>:null}
+  </>;
+}
+
+function Overview({account,w,tz,locale}:{account:Account;w:Words;tz:string;locale:string}) {
+  const {t}=useLocale(),{features}=useMarket(),c=presentationWords(locale),p=account.profile;
+  const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
+  return <>
+    <section className="career-hero">
+      <div className="career-identity"><span className="eyebrow">{c.career}</span><h1>{p.nickname}</h1><p>{c.careerIntro}</p><div className="career-level"><span>{w.level} <b>{number(p.level)}</b></span>{(p.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}{features.supporter&&p.supporter?<HeroRecognitionBadge recognition={p.supporter}/>:null}</div></div>
+      <div className="career-next"><Link className="button primary" href="/play"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="m8 4 13 8-13 8Z"/></svg>{c.play}</Link><small>{c.practice}</small></div>
+    </section>
+    <Card className="career-summary"><ProfileMetrics p={p} w={w}/><div className="profile-strip"><span>{number(p.rated_matches)} {w.ratedMatches.toLowerCase()}</span><span>{number(p.progression_xp)} XP</span><Link href="/me/stats">{w.stats} →</Link></div></Card>
+    <HistoryView w={w} tz={tz} locale={locale} compact/>
+    <Card className="player-identity-card"><div><span className="section-kicker">{c.account}</span><h2>{c.accountHint}</h2><p className="code">{p.nickname}</p></div><div className="identity-actions"><Copy value={p.nickname} w={w}/><Link className="button" href="/friends">{w.friends}</Link><Link className="button" href="/settings">{w.settings}</Link><Link className="button" href="/devices">{t('Devices')}</Link></div></Card>
+  </>;
 }
 
 function FriendsView({w}:{w:Words}){
@@ -166,6 +264,7 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   const[socialTicket,setSocialTicket]=useState(initialTicket),[signingOut,setSigningOut]=useState(false);
   const { features, landing, legal } = useMarket();
   const { locale, t } = useLocale();
+  const c=presentationWords(locale);
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
   const path=usePathname();const router=useRouter();const w=dictionaries[locale],tz=account?.settings.timezone||'UTC';
   const reload=useCallback(async()=>{try{setAccount(await api<Account>('me'));setUnavailable(false);}catch(e){if(e instanceof ApiFailure&&e.status===401){setAccount(null);setUnavailable(false);}else setUnavailable(true);}},[]);
@@ -230,7 +329,7 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   else if(!account&&socialTicket&&path!=='/download'&&!path.startsWith('/players/'))content=<RegistrationView ticket={socialTicket} busy={signingOut} onSignOut={()=>void signOut()}><Downloads w={w}/></RegistrationView>;
   else if(path==='/download')content=<Downloads w={w}/>;
   else if(path.startsWith('/players/'))content=<PlayersView id={path.split('/')[2]} w={w} me={account?.profile.profile_id}/>;
-  else if(!account)content=<><div className="hero"><span className="eyebrow">{t("OMOBA · PLAYER PORTAL")}</span><h1>{w.title}</h1><p>{w.intro}</p><Link className="button primary" href={loginHref}>{signInLabel} →</Link><Link className="button" href="/download">{w.download}</Link></div><div className="value-grid">{[[w.matches,w.historical],[w.stats,w.ratingHistory],[w.friends,w.friendCode]].map(([title,description])=><Card key={title}><h2>{title}</h2><p className="muted">{description}</p></Card>)}</div></>;
+  else if(!account)content=<><div className="hero"><span className="eyebrow">{t("OMOBA · PLAYER PORTAL")}</span><h1>{w.title}</h1><p>{w.intro}</p><Link className="button primary" href={loginHref}>{signInLabel} →</Link><Link className="button" href="/download">{w.download}</Link><ProgressFollowsVk/></div><div className="value-grid">{[[w.matches,w.historical],[w.stats,w.ratingHistory],[w.friends,w.friendCode]].map(([title,description])=><Card key={title}><h2>{title}</h2><p className="muted">{description}</p></Card>)}</div></>;
   else if(path==='/me/matches')content=<HistoryView w={w} tz={tz} locale={locale}/>;
   else if(path.startsWith('/matches/'))content=<MatchView id={path.split('/')[2]} me={account.profile.profile_id} w={w} tz={tz} locale={locale}/>;
   else if(path==='/me/stats')content=<StatsView w={w} tz={tz} locale={locale}/>;
@@ -239,7 +338,7 @@ export default function Portal({initialAccount,initiallyUnavailable,accountDisab
   else if(path==='/supporter'&&features.supporter)content=<SupporterView locale={locale} nickname={account.profile.nickname}/>;
   else if(path==='/devices')content=<DevicesView locale={locale} nickname={account.profile.nickname}/>;
   else if(path==='/settings')content=<SettingsView account={account} w={w} update={()=>void reload()}/>;
-  else if(path==='/'||path==='/me')content=<><div className="page-heading"><span className="eyebrow">{w.account}</span><h1>{account.profile.nickname}<span className="dot">.</span></h1><p>{w.title}</p></div>{path==='/me'&&features.vkSignIn&&account.profile.matches_played===0&&account.profile.progression_xp==='0'?<GameNextStep/>:null}<Card><ProfileMetrics p={account.profile} w={w}/><div className="profile-strip"><span>{number(account.profile.rated_matches)} {w.ratedMatches.toLowerCase()}</span>{(account.profile.rated_matches||0)<account.rules.newcomer_matches?<span className="tag">{w.newcomer}</span>:null}<span>{number(account.profile.progression_xp)} XP</span></div></Card>{path==='/me'?<Card><h2>{w.friendCode}</h2><p className="code">{account.profile.nickname}</p><Copy value={account.profile.nickname} w={w}/><Link className="button" href="/settings">{w.settings}</Link>{features.supporter?<Link className="button" href="/supporter">✦ {t('Hero')}</Link>:null}<Link className="button" href="/devices">{t('Devices')}</Link></Card>:null}<HistoryView w={w} tz={tz} locale={locale} compact/></>;
+  else if(path==='/'||path==='/me')content=<>{path==='/me'&&features.vkSignIn&&account.profile.matches_played===0&&account.profile.progression_xp==='0'?<GameNextStep/>:null}<Overview account={account} w={w} tz={tz} locale={locale}/></>;
   else content=<Card><Empty text={w.private}/></Card>;
-  return <div className="shell"><aside className="sidebar"><Link href={brandHref} className="brand"><Brand section={t("Player portal")} /></Link><nav aria-label={t("Main")}>{nav.map(([href,title])=><Link key={href} href={href} className={path===href?'active':''}><NavIcon href={href}/>{title}{experimental(href)}</Link>)}</nav><div className="sidebar-bottom">{ownLanding?null:<a className="button" href={siteUrl}>{t('OMOBA website')} ↗</a>}<Link className="button" href="/download">{w.download} ↗</Link><small>{t("OPEN SOURCE · OPEN MOBA")}</small></div></aside><div className="workspace"><header className="topbar"><Link href={brandHref} className="portal-mobile-brand" aria-label={t("OMOBA player portal")}><Brand section={t("Player portal")} /></Link><span className="beta">BETA</span><span className="muted">{w.account}</span><div className="grow"/><LanguageSelector />{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button></>:accountDisabled?<span className="muted">{t('Guest prototype')}</span>:socialTicket?<button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button>:<Link href={loginHref}>{signInLabel}</Link>}</header><main>{unavailable&&!accountDisabled?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer>{ownLanding?<Link href="/">OMOBA</Link>:<a href={siteUrl}>OMOBA · {t('Website')} ↗</a>}<LegalLinks/>{legal.ageRating?<span className="age-sign" title={t('Age rating')} aria-label={t('Age rating')+' '+legal.ageRating} data-age-rating>{legal.ageRating}</span>:null}<span>2026</span></footer></div><nav className="mobile-nav" aria-label={t("Mobile")}>{nav.filter(([p])=>mobileNav(features,landing).includes(p)).map(([href,title])=><Link href={href} key={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav></div>;
+  return <div className="shell portal-shell"><aside className="sidebar"><Link href={brandHref} className="brand"><Brand section={t("Player portal")} /></Link><Link className="button primary sidebar-play" href="/play"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="m8 4 13 8-13 8Z"/></svg>{c.play}</Link><nav aria-label={t("Main")}>{nav.map(([href,title])=><Link key={href} href={href} className={(path===href||(href==='/me/matches'&&path.startsWith('/matches/'))?'active ':'')+(['/devices','/settings'].includes(href)?'nav-utility':'')} aria-current={path===href?'page':undefined}><NavIcon href={href}/>{title}{experimental(href)}</Link>)}</nav><div className="sidebar-bottom">{ownLanding?null:<a className="button" href={siteUrl}>{t('OMOBA website')} ↗</a>}<Link className="button" href="/download">{w.download} ↗</Link><small>{t("OPEN SOURCE · OPEN MOBA")}</small></div></aside><div className="workspace"><header className="topbar"><Link href={brandHref} className="portal-mobile-brand" aria-label={t("OMOBA player portal")}><Brand section={t("Player portal")} /></Link><span className="beta">BETA</span><span className="muted topbar-location">{titles[path]||w.account}</span><div className="grow"/><LanguageSelector /><Link className="button topbar-play" href="/play">{c.play} <span aria-hidden="true">↗</span></Link>{account?<><Link className="account-link" href="/me">{account.profile.nickname}</Link><button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button></>:accountDisabled?<span className="muted">{t('Guest prototype')}</span>:socialTicket?<button disabled={signingOut} onClick={()=>void signOut()}>{w.logout}</button>:<Link href={loginHref}>{signInLabel}</Link>}</header><main>{unavailable&&!accountDisabled?<div role="alert" className="notice error">{w.unavailable} <button onClick={()=>void reload()}>{w.retry}</button></div>:null}{content}</main><footer>{ownLanding?<Link href="/">OMOBA</Link>:<a href={siteUrl}>OMOBA · {t('Website')} ↗</a>}<LegalLinks/><a className="portal-credits" href="/art/portal/LICENSES.md">{c.credits}</a>{legal.ageRating?<span className="age-sign" title={t('Age rating')} aria-label={t('Age rating')+' '+legal.ageRating} data-age-rating>{legal.ageRating}</span>:null}<span>2026</span></footer></div><nav className="mobile-nav" aria-label={t("Mobile")}>{nav.filter(([p])=>mobileNav(features,landing).includes(p)).map(([href,title])=><Link href={href} key={href} className={path===href?'active':''}><NavIcon href={href}/>{title}</Link>)}</nav></div>;
 }

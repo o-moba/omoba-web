@@ -209,6 +209,12 @@ let vkUser = "", behavior = "success", callbackUrl = "";
     assert.equal(created.status, 200, JSON.stringify(created.body));
     return { e, code: created.body.code };
   }
+  const progressNote = /^Прогресс следует за аккаунтом, привязанным к VK\. .*тем же VK ID.*Коды восстановления/;
+  for (const path of ["/me", "/login"]) {
+    await page.goto(origin + path);
+    assert.match(await page.locator("[data-progress-follows-vk]").innerText(), progressNote, path);
+  }
+  checks.push("guest home and sign-in explain progress recovery through the linked VK account");
   // Real pinned SDK, real BFF/API/PostgreSQL, only the provider is a stand-in.
   const widgetProfiles = [];
   // Actual POST endpoints reject CSRF, foreign claims and oversized bodies.
@@ -400,6 +406,9 @@ let vkUser = "", behavior = "success", callbackUrl = "";
   await signIn("vkid");
   assert.equal((await me()).body.profile.profile_id, home.profile);
   nativeFixtures.push({ method: "game-first", profile_id: home.profile, seed: home.seed.toString("hex") });
+  await page.goto(origin + "/devices");
+  assert.match(await page.locator("[data-progress-follows-vk]").innerText(), progressNote, "/devices");
+  checks.push("Devices explains linked-account recovery beside recovery codes");
   checks.push("game-first link clears old browser identity, reviews device and preserves signed current profile/progress");
 
   await context.clearCookies();
