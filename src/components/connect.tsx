@@ -6,7 +6,7 @@ import { api, ApiFailure } from '@/lib/client-api';
 import { CONNECT_CODE, portalLoginHref } from '@/lib/navigation.mjs';
 import { useLocale } from '@/components/locale-provider';
 import { useMarket } from '@/components/market-profile';
-import { VkSignInButtons, fill, type SocialTicket } from '@/components/social';
+import { ProgressFollowsVk, VkSignInButtons, fill, type SocialTicket } from '@/components/social';
 import { SignInLegalNotice } from '@/components/legal';
 
 type Enrollment = { enrollment_id: string; public_key: string; label: string; expires_at: string; nickname?: string; profile_id?: string };
@@ -67,6 +67,7 @@ export default function ConnectView({ signedIn, currentProfileId, socialTicket, 
   }
   const signIn = <>
     {features.vkSignIn ? <VkSignInButtons returnTo={here} /> : null}
+    <ProgressFollowsVk />
     <p className="muted separated"><Link href={portalLoginHref(here, features)}>{t('Connect your game instead')} →</Link></p>
   </>;
   let body: React.ReactNode;

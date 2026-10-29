@@ -51,7 +51,7 @@ Fail closed, like the contour (`src/lib/market-profile.mjs`):
 - The allowlist refuses `me/supporter*` and `supporters`.
 - No Hero / Supporters nav entry, no Hero button on the profile, no "Meet the supporters" link and no Hero badge on player cards.
 
-**VK sign-in on** (`ru`) **and** `OMOBA_VKID_CLIENT_ID` set: the login view shows **Войти через VK ID**, **Одноклассники** and **Mail.ru** above the game pairing (which stays as the secondary path); the allowlist adds `POST auth/social/attach`, `POST auth/social/ticket` and `DELETE me/social/vk`. Without the app id the buttons are hidden and `/api/auth/vk/*` answers 404.
+**VK sign-in on** (`ru`) **and** `OMOBA_VKID_CLIENT_ID` set: the login view shows **Войти через VK ID**, **Одноклассники** and **Mail.ru** above the game pairing (which stays as the secondary path); the allowlist adds `POST auth/social/attach`, `POST auth/social/ticket` and `DELETE me/social/vk`. Without the app id the buttons are hidden and `/api/auth/vk/*` answers 404. With the buttons on, the guest home, the login view, the `/connect` sign-in step and Devices → Account recovery also say that progress follows the VK-linked account: after a reinstall or on a new device the same VK ID brings the profile back, and recovery codes work on any device (`ProgressFollowsVk` in `src/components/social.tsx`, LR-18).
 
 **Language.** Without a manual choice (the language cookie always wins) and without a supported browser language, `ru` falls back to Russian and `cn` to Chinese; neither uses the IP-country heuristic. `global` is unchanged (browser language, then country, then English).
 
