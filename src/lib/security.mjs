@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
 import { CONTOURS, CONTOUR_VARIABLE, DEV_ACCOUNT_API_ORIGIN, contourName, foreignOrigin, isLoopbackHost } from './contour.mjs';
-import { marketFeatures } from './market-profile.mjs';
+import { marketFeatures, marketName, paymentProviders } from './market-profile.mjs';
 
 export function portalConfig(env = process.env) {
   const contour = contourName(env);
@@ -124,14 +124,19 @@ export function safeEqual(a, b) {
 
 /**
  * The browser may reach only these Account API routes. Ekza library routes need
- * the `ekza` feature, Supporter routes `supporter`, VK ID routes `vkSignIn`; the
- * default is the running server's market (fail closed in ru/cn).
+ * the `ekza` feature, Supporter routes `supporter`, VK ID routes `vkSignIn`, and a
+ * payment provider's routes (`me/supporter/<provider>/…`) that the market sells
+ * through it (`paymentProviders`: Solana in global, YooKassa in RU; LR-67). The
+ * default is the running server's market (fail closed in cn).
  * @param {string} path @param {string} method
  * @param {{ekza: boolean, supporter: boolean, vkSignIn: boolean}} [features]
+ * @param {readonly string[]} [providers]
  */
-export function allowedPath(path, method, features = marketFeatures(process.env)) {
+export function allowedPath(path, method, features = marketFeatures(process.env), providers = paymentProviders(marketName(process.env), features)) {
   if (/^me\/ekza-library(?:\/|$)/.test(path) && !features.ekza) return false;
   if ((/^me\/supporter(?:\/|$)/.test(path) || path === 'supporters') && !features.supporter) return false;
+  const provider = /^me\/supporter\/(apple|solana|yookassa)(?:\/|$)/.exec(path)?.[1];
+  if (provider && !providers.includes(provider)) return false;
   if ((/^auth\/social(?:\/|$)/.test(path) || /^me\/social(?:\/|$)/.test(path)) && !features.vkSignIn) return false;
   if (method === 'POST' && /^auth\/social\/(?:attach|ticket|enrollment)$/.test(path)) return true;
   if (method === 'DELETE' && path === 'me/social/vk') return true;
@@ -139,10 +144,10 @@ export function allowedPath(path, method, features = marketFeatures(process.env)
   if (method === 'POST' && /^(me\/class-builds|me\/ekza-library\/(connect|poll))$/.test(path)) return true;
   if (method === 'PATCH' && /^me\/class-builds\/[0-9a-f]{64}$/.test(path)) return true;
   if (method === 'DELETE' && /^(me\/class-builds\/[0-9a-f]{64}|me\/ekza-library)$/.test(path)) return true;
-  if (method === 'GET') return /^(supporters|me|me\/matches|me\/statistics|me\/friends|me\/sessions|me\/devices|me\/supporter|me\/supporter\/solana\/orders|players|players\/[0-9a-f]{64}|matches\/[A-Za-z0-9_-]{1,128}|releases)$/.test(path);
+  if (method === 'GET') return /^(supporters|me|me\/matches|me\/statistics|me\/friends|me\/sessions|me\/devices|me\/supporter|me\/supporter\/solana\/orders|me\/supporter\/yookassa\/payments|players|players\/[0-9a-f]{64}|matches\/[A-Za-z0-9_-]{1,128}|releases)$/.test(path);
   if (method === 'PATCH') return /^(me\/profile|me\/settings|me\/supporter\/(aura|recognition))$/.test(path);
   if (method === 'DELETE') return /^me\/(?:sessions|devices)\/[0-9a-f]{64}$/.test(path);
-  return method === 'POST' && /^(me\/friend-actions|me\/devices\/(?:lookup|approve)|me\/recovery-codes|me\/supporter\/solana\/(?:checkout|confirm)|auth\/logout|auth\/pairings(?:\/(status|complete|cancel))?)$/.test(path);
+  return method === 'POST' && /^(me\/friend-actions|me\/devices\/(?:lookup|approve)|me\/recovery-codes|me\/supporter\/solana\/(?:checkout|confirm)|me\/supporter\/yookassa\/checkout|auth\/logout|auth\/pairings(?:\/(status|complete|cancel))?)$/.test(path);
 }
 
 /** An opaque Account API secret: 32 bytes as 64 lowercase hex characters. */
@@ -173,8 +178,9 @@ export function mutationAllowed(origin, expected, token, cookie) {
 
 export function cookieNames(secure) {
   const prefix = secure ? '__Host-' : '';
-  // vk: the PKCE attempt of one VK ID sign-in; social: an unlinked VK ID ticket.
-  return { session: prefix+'omoba-session', pair: prefix+'omoba-pair', csrf: prefix+'omoba-csrf', vk: prefix+'omoba-vk', social: prefix+'omoba-social' };
+  // vk: the PKCE attempt of one VK ID sign-in; social: an unlinked VK ID ticket;
+  // checkout: the Idempotency-Key of one YooKassa payment attempt (checkout-attempt.mjs).
+  return { session: prefix+'omoba-session', pair: prefix+'omoba-pair', csrf: prefix+'omoba-csrf', vk: prefix+'omoba-vk', social: prefix+'omoba-social', checkout: prefix+'omoba-checkout' };
 }
 
 /**

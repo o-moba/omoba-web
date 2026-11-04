@@ -217,6 +217,6 @@ test('VK ID ticket routes inject the ticket from its cookie and never trust the 
   assert.deepEqual(socialTicketBody('auth/social/ticket', { social_ticket: 'd'.repeat(64) }, TICKET), { code: 'invalid_request', status: 400 });
   for (const cookie of [undefined, '', 'C'.repeat(64), TICKET + '0', 'c'.repeat(63)])
     assert.deepEqual(socialTicketBody('auth/social/attach', { code: 'ABCD2345' }, cookie), { code: 'social_ticket_expired', status: 404 }, String(cookie));
-  assert.deepEqual(cookieNames(true), { session: '__Host-omoba-session', pair: '__Host-omoba-pair', csrf: '__Host-omoba-csrf', vk: '__Host-omoba-vk', social: '__Host-omoba-social' });
+  assert.deepEqual(cookieNames(true), { session: '__Host-omoba-session', pair: '__Host-omoba-pair', csrf: '__Host-omoba-csrf', vk: '__Host-omoba-vk', social: '__Host-omoba-social', checkout: '__Host-omoba-checkout' });
   assert.equal(cookieNames(false).social, 'omoba-social');
 });

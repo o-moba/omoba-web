@@ -1,5 +1,5 @@
 import { CONTOURS, contourName } from './contour.mjs';
-import { MARKET_LANDING, MARKET_PRESETS, marketLanding, marketName, navForMarket, routeEnabled } from './market-profile.mjs';
+import { MARKET_LANDING, MARKET_PRESETS, marketLanding, marketName, navForMarket, routeEnabled, supporterLinks } from './market-profile.mjs';
 
 export const DEFAULT_SITE_URL = CONTOURS.production.site;
 
@@ -13,13 +13,16 @@ export const PORTAL_NAV = Object.freeze(['/me', '/me/matches', '/me/stats', '/pl
 export const MOBILE_NAV = Object.freeze(['/me', '/me/matches', '/creators', '/workshop', '/supporters', '/friends']);
 /** Buttons on the guest-prototype card. */
 export const GUEST_LINKS = Object.freeze(['/creators', '/sponsor', '/market']);
+/** The Supporter navigation: shown only while `supporterLinks` is on (LR-67, LR-68). */
+export const SUPPORTER_NAV = Object.freeze(['/supporter', '/supporters']);
 
 /**
  * @param {readonly string[]} list
  * @param {{ekza: boolean, supporter: boolean}} [features] the market's features (default: global)
+ * @param {boolean} [links] the one Supporter-links switch (`supporterLinks`; default: on with the feature)
  */
-export function portalNav(list, features = MARKET_PRESETS.global) {
-  return navForMarket(list, features);
+export function portalNav(list, features = MARKET_PRESETS.global, links = supporterLinks(features)) {
+  return navForMarket(list, features).filter((href) => links || !SUPPORTER_NAV.includes(href));
 }
 
 /**
@@ -27,9 +30,10 @@ export function portalNav(list, features = MARKET_PRESETS.global) {
  * market labels it experimental (`marketLanding`, LR-22); the sidebar keeps it, labelled.
  * @param {{ekza: boolean, supporter: boolean}} [features] the market's features (default: global)
  * @param {{workshop: "listed" | "experimental"}} [landing] the market's landing (default: global)
+ * @param {boolean} [links] the one Supporter-links switch (`supporterLinks`)
  */
-export function mobileNav(features = MARKET_PRESETS.global, landing = MARKET_LANDING.global) {
-  return portalNav(MOBILE_NAV, features).filter((href) => href !== '/workshop' || landing.workshop === 'listed');
+export function mobileNav(features = MARKET_PRESETS.global, landing = MARKET_LANDING.global, links = supporterLinks(features)) {
+  return portalNav(MOBILE_NAV, features, links).filter((href) => href !== '/workshop' || landing.workshop === 'listed');
 }
 
 /**

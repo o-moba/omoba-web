@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api, ApiFailure } from '@/lib/client-api';
 import { useLocale } from '@/components/locale-provider';
+import { useMarket } from '@/components/market-profile';
 import { HeroRecognitionBadge } from '@/components/hero-recognition';
 import type { SupportersDirectory } from '@/lib/types';
 
 export default function SupportersView({ accountDisabled = false }: { accountDisabled?: boolean }) {
   const { t } = useLocale();
+  const { supporterLinks } = useMarket();
   const [cursors, setCursors] = useState<string[]>([]);
   const [data, setData] = useState<SupportersDirectory | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -39,7 +41,7 @@ export default function SupportersView({ accountDisabled = false }: { accountDis
       <h1>{t('Supporters')}</h1>
       <p>{t('Thank you for keeping an open game growing.')}</p>
       <p className="muted">{t('Every paid month counts. Recognition stays after Hero expires.')}</p>
-      <Link className="button primary" href="/supporter">{t('Support the game')} <span aria-hidden="true">→</span></Link>
+      {supporterLinks ? <Link className="button primary" href="/supporter">{t('Support the game')} <span aria-hidden="true">→</span></Link> : null}
     </div>
     <section className="card supporters-card" aria-label={t('Supporters')} aria-busy={busy}>
       <div className="section-heading"><h2>{t('Our community')}</h2>{!disabled && <button disabled={busy} onClick={() => setRevision(value => value + 1)}>{t('Refresh')}</button>}</div>

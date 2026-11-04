@@ -43,7 +43,9 @@ test('the RU site link is its own home page and OMOBA_SITE_URL is refused there'
 test('the RU workshop is labelled experimental and left out of the phone navigation', () => {
   assert.ok(MOBILE_NAV.includes('/workshop'));
   assert.ok(!mobileNav(MARKET_PRESETS.ru, marketLanding('ru')).includes('/workshop'));
-  assert.deepEqual(mobileNav(MARKET_PRESETS.ru, marketLanding('ru')), ['/me', '/me/matches', '/friends']);
+  // RU keeps the supporters directory in the phone navigation (LR-67; the one Supporter switch).
+  assert.deepEqual(mobileNav(MARKET_PRESETS.ru, marketLanding('ru')), ['/me', '/me/matches', '/supporters', '/friends']);
+  assert.deepEqual(mobileNav(MARKET_PRESETS.ru, marketLanding('ru'), false), ['/me', '/me/matches', '/friends']);
   assert.ok(mobileNav(MARKET_PRESETS.global, marketLanding('global')).includes('/workshop'));
   assert.deepEqual(mobileNav(), mobileNav(MARKET_PRESETS.global, marketLanding('global')));
 });

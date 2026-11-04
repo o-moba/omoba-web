@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'node:crypto';
 import { accountUpstreamHeaders, allowedPath, cookieNames, cookieOptions, expireCookie, mutationAllowed, portalConfig, socialTicketBody } from '@/lib/security.mjs';
-import { marketFeatures } from '@/lib/market-profile.mjs';
+import { marketFeatures, marketName, paymentProviders } from '@/lib/market-profile.mjs';
+import { CHECKOUT_COOKIE_SECONDS, CHECKOUT_PATH, PAYMENTS_PATH, attemptFinished, attemptId, checkoutAttempt, checkoutCookie, checkoutFingerprint, checkoutFinished, checkoutRequest, confirmationUrl, parseCheckoutCookie } from '@/lib/checkout-attempt.mjs';
 import { contourHostProblem, contourName, requestHostname } from '@/lib/contour.mjs';
 
 export const runtime = 'nodejs';
@@ -12,13 +13,14 @@ const noStore = { 'Cache-Control': 'private, no-store', 'Vary': 'Cookie' };
 function fail(code: string, status: number) { return NextResponse.json({ code }, { status, headers: noStore }); }
 
 async function handle(request: NextRequest, context: { params: Promise<{path:string[]}> }) {
-  let config: ReturnType<typeof portalConfig>, features: ReturnType<typeof marketFeatures>;
-  try { config = portalConfig(); features = marketFeatures(); } catch { return fail('configuration_unavailable', 503); }
+  let config: ReturnType<typeof portalConfig>, features: ReturnType<typeof marketFeatures>, providers: ReturnType<typeof paymentProviders>;
+  try { config = portalConfig(); features = marketFeatures(); providers = paymentProviders(marketName(), features); } catch { return fail('configuration_unavailable', 503); }
   // A request under the other contour's host never reaches this contour's Account API.
   if (contourHostProblem(contourName(), requestHostname(request.headers.get('host')))) return fail('configuration_unavailable', 503);
   const path = (await context.params).path.join('/');
-  // Routes of a feature this market does not serve (Ekza library, Supporter, VK ID) are 404.
-  const allowed = allowedPath(path, request.method, features);
+  // Routes of a feature or payment provider this market does not serve (Ekza library,
+  // Supporter, Solana or YooKassa, VK ID) are 404.
+  const allowed = allowedPath(path, request.method, features, providers);
   if (!config.accountEnabled) return fail(
     (path === 'csrf' && request.method === 'GET') || allowed ? 'account_service_disabled' : 'not_found',
     (path === 'csrf' && request.method === 'GET') || allowed ? 503 : 404,
@@ -54,7 +56,7 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
     if (!body || Array.isArray(body) || typeof body !== 'object') return fail('invalid_json',400);
     // Preserve duplicate fields and numeric spellings for the authoritative
     // Rust parser; normalizing here would silently accept an invalid document.
-    if (path === 'me/supporter/recognition' || /^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawStrictBody=raw;
+    if (path === 'me/supporter/recognition' || path === CHECKOUT_PATH || /^me\/class-builds(?:\/[0-9a-f]{64})?$/.test(path)) rawStrictBody=raw;
   }
   const token = jar.get(names.session)?.value;
   // Ingress key (non-loopback API only) and the player's X-Real-IP from the portal's own ingress.
@@ -64,6 +66,18 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
   if (token) headers.Authorization='Bearer '+token;
   const operation = request.headers.get('idempotency-key');
   if (operation && /^[A-Za-z0-9_-]{16,128}$/.test(operation)) headers['Idempotency-Key']=operation;
+  // A YooKassa payment: the Idempotency-Key is the BFF's, one per attempt, kept in an
+  // HttpOnly cookie across retries of that attempt and saved before the call, so a lost
+  // reply is retried with the same key (src/lib/checkout-attempt.mjs). The browser's
+  // key is ignored; its quote goes through unchanged for the API to compare.
+  let checkout: ReturnType<typeof checkoutAttempt> | null = null;
+  if (path === CHECKOUT_PATH) {
+    const attempt = checkoutRequest(body);
+    if (!attempt) return fail('invalid_request',400);
+    checkout = checkoutAttempt(parseCheckoutCookie(jar.get(names.checkout)?.value), checkoutFingerprint(token || '', attempt));
+    jar.set(names.checkout, checkoutCookie(checkout), {...options, maxAge:CHECKOUT_COOKIE_SECONDS});
+    headers['Idempotency-Key']=checkout.key;
+  }
   // No browser-controlled actor, API URL, forwarding header or service token is forwarded.
   let target=path;
   if (path.startsWith('auth/pairings/') || path === 'auth/pairings') {
@@ -112,9 +126,20 @@ async function handle(request: NextRequest, context: { params: Promise<{path:str
       result={status:'connected'};
     }
     if(upstream.ok && path==='auth/pairings/cancel') clear(names.pair);
+    if (checkout) {
+      if (upstream.ok) {
+        // Only YooKassa's HTTPS redirect reaches the browser; the attempt id stays here.
+        const redirect=confirmationUrl(result.confirmation_url);
+        if(!redirect) return fail('invalid_service_response',502);
+        jar.set(names.checkout, checkoutCookie({...checkout, attempt:attemptId(result.attempt_id)}), {...options, maxAge:CHECKOUT_COOKIE_SECONDS});
+        result={confirmation_url:redirect};
+      } else if (checkoutFinished(upstream.status, result.code)) clear(names.checkout);
+    }
+    // The return page reads the payment list: once its attempt is over, the next payment gets a new key.
+    if (upstream.ok && path===PAYMENTS_PATH && attemptFinished(result, parseCheckoutCookie(jar.get(names.checkout)?.value)?.attempt ?? null)) clear(names.checkout);
     if(upstream.status===404 && path==='auth/social/ticket') clear(names.social);
     if(path==='auth/logout' && (upstream.ok||upstream.status===401)) {
-      clear(names.session, names.csrf, names.pair, names.social, names.vk);
+      clear(names.session, names.csrf, names.pair, names.social, names.vk, names.checkout);
       if(upstream.status===401)return NextResponse.json({status:'revoked'},{headers:noStore});
     }
     const response=NextResponse.json(result,{status:upstream.status,headers:noStore});

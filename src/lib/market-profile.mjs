@@ -3,8 +3,10 @@
 // exactly: the same variable names, values, presets and override semantics.
 //
 // - `global` (unset or empty `OMOBA_MARKET`): Europe and the rest of the world,
-//   today's product: the Ekza ecosystem and paid Hero Supporter cosmetics.
-// - `ru`: Russia. Free, no Ekza, no payments, sign-in with VK ID (VK, OK, Mail.ru).
+//   today's product: the Ekza ecosystem and paid Hero Supporter cosmetics (Apple,
+//   Solana).
+// - `ru`: Russia. No Ekza; Hero tiers sold only through YooKassa payments on this
+//   portal (LR-67, ADR-024); sign-in with VK ID (VK, OK, Mail.ru).
 // - `cn`: mainland China. Free, no Ekza, no payments; providers not decided yet.
 //
 // One feature may be flipped per build with `OMOBA_FEATURE_<NAME>=on|off` (empty
@@ -28,8 +30,24 @@ export const FEATURES = Object.freeze([
 /** Each market's preset (market.rs `Market::default_features`). */
 export const MARKET_PRESETS = Object.freeze({
   global: Object.freeze({ ekza: true, supporter: true, vkSignIn: false }),
-  ru: Object.freeze({ ekza: false, supporter: false, vkSignIn: true }),
+  ru: Object.freeze({ ekza: false, supporter: true, vkSignIn: true }),
   cn: Object.freeze({ ekza: false, supporter: false, vkSignIn: false }),
+});
+
+/** Every payment provider id (market.rs `PaymentProvider::key`, markets.py `PAYMENT_PROVIDERS`). */
+export const PAYMENT_PROVIDERS = Object.freeze(["apple", "solana", "yookassa"]);
+
+/**
+ * Who sells Hero Supporter access in each market while its `supporter` feature is on
+ * (market.rs `Market::payment_providers`, markets.py `payment_providers`; ADR-024):
+ * global keeps Apple (in the iOS app) and Solana (on this portal); RU sells only
+ * through YooKassa on this portal. LR-68/LR-69 make the list per region × channel;
+ * `paymentProviders` stays the one accessor.
+ */
+export const MARKET_PAYMENT_PROVIDERS = Object.freeze({
+  global: Object.freeze(["apple", "solana"]),
+  ru: Object.freeze(["yookassa"]),
+  cn: Object.freeze([]),
 });
 
 /** Fallback page language when the player has not chosen one; null keeps negotiation. */
@@ -96,7 +114,8 @@ export const MARKET_LANDING = Object.freeze({
 /**
  * Pages that exist only with a feature. `/creators`, `/market` and `/sponsor` are
  * Ekza surfaces (Registry, Studio, Ekza library); `/supporter` and `/supporters`
- * belong to the paid Hero membership.
+ * belong to the paid Hero membership. Links to `/supporter`, `/supporters` and
+ * `/offer` follow one more switch, `supporterLinks`.
  */
 export const FEATURE_ROUTES = Object.freeze({
   "/creators": "ekza",
@@ -161,7 +180,33 @@ export function marketProfile(env = process.env) {
 }
 
 /**
- * The same line as market.rs `describe`: `ru (ekza off, supporter off, vk_sign_in on)`.
+ * The providers one deployment sells through: the market's list while `supporter` is
+ * on, none otherwise (market.rs `providers_of`, markets.py `payment_providers`). An
+ * unknown market sells nothing (fail closed).
+ * @param {"global" | "ru" | "cn"} market
+ * @param {{supporter: boolean}} features
+ * @returns {readonly ("apple" | "solana" | "yookassa")[]}
+ */
+export function paymentProviders(market, features) {
+  if (features.supporter !== true || !Object.hasOwn(MARKET_PAYMENT_PROVIDERS, market)) return Object.freeze([]);
+  return /** @type {readonly ("apple" | "solana" | "yookassa")[]} */ (MARKET_PAYMENT_PROVIDERS[market]);
+}
+
+/**
+ * The one switch for Supporter links (LR-67; launch plan section 7, "store-mode portal
+ * pages"): the Supporter navigation (`/supporter`, `/supporters`), every other link to
+ * `/supporter` and `/supporters`, and the `/offer` link. On while the `supporter`
+ * feature is on. A page opened from a store build (`?app=<channel>`, LR-68) passes
+ * `storeMode` and shows none of them; the pages themselves keep their routes.
+ * @param {{supporter: boolean}} features
+ * @param {boolean} [storeMode]
+ */
+export function supporterLinks(features, storeMode = false) {
+  return features.supporter === true && storeMode !== true;
+}
+
+/**
+ * The same line as market.rs `describe`: `ru (ekza off, supporter on, vk_sign_in on)`.
  * @param {{market: string, features: Record<string, boolean>}} profile
  */
 export function describeMarket(profile) {

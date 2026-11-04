@@ -5,7 +5,7 @@ One build of the portal serves one **market**, the same axis as the game's separ
 | Market | `OMOBA_MARKET` | For | Ekza | Supporter (payments) | Sign-in |
 |---|---|---|---|---|---|
 | `global` | unset, empty or `global` | Europe and the rest of the world; today's product | on | on | game pairing |
-| `ru` | `ru` | Russia: a free game, no Ekza ecosystem, no payments | off | off | VK ID (VK, OK, Mail.ru) + game pairing |
+| `ru` | `ru` | Russia: a free game with voluntary Hero tier donations through YooKassa, no Ekza ecosystem | off | on (YooKassa only) | VK ID (VK, OK, Mail.ru) + game pairing |
 | `cn` | `cn` | mainland China: free, no Ekza, no payments; providers not decided | off | off | game pairing |
 
 The market is independent of the contour (`OMOBA_CONTOUR`, [Contours](vercel.md#contours)): an RU build can be the production or the dev contour. Both axes are checked separately and neither falls back to the other.
@@ -27,12 +27,12 @@ Names, values and semantics equal `market.rs` (`Market::parse`, `Features::resol
 | Market | `ekza` | `supporter` | `vk_sign_in` |
 |---|---|---|---|
 | `global` | on | on | off |
-| `ru` | off | off | on |
+| `ru` | off | on | on |
 | `cn` | off | off | off |
 
 Fail closed, like the contour (`src/lib/market-profile.mjs`):
 
-- **Build.** `next.config.ts` calls `assertMarket` and fails `next build`/`next dev` with `OMOBA market misconfigured, refusing to build or serve (fail closed)` and one line per problem. It inlines the build's line, for example `OMOBA_BUILT_MARKET=ru (ekza off, supporter off, vk_sign_in on)` (the same text as `market.rs` `describe`).
+- **Build.** `next.config.ts` calls `assertMarket` and fails `next build`/`next dev` with `OMOBA market misconfigured, refusing to build or serve (fail closed)` and one line per problem. It inlines the build's line, for example `OMOBA_BUILT_MARKET=ru (ekza off, supporter on, vk_sign_in on)` (the same text as `market.rs` `describe`).
 - **Startup.** `src/instrumentation.ts` refuses to serve when the runtime market or any feature differs from the built line (`OMOBA market mismatch …; rebuild`): every request answers 500 and the log says why. Rebuild after changing any `OMOBA_MARKET` / `OMOBA_FEATURE_*` value.
 - **Each request.** The root layout calls `assertMarket` again and renders no page on a bad value.
 
@@ -45,11 +45,15 @@ Fail closed, like the contour (`src/lib/market-profile.mjs`):
 - The Account API BFF allowlist (`allowedPath` in `src/lib/security.mjs`) refuses `me/ekza-library*`.
 - The sidebar, mobile nav and guest card show no Creators, Market or Community sculptures; the workshop shows no Ekza library panel, no asset library, market or Studio link, and does not request `me/ekza-library`. Return destinations (`portalReturnTo`) drop those pages.
 
-**Supporter off** (`ru`, `cn`):
+**Supporter off** (`cn`, or `OMOBA_FEATURE_SUPPORTER=off`):
 
 - `/supporter` and `/supporters` answer the 404 page.
 - The allowlist refuses `me/supporter*` and `supporters`.
 - No Hero / Supporters nav entry, no Hero button on the profile, no "Meet the supporters" link and no Hero badge on player cards.
+
+**Payment providers.** While `supporter` is on, each market sells through its own list (`MARKET_PAYMENT_PROVIDERS`, `paymentProviders`; `market.rs` `Market::payment_providers`, ADR-024): `global` = Apple (in the iOS app) and Solana (on this portal), `ru` = YooKassa only, `cn` = none. The BFF allowlist refuses the routes of every other provider. One more switch, `supporterLinks`, gates every link to `/supporter`, `/supporters` and `/offer` (store builds turn it off later, LR-68); the pages keep their routes.
+
+**RU Hero tiers** (`/supporter` with provider `yookassa`, `src/components/hero-tiers.tsx`, LR-67c): the seven tier cards (100 … 10 000 ₽, colour swatch and CSS aura preview, rainbow shimmer for Prism, still under reduced motion) and a custom amount (100 … 100 000 ₽, whole rubles) are readable without sign-in, with the offer. A signed-in player enters the receipt e-mail, accepts the offer (its legal-table version is sent as `offer_version`) and is redirected to YooKassa; the browser sends the quote it showed and the Account API answers `409 reload` if it differs. The BFF, not the browser, owns the attempt's `Idempotency-Key` (`src/lib/checkout-attempt.mjs`: an HttpOnly cookie with a fingerprint of session, amount, e-mail and offer; a retry of the same attempt reuses it, a finished attempt drops it). Back on `/supporter?paid=1` the page reads the payment list (which re-reads the newest open payment from YooKassa) and then `me/supporter`, up to 5 × 1.5 s, and says «Проверяем оплату… Не оплачивайте повторно» until the payment is succeeded, canceled or in manual review. Signed in, the page also shows the current tier with its step-down dates, the aura choice (styles above the tier stay locked), the payment history with refunds, and the public-recognition switch; `/supporters` lists RU supporters who opted in. End to end: `npm run test:hero-tiers` (RU portal build, RU Account API debug build, disposable PostgreSQL, Chrome, a loopback YooKassa stand-in).
 
 **VK sign-in on** (`ru`) **and** `OMOBA_VKID_CLIENT_ID` set: the login view shows **Войти через VK ID**, **Одноклассники** and **Mail.ru** above the game pairing (which stays as the secondary path); the allowlist adds `POST auth/social/attach`, `POST auth/social/ticket` and `DELETE me/social/vk`. Without the app id the buttons are hidden and `/api/auth/vk/*` answers 404. With the buttons on, the guest home, the login view, the `/connect` sign-in step and Devices → Account recovery also say that progress follows the VK-linked account: after a reinstall or on a new device the same VK ID brings the profile back, and recovery codes work on any device (`ProgressFollowsVk` in `src/components/social.tsx`, LR-18).
 

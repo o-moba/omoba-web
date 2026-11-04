@@ -4,6 +4,8 @@
 // Every market value comes from `marketLegal` (market-profile.mjs); nothing here
 // compares markets. Portable: no framework, network or Node-only APIs.
 
+import { supporterLinks } from "./market-profile.mjs";
+
 /** The documents this portal serves, each at a fixed page. */
 export const LEGAL_PAGES = Object.freeze({ privacy: "/privacy", terms: "/terms", offer: "/offer" });
 /** The public account-deletion page (O-15): a page of this portal, not a versioned document. */
@@ -48,17 +50,18 @@ export function legalSourceUrl(legal, version = null) {
 /**
  * The footer's legal and channel links, in order, without the ones the market does not
  * provide. Documents this portal serves link to its own page; the offer is shown only
- * with the Supporter feature (the one switch for Supporter links, LR-67/LR-68).
+ * while the one switch for Supporter links is on (`supporterLinks`, LR-67/LR-68).
  * @param {MarketLegal} legal
  * @param {{supporter: boolean}} features
+ * @param {boolean} [shown] the Supporter-links switch (default: on with the feature)
  * @returns {{key: "privacy" | "terms" | "offer" | "delete" | "support" | "source" | "vk" | "telegram", href: string, external: boolean}[]}
  */
-export function legalLinks(legal, features) {
+export function legalLinks(legal, features, shown = supporterLinks(features)) {
   /** @type {{key: any, href: string, external: boolean}[]} */
   const links = [];
   if (legal.privacy) links.push({ key: "privacy", href: LEGAL_PAGES.privacy, external: false });
   if (legal.terms) links.push({ key: "terms", href: LEGAL_PAGES.terms, external: false });
-  if (legal.offer && features.supporter) links.push({ key: "offer", href: LEGAL_PAGES.offer, external: false });
+  if (legal.offer && shown) links.push({ key: "offer", href: LEGAL_PAGES.offer, external: false });
   if (legal.delete) links.push({ key: "delete", href: DELETION_PAGE, external: false });
   if (legal.supportEmail) links.push({ key: "support", href: "mailto:" + legal.supportEmail, external: true });
   const source = legalSourceUrl(legal);

@@ -136,7 +136,8 @@ if (market === "ru") {
     assert.ok(!html.includes("ipfs") && !html.includes("store.apk") && !html.includes(".ipa"), "a mirror, store or iOS package is offered");
     assert.match(html, /data-age-rating="?[^>]*>12\+</);
     const footer = /<footer>[\s\S]*?<\/footer>/.exec(html)?.[0] ?? "";
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "delete", "source"]);
+    // RU sells Hero tiers (LR-67): the footer links the offer too.
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "delete", "source"]);
     assert.match(footer, /data-age-rating/);
     assert.match(footer, /<a href="\/">OMOBA<\/a>/);
     assert.ok(!html.includes("https://omoba.io"), "the RU landing links the global website");
@@ -158,7 +159,8 @@ if (market === "ru") {
   });
 
   await run("ru: no donate, wallet, crypto or Ekza content on any RU page", RU, async ({ origin }) => {
-    for (const path of ["/", "/download", "/login", "/me", "/workshop", "/privacy", "/terms", "/offer", "/delete", "/connect?code=ABCD2345", "/settings"]) {
+    // The Hero pages are allowed in RU (YooKassa, LR-67) and carry none of it either.
+    for (const path of ["/", "/download", "/login", "/me", "/workshop", "/privacy", "/terms", "/offer", "/delete", "/connect?code=ABCD2345", "/settings", "/supporter", "/supporters"]) {
       const response = await get(origin, path);
       if (path === "/offer" && response.status === 404) continue;
       assert.equal(response.status, 200, path);
@@ -166,6 +168,7 @@ if (market === "ru") {
     }
     const signedIn = await (await get(origin, "/me", { session: true })).text();
     assertClean(signedIn, "/me (signed in)");
+    assertClean(await (await get(origin, "/supporter", { session: true })).text(), "/supporter (signed in)");
     // The workshop is labelled experimental (LR-22), in its page and in the sidebar.
     const workshop = await (await get(origin, "/workshop")).text();
     assert.match(workshop, /data-experimental[^>]*>Эксперимент: мастерская классов — прототип/);
@@ -190,7 +193,8 @@ if (market === "ru") {
     assert.ok(!html.includes("mailto:"), "a mailto link without a support e-mail");
     assert.match(html, /href="\/privacy#requests"/);
     const footer = /<footer class="legal-page-footer">[\s\S]*?<\/footer>/.exec(html)?.[0] ?? "";
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "delete", "source"]);
+    // RU sells Hero tiers (LR-67): the footer links the offer too.
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "delete", "source"]);
     // Every page language.
     const english = surface(await (await get(origin, "/delete", { language: "en-US" })).text()).text;
     assert.ok(english.includes("Delete your OMOBA account") && english.includes("within 30 days"), "English page");
