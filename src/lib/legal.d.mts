@@ -23,7 +23,7 @@ export const LEGAL_VERSION: RegExp;
 export const LEGAL_DIR: 'legal';
 export function legalDocumentFile(market: string, legal: MarketLegal, name: LegalDocumentName): string | null;
 export function legalSourceUrl(legal: MarketLegal, version?: string | null): string | null;
-export function legalLinks(legal: MarketLegal, features: { supporter: boolean }): LegalLink[];
+export function legalLinks(legal: MarketLegal, features: { supporter: boolean }, shown?: boolean): LegalLink[];
 export function deletionPage(legal: MarketLegal): { email: string | null; privacy: string | null } | null;
 export function signInNotice(legal: MarketLegal): { terms: string; privacy: string; version: string | null } | null;
 export function parseInline(text: string, nested?: boolean): Inline[];

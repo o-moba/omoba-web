@@ -14,7 +14,7 @@ import { chromium } from "@playwright/test";
 
 const required = JSON.parse(await readFile(new URL("../.next/required-server-files.json", import.meta.url), "utf8"));
 const built = required.config?.env?.OMOBA_BUILT_MARKET;
-const RU_LINE = "ru (ekza off, supporter off, vk_sign_in on)", GLOBAL_LINE = "global (ekza on, supporter on, vk_sign_in off)";
+const RU_LINE = "ru (ekza off, supporter on, vk_sign_in on)", GLOBAL_LINE = "global (ekza on, supporter on, vk_sign_in off)";
 assert.ok(built === RU_LINE || built === GLOBAL_LINE, "run after a global or a ru build (got " + built + ")");
 const market = built === RU_LINE ? "ru" : "global";
 
@@ -127,25 +127,29 @@ async function refused(response, log, pattern) {
 
 if (market === "ru") {
   const RU = { OMOBA_MARKET: "ru", OMOBA_VKID_CLIENT_ID: "12345" };
-  await run("a ru build hides every Ekza and Supporter surface", RU, async ({ origin }) => {
-    for (const page of ["/market", "/sponsor", "/creators", "/supporter", "/supporters", "/market/x"])
+  await run("a ru build hides every Ekza surface and Solana or Apple checkout, and serves the Hero pages", RU, async ({ origin }) => {
+    for (const page of ["/market", "/sponsor", "/creators", "/market/x"])
       assert.equal((await get(origin, page)).status, 404, page);
+    // Hero tiers through YooKassa (LR-67): the pages exist, with prices for guests.
+    for (const page of ["/supporter", "/supporters"]) assert.equal((await get(origin, page)).status, 200, page);
+    assert.match(await (await get(origin, "/supporter")).text(), /data-hero-tiers/);
     const before = calls.length;
-    for (const path of ["/api/ekza/csrf", "/api/ekza/library", "/api/sponsor/csrf", "/api/me/ekza-library", "/api/me/supporter", "/api/supporters"]) {
+    for (const path of ["/api/ekza/csrf", "/api/ekza/library", "/api/sponsor/csrf", "/api/me/ekza-library", "/api/me/supporter/solana/orders", "/api/me/supporter/apple/prepare"]) {
       const response = await get(origin, path);
       assert.equal(response.status, 404, path);
       assert.deepEqual(await response.json(), { code: "not_found" }, path);
     }
-    assert.equal(calls.length, before, "a disabled feature reached the Account API");
+    assert.equal(calls.length, before, "a disabled feature or provider reached the Account API");
     const workshop = await (await get(origin, "/workshop")).text();
-    for (const link of ['href="/market"', 'href="/creators"', 'href="/sponsor"', 'href="/supporter"', "studio.ekza.io", "hub.ekza.io", "Ekza"])
+    for (const link of ['href="/market"', 'href="/creators"', 'href="/sponsor"', "studio.ekza.io", "hub.ekza.io", "Ekza"])
       assert.ok(!workshop.includes(link), "workshop contains " + link);
     const login = await (await get(origin, "/login")).text();
     assert.equal([...login.matchAll(/data-vk-method="(\w+)"/g)].map((m) => m[1]).join(","), "vkid,ok_ru,mail_ru");
     assert.match(login, /Войти через VK ID/);
     assert.match(login, /data-pairing/);
     assert.match(login, /<html lang="ru"/);
-    for (const link of ['href="/market"', 'href="/creators"', 'href="/supporter"', 'href="/supporters"']) assert.ok(!login.includes(link), "nav contains " + link);
+    for (const link of ['href="/market"', 'href="/creators"']) assert.ok(!login.includes(link), "nav contains " + link);
+    for (const link of ['href="/supporter"', 'href="/supporters"', 'href="/offer"']) assert.ok(login.includes(link), "nav or footer lacks " + link);
   });
 
   await run("VK ID start, callback, ticket and /connect through the BFF", RU, async ({ origin }) => {
@@ -240,7 +244,8 @@ if (market === "ru") {
       await page.goto(origin + "/login");
       await page.locator("[data-vk-method]").first().waitFor();
       assert.equal(await page.locator("[data-vk-method]").count(), 3);
-      assert.equal(await page.locator('nav a[href="/market"], nav a[href="/supporter"]').count(), 0);
+      assert.equal(await page.locator('nav a[href="/market"], nav a[href="/creators"]').count(), 0);
+      assert.equal(await page.locator('aside nav a[href="/supporter"]').count(), 1);
       await page.screenshot({ path: dir + "/ru-login.png", fullPage: true });
       // Signed in (as after "signed_in"): the game's code is looked up and approved.
       await context.addCookies([{ name: "omoba-session", value: SESSION, url: origin, httpOnly: true }]);
@@ -281,8 +286,8 @@ if (market === "ru") {
     assert.match(notice, /Входя, вы принимаете/);
     assert.deepEqual([...notice.matchAll(/href="([^"]+)"/g)].map((m) => m[1]), ["/terms", "/privacy"]);
     const footer = /<nav class="legal-links"[\s\S]*?<\/nav>/.exec(login)?.[0] ?? "";
-    // Supporter is off in ru: no offer link; support and community wait for the owner (LR-21).
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "delete", "source"]);
+    // RU sells Hero tiers (LR-67): the offer is linked; support and community wait for the owner (LR-21).
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "delete", "source"]);
     assert.match(footer, /href="https:\/\/github.com\/o-moba\/omoba-bevy"/);
     assert.match(await (await get(origin, "/connect?code=" + CODE)).text(), /<p class="legal-notice"/);
     assert.match(await (await get(origin, "/workshop")).text(), /data-legal-links/);
@@ -348,6 +353,14 @@ if (market === "ru") {
     assert.ok(!/data-vk-method/.test(login));
     for (const link of ['href="/market"', 'href="/creators"', 'href="/supporter"', 'href="/supporters"']) assert.ok(login.includes(link), "nav lacks " + link);
     assert.equal((await get(origin, "/supporters")).status, 200);
+    // Global keeps its Supporter page (sign-in for guests; Solana and Apple) and never offers YooKassa.
+    const supporter = await get(origin, "/supporter");
+    assert.equal(supporter.status, 200);
+    assert.ok(!(await supporter.text()).includes("data-hero-tiers"), "the YooKassa page in a global build");
+    const before2 = calls.length;
+    assert.equal((await get(origin, "/api/me/supporter/yookassa/payments")).status, 404);
+    assert.equal((await post(origin, "/api/me/supporter/yookassa/checkout", {})).status, 404);
+    assert.equal(calls.length, before2, "a YooKassa route reached the Account API in a global build");
   });
   await run("a global build has no legal pages, sign-in notice or legal links", {}, async ({ origin }) => {
     for (const path of ["/privacy", "/terms", "/offer", "/delete"]) assert.equal((await get(origin, path)).status, 404, path);

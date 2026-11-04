@@ -2,6 +2,7 @@ export type Market = "global" | "ru" | "cn";
 export type MarketFeatures = Readonly<{ ekza: boolean; supporter: boolean; vkSignIn: boolean }>;
 export type MarketProfile = { market: Market; features: MarketFeatures };
 export type FeatureName = "ekza" | "supporter" | "vkSignIn";
+export type PaymentProvider = "apple" | "solana" | "yookassa";
 /** scripts/markets.py `Legal` (camelCase) plus the portal-only `offer` and `delete`; null = not provided. */
 export type MarketLegal = Readonly<{
   version: string | null;
@@ -24,12 +25,16 @@ export const VKID_CLIENT_VARIABLE: "OMOBA_VKID_CLIENT_ID";
 export const FEATURES: readonly Readonly<{ name: FeatureName; key: "ekza" | "supporter" | "vk_sign_in"; env: string }>[];
 export const MARKET_PRESETS: Readonly<Record<Market, MarketFeatures>>;
 export const MARKET_LOCALES: Readonly<Record<Market, "ru" | "zh" | null>>;
+export const PAYMENT_PROVIDERS: readonly PaymentProvider[];
+export const MARKET_PAYMENT_PROVIDERS: Readonly<Record<Market, readonly PaymentProvider[]>>;
 export const MARKET_LEGAL: Readonly<Record<Market, MarketLegal>>;
 export const MARKET_LANDING: Readonly<Record<Market, MarketLanding>>;
 export const FEATURE_ROUTES: Readonly<Record<string, "ekza" | "supporter">>;
 export function marketName(env?: Record<string, string | undefined>): Market;
 export function marketFeatures(env?: Record<string, string | undefined>): MarketFeatures;
 export function marketProfile(env?: Record<string, string | undefined>): MarketProfile;
+export function paymentProviders(market: Market, features: { supporter: boolean }): readonly PaymentProvider[];
+export function supporterLinks(features: { supporter: boolean }, storeMode?: boolean): boolean;
 export function describeMarket(profile: { market: string; features: Record<string, boolean> }): string;
 export function vkIdClientId(env?: Record<string, string | undefined>): string | null;
 export function vkSignInClientId(env?: Record<string, string | undefined>): string | null;

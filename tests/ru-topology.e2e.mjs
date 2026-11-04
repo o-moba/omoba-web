@@ -30,7 +30,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer, request as httpRequest } from "node:http";
 
 const required = JSON.parse(await readFile(new URL("../.next/required-server-files.json", import.meta.url), "utf8"));
-assert.equal(required.config?.env?.OMOBA_BUILT_MARKET, "ru (ekza off, supporter off, vk_sign_in on)", "run after a ru build");
+assert.equal(required.config?.env?.OMOBA_BUILT_MARKET, "ru (ekza off, supporter on, vk_sign_in on)", "run after a ru build");
 const binary = process.env.OMOBA_ACCOUNT_API_BIN, database = process.env.OMOBA_E2E_DATABASE_URL;
 assert.ok(binary && database, "set OMOBA_ACCOUNT_API_BIN and OMOBA_E2E_DATABASE_URL");
 const db = new URL(database);

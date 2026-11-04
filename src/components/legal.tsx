@@ -29,9 +29,9 @@ function useLinkLabel() {
  */
 export function LegalLinks({ className = '' }: { className?: string }) {
   const { t } = useLocale();
-  const { legal, features } = useMarket();
+  const { legal, features, supporterLinks } = useMarket();
   const label = useLinkLabel();
-  const links = legalLinks(legal, features);
+  const links = legalLinks(legal, features, supporterLinks);
   if (!links.length) return null;
   return <nav className={('legal-links ' + className).trim()} aria-label={t('Legal information and support')} data-legal-links>
     {links.map(link => link.external

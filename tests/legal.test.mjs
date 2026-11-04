@@ -56,18 +56,22 @@ test('footer links: privacy, terms, deletion and source in ru; nothing in global
   assert.deepEqual(keys('global'), []);
   assert.deepEqual(keys('cn'), []);
   assert.deepEqual(keys('global', { supporter: true }), [], 'global stays unchanged even with Supporter');
+  // RU sells Hero tiers (LR-67): its footer links the offer.
   assert.deepEqual(legalLinks(marketLegal('ru'), MARKET_PRESETS.ru), [
     { key: 'privacy', href: '/privacy', external: false },
     { key: 'terms', href: '/terms', external: false },
+    { key: 'offer', href: '/offer', external: false },
     { key: 'delete', href: '/delete', external: false },
     { key: 'source', href: 'https://github.com/o-moba/omoba-bevy', external: true },
   ]);
-  // The offer follows the one Supporter switch (LR-67/LR-68); the deletion page does not.
-  assert.deepEqual(keys('ru', { ...MARKET_PRESETS.ru, supporter: true }), ['privacy', 'terms', 'offer', 'delete', 'source']);
+  // The offer follows the one Supporter switch (LR-67/LR-68: off without the feature or on
+  // a store-mode page); the deletion page does not.
+  assert.deepEqual(keys('ru', { ...MARKET_PRESETS.ru, supporter: false }), ['privacy', 'terms', 'delete', 'source']);
+  assert.deepEqual(legalLinks(marketLegal('ru'), MARKET_PRESETS.ru, false).map(link => link.key), ['privacy', 'terms', 'delete', 'source']);
   // Support and community appear once the owner provides them (LR-21).
   const channels = { ...MARKET_LEGAL.ru, supportEmail: 'support@omoba.ru', communityVk: 'https://vk.com/omoba', communityTelegram: 'https://t.me/omoba' };
   assert.deepEqual(legalLinks(channels, MARKET_PRESETS.ru).map(link => [link.key, link.href]), [
-    ['privacy', '/privacy'], ['terms', '/terms'], ['delete', '/delete'], ['support', 'mailto:support@omoba.ru'], ['source', 'https://github.com/o-moba/omoba-bevy'],
+    ['privacy', '/privacy'], ['terms', '/terms'], ['offer', '/offer'], ['delete', '/delete'], ['support', 'mailto:support@omoba.ru'], ['source', 'https://github.com/o-moba/omoba-bevy'],
     ['vk', 'https://vk.com/omoba'], ['telegram', 'https://t.me/omoba'],
   ]);
 });
