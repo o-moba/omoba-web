@@ -1,7 +1,8 @@
 import type { MarketLegal } from './market-profile.mjs';
 
 export type LegalDocumentName = 'privacy' | 'terms' | 'offer';
-export type LegalLinkKey = 'privacy' | 'terms' | 'offer' | 'delete' | 'support' | 'source' | 'vk' | 'telegram';
+export const CONTACTS_PAGE: '/contacts';
+export type LegalLinkKey = 'privacy' | 'terms' | 'offer' | 'contacts' | 'delete' | 'support' | 'source' | 'vk' | 'telegram';
 export type LegalLink = { key: LegalLinkKey; href: string; external: boolean };
 export type Inline =
   | { type: 'text'; value: string }
