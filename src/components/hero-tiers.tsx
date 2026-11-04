@@ -252,7 +252,7 @@ export default function HeroTiersView({ signedIn, accountDisabled = false, login
             <span>{fill(t('I have read and accept {offer}.'), { offer: offerLink })}</span></label>
           <button className="primary" disabled={!ready} data-checkout-submit>{amount === null ? t('Continue to payment') : fill(t('Pay {amount}'), { amount: rubles(amount) })}</button>
           <p className="muted">{t('You pay on the YooKassa page and come back here afterwards. One payment, no automatic renewal.')}</p>
-        </> : accountDisabled ? <p className="notice">{t('Payments are not available on this site.')}</p>
+        </> : accountDisabled ? <p className="notice" data-payments-soon>{fill(t('Payments open soon. You can already read the prices and {offer}; you will pay on the YooKassa page.'), { offer: offerLink })}</p>
           : <div className="tier-guest" data-tier-guest><Link className="button primary" href={loginHref}>{t('Sign in to support')} →</Link>
             <p className="muted">{fill(t('Prices and {offer} are open to everyone; paying needs your OMOBA account so that the aura reaches your hero.'), { offer: offerLink })}</p></div>}
       </form>
