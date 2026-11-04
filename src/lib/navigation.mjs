@@ -3,13 +3,14 @@ import { MARKET_LANDING, MARKET_PRESETS, marketLanding, marketName, navForMarket
 
 export const DEFAULT_SITE_URL = CONTOURS.production.site;
 
-const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/play', '/workshop', '/friends', '/players', '/devices', '/supporter', '/supporters', '/settings', '/download', '/creators', '/market', '/sponsor']);
+const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/leaderboard', '/play', '/workshop', '/friends', '/players', '/devices', '/supporter', '/supporters', '/settings', '/download', '/creators', '/market', '/sponsor']);
 
 /** The device-confirmation page the game opens: exactly one 8-character enrollment code. */
 export const CONNECT_CODE = /^[A-Z2-9]{8}$/;
 
 /** Sidebar order; `navForMarket` drops the pages this market does not serve. */
-export const PORTAL_NAV = Object.freeze(['/me', '/me/matches', '/me/stats', '/players', '/friends', '/creators', '/market', '/sponsor', '/workshop', '/supporter', '/supporters', '/devices', '/settings']);
+export const PORTAL_NAV = Object.freeze(['/me', '/me/matches', '/me/stats', '/leaderboard', '/players', '/friends', '/creators', '/market', '/sponsor', '/workshop', '/supporter', '/supporters', '/devices', '/settings']);
+/** The phone bar keeps six entries; the leaderboard is reached from the overview and the statistics page. */
 export const MOBILE_NAV = Object.freeze(['/me', '/me/matches', '/creators', '/workshop', '/supporters', '/friends']);
 /** Buttons on the guest-prototype card. */
 export const GUEST_LINKS = Object.freeze(['/creators', '/sponsor', '/market']);

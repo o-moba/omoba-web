@@ -93,3 +93,10 @@ from one address limit only that address, and that no request through the ingres
 403. `OMOBA_CADDYFILE_RU=<game repo>/ops/vps/ru/Caddyfile.ru` reads the native list
 from the real file; `OMOBA_E2E_API_MARKET=global` accepts a global Account API build
 (the VK callback and its limit are checked, VK sign-in success is not).
+
+`npm run test:leaderboard` (after `seed-local-portal`, with the portal on 3010 and the
+Account API on 40550 against the disposable cluster; give fixture 7 at least 20 rated
+matches first) checks the `/leaderboard` page: ordering and own rank, no `MMR` or raw
+codes in the copy, the 390 px layout, the Settings opt-out (`leaderboard_listed`) hiding
+the player and saying so, and the newcomer progress line on the overview. Screenshots
+land in `.agent/browser/leaderboard/`.

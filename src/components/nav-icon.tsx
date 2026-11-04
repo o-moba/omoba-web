@@ -2,6 +2,7 @@ const paths: Record<string, string> = {
   "/me": "M3 10 12 3l9 7v11h-6v-7H9v7H3Z",
   "/me/matches": "M4 4h16v16H4ZM8 8h8M8 12h8M8 16h4",
   "/me/stats": "M4 20V4M4 20h16M8 16v-4M12 16V8M16 16V5",
+  "/leaderboard": "M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3",
   "/players": "M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
   "/friends":
     "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M17 4a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-4",

@@ -7,7 +7,8 @@ The matching Rust Account API and native approval screen are in the game workspa
 It deliberately preserves the separate, unmerged iPhone packaging work.
 
 The portal includes game-confirmed sign-in, profile overview, settled match history,
-participant-only match reports, class statistics and rating changes, friends and
+participant-only match reports, class statistics and rating changes, the rating
+leaderboard (top 100 past the newcomer bracket, with an opt-out in Settings), friends and
 requests, nickname, privacy, RU/EN preferences, time zone, sessions and downloads.
 The downloads list is empty until verified public artifacts are configured.
 Cosmetic/NFT loadout editing and passkeys are P1, not shipped in this implementation.

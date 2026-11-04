@@ -138,3 +138,23 @@ test('the guest home and its translations carry no donate, wallet, crypto or Ekz
   assert.equal(landingTranslations['vs Bots'].ru, 'Против ботов');
   assert.equal(landingTranslations['Offline practice'].ru, 'Офлайн-тренировка');
 });
+
+test('the guest home states the rating rules: start at 1000, Ranked only, newcomer bracket, experience, leaderboard', async () => {
+  const { RATING_FACTS, landingTranslations } = await importTs('../src/lib/landing-translations.ts');
+  assert.equal(RATING_FACTS.length, 5);
+  assert.deepEqual(Object.keys(landingTranslations.Rating), ['ru', 'zh']);
+  assert.equal(landingTranslations.Rating.ru, 'Рейтинг');
+  for (const fact of RATING_FACTS) {
+    assert.ok(landingTranslations[fact]?.ru && landingTranslations[fact]?.zh, fact);
+    for (const text of [fact, landingTranslations[fact].ru, landingTranslations[fact].zh]) assert.doesNotMatch(text, FORBIDDEN, text);
+  }
+  const ru = RATING_FACTS.map(fact => landingTranslations[fact].ru).join(' ');
+  assert.match(ru, /рейтинга 1000/);
+  assert.match(ru, /только рейтинговые матчи/);
+  assert.match(ru, /Первые 20 рейтинговых матчей .* новичков/);
+  assert.match(ru, /Обычный PvP и матчи против ботов дают опыт, но не рейтинг/);
+  assert.match(ru, /таблицу лидеров .* после 20 рейтинговых матчей/);
+  const source = await readFile(new URL('../src/components/guest-home.tsx', import.meta.url), 'utf8');
+  assert.match(source, /data-landing-rating/);
+  assert.match(source, /RATING_FACTS\.map/);
+});
