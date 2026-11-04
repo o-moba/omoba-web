@@ -6,7 +6,7 @@ import { cache } from 'react';
 import { DeletionView } from '@/components/deletion';
 import { LegalDocumentView } from '@/components/legal';
 import { deletionText } from '@/lib/deletion-translations';
-import { LEGAL_DIR, deletionPage, legalDocumentFile, parseLegalDocument, type LegalDocumentName } from '@/lib/legal.mjs';
+import { LEGAL_DIR, deletionPage, legalDocumentFile, legalDocumentVersion, parseLegalDocument, type LegalDocumentName } from '@/lib/legal.mjs';
 import { getLocale } from '@/lib/locale-server';
 import { assertMarket, marketLegal } from '@/lib/market-profile.mjs';
 import { contourSiteUrl } from '@/lib/navigation.mjs';
@@ -25,8 +25,9 @@ export const loadLegalDocument = cache(async (name: LegalDocumentName) => {
   if (!file) return null;
   // Scoped to the legal folder, so the build traces only it (next.config.ts includes it too).
   const document = parseLegalDocument(await readFile(join(process.cwd(), 'legal', file), 'utf8'));
-  if (document.meta.version !== legal.version)
-    throw new Error('legal: ' + LEGAL_DIR + '/' + file + ' is version ' + document.meta.version + ' but the market asks for ' + legal.version);
+  const version = legalDocumentVersion(legal, name);
+  if (document.meta.version !== version)
+    throw new Error('legal: ' + LEGAL_DIR + '/' + file + ' is version ' + document.meta.version + ' but the market asks for ' + version);
   return document;
 });
 

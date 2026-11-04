@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { MARKETS, MARKET_LEGAL, MARKET_PRESETS, marketLegal } from '../src/lib/market-profile.mjs';
-import { DELETION_PAGE, LEGAL_DIR, LEGAL_PAGES, deletionPage, legalDocumentFile, legalLinks, legalPlainText, legalSourceUrl, parseInline, parseLegalDocument, signInNotice } from '../src/lib/legal.mjs';
+import { DELETION_PAGE, LEGAL_DIR, LEGAL_PAGES, deletionPage, legalDocumentFile, legalDocumentVersion, legalLinks, legalPlainText, legalSourceUrl, parseInline, parseLegalDocument, signInNotice } from '../src/lib/legal.mjs';
 
 // Written out by hand from the game's scripts/markets.py `Legal` (ru), independent of the module.
 const RU_GAME_LEGAL = {
@@ -21,11 +21,12 @@ const GAME_FIELDS = { version: 'version', privacy: 'privacy', terms: 'terms', so
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 // `offer` and `delete` are portal-only until the game table gains them (LR-67/LR-68, LR-69).
-const portalOnly = ({ offer: _offer, delete: _delete, ...rest }) => rest;
+const portalOnly = ({ offer: _offer, offerVersion: _offerVersion, delete: _delete, ...rest }) => rest;
 
 test('the RU legal table mirrors scripts/markets.py; global and cn have none', () => {
   assert.deepEqual(portalOnly({ ...MARKET_LEGAL.ru }), RU_GAME_LEGAL);
   assert.equal(MARKET_LEGAL.ru.offer, 'https://omoba.ru/offer');
+  assert.equal(MARKET_LEGAL.ru.offerVersion, '1');
   assert.equal(MARKET_LEGAL.ru.delete, 'https://omoba.ru/delete');
   assert.deepEqual(Object.keys(portalOnly(MARKET_LEGAL.ru)).sort(), Object.keys(GAME_FIELDS).sort());
   for (const market of ['global', 'cn']) assert.ok(Object.values(MARKET_LEGAL[market]).every(value => value === null), market);
@@ -127,7 +128,12 @@ test('the sign-in notice needs both documents', () => {
 test('document files follow the market and version; nothing else is read', () => {
   assert.equal(LEGAL_DIR, 'legal');
   assert.equal(legalDocumentFile('ru', marketLegal('ru'), 'privacy'), 'ru/0-draft/privacy.md');
-  assert.equal(legalDocumentFile('ru', marketLegal('ru'), 'offer'), 'ru/0-draft/offer.md');
+  assert.equal(legalDocumentFile('ru', marketLegal('ru'), 'offer'), 'ru/1/offer.md');
+  // The offer has its own edition; without one it follows the shared version.
+  assert.equal(legalDocumentFile('ru', { ...MARKET_LEGAL.ru, offerVersion: null }, 'offer'), 'ru/0-draft/offer.md');
+  assert.equal(legalDocumentVersion(marketLegal('ru'), 'privacy'), '0-draft');
+  assert.equal(legalDocumentVersion(marketLegal('ru'), 'offer'), '1');
+  assert.throws(() => legalDocumentFile('ru', { ...MARKET_LEGAL.ru, offerVersion: '../x' }, 'offer'), /invalid/);
   for (const market of ['global', 'cn']) for (const name of ['privacy', 'terms', 'offer']) assert.equal(legalDocumentFile(market, marketLegal(market), name), null);
   assert.equal(legalDocumentFile('ru', marketLegal('ru'), 'cookies'), null);
   assert.equal(legalDocumentFile('ru', { ...MARKET_LEGAL.ru, version: null }, 'privacy'), null);
@@ -180,7 +186,7 @@ async function documents() {
     const legal = marketLegal(market);
     for (const name of Object.keys(LEGAL_PAGES)) {
       const file = legalDocumentFile(market, legal, name);
-      if (file) out[market + '/' + name] = { file, legal, doc: parseLegalDocument(await read(LEGAL_DIR + '/' + file)) };
+      if (file) out[market + '/' + name] = { file, version: legalDocumentVersion(legal, name), doc: parseLegalDocument(await read(LEGAL_DIR + '/' + file)) };
     }
   }
   return out;
@@ -189,10 +195,11 @@ async function documents() {
 test('every document of every market exists, parses and carries the version the game asks to accept', async () => {
   const docs = await documents();
   assert.deepEqual(Object.keys(docs).sort(), ['ru/offer', 'ru/privacy', 'ru/terms']);
-  for (const [key, { legal, doc }] of Object.entries(docs)) {
-    assert.equal(doc.meta.version, legal.version, key);
+  for (const [key, { version, doc }] of Object.entries(docs)) {
+    assert.equal(doc.meta.version, version, key);
     // A draft version is a draft document with the visible banner and no effective date (section 7).
-    if (legal.version.endsWith('-draft')) assert.deepEqual([doc.meta.status, doc.meta.effective], ['draft', null], key);
+    if (version.endsWith('-draft')) assert.deepEqual([doc.meta.status, doc.meta.effective], ['draft', null], key);
+    else assert.ok(doc.meta.status === 'final' && doc.meta.effective && !doc.blocks.some(block => /\{\{|Черновик/.test(JSON.stringify(block))), key + ' is a published edition');
     assert.match(doc.meta.title, /[А-Яа-яЁё]/, key + ' is Russian');
     for (const block of doc.blocks) for (const link of JSON.stringify(block).matchAll(/"href":"(\/[^"]*)"/g))
       assert.ok([...Object.values(LEGAL_PAGES), '/supporter'].includes(link[1]), key + ' links ' + link[1]);

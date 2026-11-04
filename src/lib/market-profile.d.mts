@@ -6,6 +6,7 @@ export type PaymentProvider = "apple" | "solana" | "yookassa";
 /** scripts/markets.py `Legal` (camelCase) plus the portal-only `offer` and `delete`; null = not provided. */
 export type MarketLegal = Readonly<{
   version: string | null;
+  offerVersion: string | null;
   privacy: string | null;
   terms: string | null;
   offer: string | null;

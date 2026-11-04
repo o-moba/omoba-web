@@ -286,7 +286,7 @@ try {
     const { id, request, posted } = await checkout(one.page, tier ? { tier, email: "ada@example.ru" } : { custom: amount, email: "ada@example.ru" });
     // The browser sends the quote it showed; the key of the attempt is the portal server's.
     const body = request.postDataJSON();
-    assert.deepEqual(body, { amount_rub: amount, receipt_email: "ada@example.ru", quote: { amount_minor: amount * 100, currency: "RUB", duration_days: 30, tier: tier ?? "crimson" }, offer_version: "0-draft" });
+    assert.deepEqual(body, { amount_rub: amount, receipt_email: "ada@example.ru", quote: { amount_minor: amount * 100, currency: "RUB", duration_days: 30, tier: tier ?? "crimson" }, offer_version: "1" });
     const cookie = await checkoutCookie(one.context);
     assert.ok(cookie?.httpOnly, "the attempt cookie is HttpOnly");
     const [bffKey] = cookie.value.split(".");
@@ -301,7 +301,7 @@ try {
     assert.deepEqual(post.body.receipt, { customer: { email: "ada@example.ru" }, items: [{ description: "OMOBA — поддержка проекта (аура на 30 дней)", quantity: "1.00", amount: { value: rubles(amount * 100), currency: "RUB" }, vat_code: 1, payment_mode: "full_payment", payment_subject: "service" }] });
     assert.equal(paymentOf(post.key).id, id);
     const [stored, storedAmount, storedOffer] = sql(`SELECT idempotence_key,amount_minor,offer_version FROM portal.supporter_yookassa_attempts WHERE provider_payment_id='${id}'`).split("|");
-    assert.deepEqual([stored, Number(storedAmount), storedOffer], [post.key, amount * 100, "0-draft"]);
+    assert.deepEqual([stored, Number(storedAmount), storedOffer], [post.key, amount * 100, "1"]);
     pay(id);
     // Half of them settle by the webhook; the others when the return page re-reads them.
     if (index % 2 === 0) assert.deepEqual(await notify("payment.succeeded", { id, status: "succeeded" }), { status: 200, body: { status: "accepted" } });
@@ -312,7 +312,8 @@ try {
     assert.equal(await checkoutCookie(one.context), null, "the finished attempt's key was kept");
     paidIds.push(id);
   }
-  assert.equal(new URL(one.page.url()).pathname + new URL(one.page.url()).search, "/supporter", "the return state leaves ?paid=1");
+  // The page drops ?paid=1 with router.replace once the payment settled; give it a moment.
+  await until(async () => new URL(one.page.url()).pathname + new URL(one.page.url()).search === "/supporter", "the return state leaves ?paid=1");
   assert.equal(sql(`SELECT count(*) FROM portal.supporter_grants WHERE profile_id='${ada.profile}' AND provider='yookassa' AND revoked_at IS NULL`), "8");
   assert.equal(sql(`SELECT portal.supporter_points('${ada.profile}', extract(epoch from now())::bigint)`), String(100 + 250 + 500 + 1000 + 2500 + 5000 + 10000 + 1234));
   assert.equal(await one.page.locator("[data-payment=succeeded]").count(), 8);

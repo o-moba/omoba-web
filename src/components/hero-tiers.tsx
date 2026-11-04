@@ -8,6 +8,7 @@ import { useLocale } from '@/components/locale-provider';
 import { useMarket } from '@/components/market-profile';
 import { AURA_STYLES, BASE_STYLES, GRANT_DAYS, MAX_RUB, MIN_RUB, TIERS, auraName, formatRubles, parseRubles, quoteFor, receiptEmail, styleUnlocked, tierFor, tierSteps, type Grant, type Tier } from '@/lib/hero-tiers.mjs';
 import type { SupporterRecognition } from '@/lib/types';
+import { legalDocumentVersion } from '@/lib/legal.mjs';
 
 // The Supporter page of a market that sells Hero tiers through YooKassa (LR-67, RU):
 // the tier cards and their prices (readable without sign-in), a custom amount, the
@@ -137,7 +138,7 @@ export default function HeroTiersView({ signedIn, accountDisabled = false, login
   const reaches = amount === null ? null : tierFor(amount);
   const open = Boolean(offer?.available && offer.new_charges);
   // The accepted offer is the version `/offer` shows (the market's legal table).
-  const offerVersion = legal.version;
+  const offerVersion = legalDocumentVersion(legal, 'offer');
   const ready = Boolean(signedIn && open && amount !== null && email_ && accepted && !busy && offer?.currency && offer.duration_days && offerVersion);
   const status = data?.supporter;
   const date = (seconds: number) => new Date(seconds * 1000).toLocaleDateString(tag, { dateStyle: 'long' });

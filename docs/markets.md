@@ -119,6 +119,7 @@ Each market has a legal table, `MARKET_LEGAL` in `src/lib/market-profile.mjs`, r
 | `version` | `0-draft` (the Russian drafts, LR-04) | the documents shown, the notice |
 | `privacy`, `terms` | `https://omoba.ru/privacy`, `https://omoba.ru/terms` | `/privacy`, `/terms`, footer, sign-in notice |
 | `offer` (portal only) | `https://omoba.ru/offer` | `/offer`; linked only with the Supporter feature |
+| `offerVersion` (portal only) | `1` (published 2026-11-05; the agreement and policy stay `0-draft`) | the offer shown at `/offer` and the `offer_version` a payment records |
 | `delete` (portal only) | `https://omoba.ru/delete` | `/delete` (account deletion, O-15; the URL for Play's Data safety form), footer |
 | `source` | `https://github.com/o-moba/omoba-bevy/tree/v{version}-ru` | footer (the repository), each download card (the release's tag) |
 | `supportEmail`, `communityVk`, `communityTelegram` | empty until the owner provides them (LR-21) | footer; hidden while empty |

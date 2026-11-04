@@ -21,6 +21,7 @@ export const LEGAL_PAGES: Readonly<Record<LegalDocumentName, string>>;
 export const DELETION_PAGE: '/delete';
 export const LEGAL_VERSION: RegExp;
 export const LEGAL_DIR: 'legal';
+export function legalDocumentVersion(legal: MarketLegal, name: LegalDocumentName): string | null;
 export function legalDocumentFile(market: string, legal: MarketLegal, name: LegalDocumentName): string | null;
 export function legalSourceUrl(legal: MarketLegal, version?: string | null): string | null;
 export function legalLinks(legal: MarketLegal, features: { supporter: boolean }, shown?: boolean): LegalLink[];
