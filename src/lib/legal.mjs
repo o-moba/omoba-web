@@ -24,15 +24,28 @@ const META_KEYS = new Set(["title", "version", "status", "effective", "review"])
 export const LEGAL_DIR = "legal";
 
 /**
+ * The edition of a document the market publishes: the offer has its own (`offerVersion`,
+ * accepted at payment and recorded with it); the user agreement and the privacy policy
+ * share `version`, the one the game asks players to accept.
+ * @param {MarketLegal} legal @param {LegalDocumentName} name
+ * @returns {string | null}
+ */
+export function legalDocumentVersion(legal, name) {
+  return name === "offer" ? (legal.offerVersion ?? legal.version) : legal.version;
+}
+
+/**
  * The path, inside `LEGAL_DIR`, of a document of the market's current version, or
  * null when the market has no such document (global, cn; or no version).
  * @param {string} market @param {MarketLegal} legal @param {LegalDocumentName} name
  */
 export function legalDocumentFile(market, legal, name) {
-  if (!Object.hasOwn(LEGAL_PAGES, name) || !legal[name] || !legal.version) return null;
-  if (!/^[a-z]{2,8}$/.test(market) || !LEGAL_VERSION.test(legal.version) || legal.version.includes(".."))
-    throw new Error("legal: invalid market or document version " + JSON.stringify(String(legal.version)));
-  return market + "/" + legal.version + "/" + name + ".md";
+  if (!Object.hasOwn(LEGAL_PAGES, name) || !legal[name]) return null;
+  const version = legalDocumentVersion(legal, name);
+  if (!version) return null;
+  if (!/^[a-z]{2,8}$/.test(market) || !LEGAL_VERSION.test(version) || version.includes(".."))
+    throw new Error("legal: invalid market or document version " + JSON.stringify(String(version)));
+  return market + "/" + version + "/" + name + ".md";
 }
 
 /**

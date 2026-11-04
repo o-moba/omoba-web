@@ -13,6 +13,11 @@ banner, no effective date, and `{{…}}` fields (highlighted on the page) for wh
 owner still has to fill in: operator, requisites, e-mail, retention periods counsel
 decides.
 
+`ru/1/offer.md` is the published offer (edition 1, effective 2026-11-05, owner-approved
+without counsel review so YooKassa can moderate the shop). The offer has its own edition,
+`offerVersion` in the legal table: players accept it at payment, not in the game, so a new
+offer edition does not make the game ask for acceptance again.
+
 ## Publishing the counsel-approved texts
 
 1. Copy the approved texts into a new folder, for example `ru/1/`, and set the front

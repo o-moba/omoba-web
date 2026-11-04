@@ -258,7 +258,7 @@ if (market === "ru") {
       await page.getByRole("button", { name: "Подтвердить вход" }).click();
       await page.locator("[data-connect-done]").waitFor();
       assert.match(await page.locator("[data-connect-done]").innerText(), /Вернитесь в игру и подтвердите вход/);
-      assert.deepEqual(calls.filter((c) => c.path === "/v1/me/devices/approve").at(-1).body, { enrollment_id: "b".repeat(64), public_key: KEY });
+      assert.deepEqual(calls.filter((c) => c.path === "/v1/me/devices/approve").at(-1).body, { enrollment_id: "b".repeat(64), public_key: KEY, profile_id: "a".repeat(64) });
       assert.deepEqual(errors, []);
     } finally {
       await browser.close();
@@ -267,15 +267,18 @@ if (market === "ru") {
 
   await run("ru legal pages, the sign-in notice and the footer links (LR-06)", RU, async ({ origin }) => {
     const before = calls.length;
-    for (const [name, title] of [["privacy", "Политика обработки персональных данных"], ["terms", "Пользовательское соглашение"], ["offer", "Публичная оферта"]]) {
+    // The user agreement and the privacy policy are drafts; the offer is published as edition 1.
+    for (const [name, title, version] of [["privacy", "Политика обработки персональных данных", "0-draft"], ["terms", "Пользовательское соглашение", "0-draft"], ["offer", "Публичная оферта", "1"]]) {
       const response = await get(origin, "/" + name);
       assert.equal(response.status, 200, name);
       const html = await response.text();
       assert.match(html, /<html lang="ru"/, name);
-      assert.match(html, new RegExp('data-legal-document="' + name + '" data-legal-version="0-draft" data-legal-status="draft"'), name);
-      assert.match(html, /data-legal-draft/, name);
-      assert.ok(html.includes("Проект — требует проверки юристом."), name + " has no draft banner");
-      assert.match(html, /Редакция[\s\S]{0,40}0-draft[\s\S]{0,80}не вступила в силу/, name);
+      const draft = version.endsWith("-draft");
+      assert.match(html, new RegExp('data-legal-document="' + name + '" data-legal-version="' + version + '" data-legal-status="' + (draft ? "draft" : "final") + '"'), name);
+      assert.equal(/data-legal-draft/.test(html), draft, name + " draft banner");
+      assert.equal(html.includes("Проект — требует проверки юристом."), draft, name + " draft banner text");
+      if (draft) assert.match(html, /Редакция[\s\S]{0,40}0-draft[\s\S]{0,80}не вступила в силу/, name);
+      else assert.match(html, /Редакция[\s\S]{0,40}>1<[\s\S]{0,80}действует с[\s\S]{0,20}5 ноября 2026/, name);
       assert.ok(html.includes("<title>" + title), name + " title");
       assert.match(html, /<footer class="legal-page-footer">[\s\S]*data-legal-link="privacy"[\s\S]*data-legal-link="terms"/, name);
     }
