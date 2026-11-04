@@ -116,13 +116,14 @@ Each market has a legal table, `MARKET_LEGAL` in `src/lib/market-profile.mjs`, r
 
 | Field | `ru` | Used for |
 |---|---|---|
-| `version` | `0-draft` (the Russian drafts, LR-04) | the documents shown, the notice |
+| `version` | `1` (user agreement and privacy policy, published 2026-11-05; `0-draft` kept as the record) | the documents shown, the notice |
 | `privacy`, `terms` | `https://omoba.ru/privacy`, `https://omoba.ru/terms` | `/privacy`, `/terms`, footer, sign-in notice |
 | `offer` (portal only) | `https://omoba.ru/offer` | `/offer`; linked only with the Supporter feature |
 | `offerVersion` (portal only) | `1` (published 2026-11-05; the agreement and policy stay `0-draft`) | the offer shown at `/offer` and the `offer_version` a payment records |
 | `delete` (portal only) | `https://omoba.ru/delete` | `/delete` (account deletion, O-15; the URL for Play's Data safety form), footer |
 | `source` | `https://github.com/o-moba/omoba-bevy/tree/v{version}-ru` | footer (the repository), each download card (the release's tag) |
-| `supportEmail`, `communityVk`, `communityTelegram` | empty until the owner provides them (LR-21) | footer; hidden while empty |
+| `supportEmail` | `prostosobolev@gmail.com` (LR-21) | footer «Поддержка», `/delete`, `/contacts` |
+| `communityVk`, `communityTelegram` | empty until the owner provides them (LR-21) | footer; hidden while empty |
 | `ageRating` | `12+` (placeholder, LR-07) | the guest home and the portal footer (LR-22) |
 
 `global` and `cn` have no table (every field null): no legal pages (`/privacy`, `/terms`, `/offer` and `/delete` answer 404), no notice, no legal links, footers as before.
@@ -171,3 +172,5 @@ npm run build && npm run test:market-profiles
 OMOBA_MARKET=ru OMOBA_VKID_CLIENT_ID=12345 npm run build && npm run test:market-profiles
 npm run build    # back to a global build before the other suites
 ```
+
+`/contacts` (RU) shows the seller's requisites from the offer's `#seller` section and the support e-mail; the footer links it wherever the market has an offer. Paths the portal shell does not serve (`portalShellRoute` in `src/lib/navigation.mjs`) answer a real 404.

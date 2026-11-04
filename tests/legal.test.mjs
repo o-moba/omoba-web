@@ -8,11 +8,11 @@ import { DELETION_PAGE, LEGAL_DIR, LEGAL_PAGES, deletionPage, legalDocumentFile,
 
 // Written out by hand from the game's scripts/markets.py `Legal` (ru), independent of the module.
 const RU_GAME_LEGAL = {
-  version: '0-draft',
+  version: '1',
   privacy: 'https://omoba.ru/privacy',
   terms: 'https://omoba.ru/terms',
   source: 'https://github.com/o-moba/omoba-bevy/tree/v{version}-ru',
-  supportEmail: null,
+  supportEmail: 'prostosobolev@gmail.com',
   communityVk: null,
   communityTelegram: null,
   ageRating: '12+',
@@ -52,7 +52,7 @@ test('the RU legal table equals the game\'s markets.py when it is available', { 
   assert.match(source, /portal="https:\/\/omoba\.ru"/);
 });
 
-test('footer links: privacy, terms, deletion and source in ru; nothing in global and cn', () => {
+test('footer links: privacy, terms, offer, contacts, deletion, support and source in ru; nothing in global and cn', () => {
   const keys = (market, features = MARKET_PRESETS[market]) => legalLinks(marketLegal(market), features).map(link => link.key);
   assert.deepEqual(keys('global'), []);
   assert.deepEqual(keys('cn'), []);
@@ -62,17 +62,19 @@ test('footer links: privacy, terms, deletion and source in ru; nothing in global
     { key: 'privacy', href: '/privacy', external: false },
     { key: 'terms', href: '/terms', external: false },
     { key: 'offer', href: '/offer', external: false },
+    { key: 'contacts', href: '/contacts', external: false },
     { key: 'delete', href: '/delete', external: false },
+    { key: 'support', href: 'mailto:prostosobolev@gmail.com', external: true },
     { key: 'source', href: 'https://github.com/o-moba/omoba-bevy', external: true },
   ]);
   // The offer follows the one Supporter switch (LR-67/LR-68: off without the feature or on
-  // a store-mode page); the deletion page does not.
-  assert.deepEqual(keys('ru', { ...MARKET_PRESETS.ru, supporter: false }), ['privacy', 'terms', 'delete', 'source']);
-  assert.deepEqual(legalLinks(marketLegal('ru'), MARKET_PRESETS.ru, false).map(link => link.key), ['privacy', 'terms', 'delete', 'source']);
-  // Support and community appear once the owner provides them (LR-21).
+  // a store-mode page); the contacts and deletion pages do not.
+  assert.deepEqual(keys('ru', { ...MARKET_PRESETS.ru, supporter: false }), ['privacy', 'terms', 'contacts', 'delete', 'support', 'source']);
+  assert.deepEqual(legalLinks(marketLegal('ru'), MARKET_PRESETS.ru, false).map(link => link.key), ['privacy', 'terms', 'contacts', 'delete', 'support', 'source']);
+  // Community links appear once the owner provides them (LR-21).
   const channels = { ...MARKET_LEGAL.ru, supportEmail: 'support@omoba.ru', communityVk: 'https://vk.com/omoba', communityTelegram: 'https://t.me/omoba' };
   assert.deepEqual(legalLinks(channels, MARKET_PRESETS.ru).map(link => [link.key, link.href]), [
-    ['privacy', '/privacy'], ['terms', '/terms'], ['offer', '/offer'], ['delete', '/delete'], ['support', 'mailto:support@omoba.ru'], ['source', 'https://github.com/o-moba/omoba-bevy'],
+    ['privacy', '/privacy'], ['terms', '/terms'], ['offer', '/offer'], ['contacts', '/contacts'], ['delete', '/delete'], ['support', 'mailto:support@omoba.ru'], ['source', 'https://github.com/o-moba/omoba-bevy'],
     ['vk', 'https://vk.com/omoba'], ['telegram', 'https://t.me/omoba'],
   ]);
 });
@@ -85,12 +87,14 @@ test('source links: a release tag with a version, the repository without', () =>
   assert.equal(legalSourceUrl(marketLegal('global'), '0.45.0'), null);
 });
 
-test('the deletion page: ru only, its contact from the legal table, a placeholder until LR-21', () => {
+test('the deletion page: ru only, its contact from the legal table, a placeholder without one', () => {
   assert.equal(DELETION_PAGE, '/delete');
-  // No support e-mail yet (LR-21): the page shows a placeholder; the policy section describes the procedure.
-  assert.deepEqual(deletionPage(marketLegal('ru')), { email: null, privacy: '/privacy#requests' });
+  // The operator's support e-mail (LR-21); the policy section describes the procedure.
+  assert.deepEqual(deletionPage(marketLegal('ru')), { email: 'prostosobolev@gmail.com', privacy: '/privacy#requests' });
+  // Without an address the page shows a placeholder.
+  assert.deepEqual(deletionPage({ ...MARKET_LEGAL.ru, supportEmail: null }), { email: null, privacy: '/privacy#requests' });
   assert.deepEqual(deletionPage({ ...MARKET_LEGAL.ru, supportEmail: 'support@omoba.ru' }), { email: 'support@omoba.ru', privacy: '/privacy#requests' });
-  assert.deepEqual(deletionPage({ ...MARKET_LEGAL.ru, privacy: null }), { email: null, privacy: null });
+  assert.deepEqual(deletionPage({ ...MARKET_LEGAL.ru, privacy: null }), { email: 'prostosobolev@gmail.com', privacy: null });
   for (const market of ['global', 'cn']) assert.equal(deletionPage(marketLegal(market)), null, market);
   assert.equal(deletionPage({ ...MARKET_LEGAL.ru, delete: null }), null);
   assert.equal(deletionPage(marketLegal('eu')), null, 'an unknown market has no deletion page');
@@ -119,7 +123,7 @@ test('the deletion page describes the O-15 procedure in every language, without 
 });
 
 test('the sign-in notice needs both documents', () => {
-  assert.deepEqual(signInNotice(marketLegal('ru')), { terms: '/terms', privacy: '/privacy', version: '0-draft' });
+  assert.deepEqual(signInNotice(marketLegal('ru')), { terms: '/terms', privacy: '/privacy', version: '1' });
   assert.equal(signInNotice(marketLegal('global')), null);
   assert.equal(signInNotice(marketLegal('cn')), null);
   assert.equal(signInNotice({ ...MARKET_LEGAL.ru, terms: null }), null);
@@ -127,11 +131,11 @@ test('the sign-in notice needs both documents', () => {
 
 test('document files follow the market and version; nothing else is read', () => {
   assert.equal(LEGAL_DIR, 'legal');
-  assert.equal(legalDocumentFile('ru', marketLegal('ru'), 'privacy'), 'ru/0-draft/privacy.md');
+  assert.equal(legalDocumentFile('ru', marketLegal('ru'), 'privacy'), 'ru/1/privacy.md');
   assert.equal(legalDocumentFile('ru', marketLegal('ru'), 'offer'), 'ru/1/offer.md');
   // The offer has its own edition; without one it follows the shared version.
-  assert.equal(legalDocumentFile('ru', { ...MARKET_LEGAL.ru, offerVersion: null }, 'offer'), 'ru/0-draft/offer.md');
-  assert.equal(legalDocumentVersion(marketLegal('ru'), 'privacy'), '0-draft');
+  assert.equal(legalDocumentFile('ru', { ...MARKET_LEGAL.ru, offerVersion: null, version: '0-draft' }, 'offer'), 'ru/0-draft/offer.md');
+  assert.equal(legalDocumentVersion(marketLegal('ru'), 'privacy'), '1');
   assert.equal(legalDocumentVersion(marketLegal('ru'), 'offer'), '1');
   assert.throws(() => legalDocumentFile('ru', { ...MARKET_LEGAL.ru, offerVersion: '../x' }, 'offer'), /invalid/);
   for (const market of ['global', 'cn']) for (const name of ['privacy', 'terms', 'offer']) assert.equal(legalDocumentFile(market, marketLegal(market), name), null);
@@ -259,7 +263,7 @@ test('the user agreement covers conduct, chat, the sanctions ladder, liability a
   const text = legalPlainText((await documents())['ru/terms'].doc);
   for (const pattern of [/Правила поведения/, /Чат и реакции/, /Нарушения и санкции/, /предупреждение/, /запрет отправлять сообщения в чат/,
     /запрет рейтинговых матчей/, /запрет подбора матчей/, /сброс ника/, /временная блокировка аккаунта/, /бессрочная блокировка аккаунта/,
-    /оспорить санкцию/, /Ответственность/, /AGPL-3\.0-only/, /MPL-2\.0/, /CC-BY-4\.0/, /ИНН: 501502113878/, /ОГРН\/ОГРНИП: 326508100266477/, /prostosobolev@gmail\.com/])
+    /оспорить санкцию/, /Ответственность/, /AGPL-3\.0-only/, /MPL-2\.0/, /CC-BY-4\.0/, /ИНН: 501502113878/, /ОГРНИП: 326508100266477/, /prostosobolev@gmail\.com/])
     assert.match(text, pattern);
 });
 

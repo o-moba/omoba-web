@@ -5,6 +5,7 @@ export const PORTAL_NAV: readonly string[];
 export const MOBILE_NAV: readonly string[];
 export const GUEST_LINKS: readonly string[];
 export const SUPPORTER_NAV: readonly string[];
+export function portalShellRoute(pathname: string): boolean;
 export function portalNav(list: readonly string[], features?: NavFeatures, links?: boolean): string[];
 export function mobileNav(features?: NavFeatures, landing?: { workshop: 'listed' | 'experimental' }, links?: boolean): string[];
 export function portalReturnTo(value: unknown, features?: NavFeatures): string;

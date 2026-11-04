@@ -13,6 +13,8 @@ banner, no effective date, and `{{…}}` fields (highlighted on the page) for wh
 owner still has to fill in: operator, requisites, e-mail, retention periods counsel
 decides.
 
+`ru/1/` holds the published RU edition: `privacy.md` and `terms.md` since 2026-11-05 (owner-approved without counsel review; the RKN registry number is added once the operator's notification is registered), and `offer.md`. `ru/0-draft/` stays as the record.
+
 `ru/1/offer.md` is the published offer (edition 1, effective 2026-11-05, owner-approved
 without counsel review so YooKassa can moderate the shop). The offer has its own edition,
 `offerVersion` in the legal table: players accept it at payment, not in the game, so a new

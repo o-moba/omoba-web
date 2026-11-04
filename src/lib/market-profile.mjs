@@ -72,20 +72,20 @@ const NO_LEGAL = Object.freeze({
  * the game links `/supporter`, which links the offer; the game table gains it with
  * LR-67/LR-68. `delete` (the public account-deletion page, O-15; the URL for Play's
  * Data safety form) is portal-only too; the game table gains it with the in-app
- * deletion request (LR-69). RU support and community stay null until the owner
- * provides them (LR-21).
+ * deletion request (LR-69). RU support e-mail is the operator's address (LR-21);
+ * the community links stay null until the owner provides them.
  */
 export const MARKET_LEGAL = Object.freeze({
   global: NO_LEGAL,
   ru: Object.freeze({
-    version: "0-draft",
+    version: "1",
     offerVersion: "1",
     privacy: "https://omoba.ru/privacy",
     terms: "https://omoba.ru/terms",
     offer: "https://omoba.ru/offer",
     delete: "https://omoba.ru/delete",
     source: "https://github.com/o-moba/omoba-bevy/tree/v{version}-ru",
-    supportEmail: null,
+    supportEmail: "prostosobolev@gmail.com",
     communityVk: null,
     communityTelegram: null,
     ageRating: "12+",

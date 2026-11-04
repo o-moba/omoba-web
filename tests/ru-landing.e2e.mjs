@@ -137,7 +137,7 @@ if (market === "ru") {
     assert.match(html, /data-age-rating="?[^>]*>12\+</);
     const footer = /<footer>[\s\S]*?<\/footer>/.exec(html)?.[0] ?? "";
     // RU sells Hero tiers (LR-67): the footer links the offer too.
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "delete", "source"]);
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "contacts", "delete", "support", "source"]);
     assert.match(footer, /data-age-rating/);
     assert.match(footer, /<a href="\/">OMOBA<\/a>/);
     assert.ok(!html.includes("https://omoba.io"), "the RU landing links the global website");
@@ -188,13 +188,13 @@ if (market === "ru") {
     const { text } = surface(html);
     for (const claim of ["с темой «Персональные данные»", "ник с тегом", "ключи устройств аккаунта больше не принимаются", "не более 30 дней", "«Удалённый игрок»", "вручную по запросу"])
       assert.ok(text.includes(claim), claim);
-    // No support e-mail yet (LR-21): a highlighted placeholder, and the policy section that sets the procedure.
-    assert.match(html, /data-deletion-contact="placeholder"[^>]*>адрес поддержки \(будет опубликован до запуска\)</);
-    assert.ok(!html.includes("mailto:"), "a mailto link without a support e-mail");
+    // The operator's support e-mail (LR-21), and the policy section that sets the procedure.
+    assert.match(html, /data-deletion-contact="email"[^>]*>prostosobolev@gmail\.com</);
+    assert.ok(html.includes('href="mailto:prostosobolev@gmail.com"'), "the deletion contact is a mailto link");
     assert.match(html, /href="\/privacy#requests"/);
     const footer = /<footer class="legal-page-footer">[\s\S]*?<\/footer>/.exec(html)?.[0] ?? "";
     // RU sells Hero tiers (LR-67): the footer links the offer too.
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "delete", "source"]);
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "contacts", "delete", "support", "source"]);
     // Every page language.
     const english = surface(await (await get(origin, "/delete", { language: "en-US" })).text()).text;
     assert.ok(english.includes("Delete your OMOBA account") && english.includes("within 30 days"), "English page");

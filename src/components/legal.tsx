@@ -13,6 +13,7 @@ function useLinkLabel() {
       case 'privacy': return t('Privacy policy');
       case 'terms': return t('Terms of use');
       case 'offer': return t('Public offer');
+      case 'contacts': return t('Contacts and requisites');
       case 'delete': return t('Delete account');
       case 'support': return t('Support');
       case 'source': return t('Source code');
@@ -121,6 +122,31 @@ export function LegalDocumentView({ name, document, siteUrl }: { name: LegalDocu
           {meta.review ? <> · {meta.review}</> : null}
         </p>
         {blocks.map((block, index) => <DocumentBlock key={index} block={block} />)}
+      </article>
+    </main>
+    <footer className="legal-page-footer"><a href={siteUrl}>OMOBA · {t('Website')} ↗</a><LegalLinks /></footer>
+  </div>;
+}
+
+/**
+ * `/contacts` (RU): the seller's requisites from the offer's requisites section
+ * (`#seller`), so the offer stays their single source, plus the support address.
+ */
+export function ContactsView({ blocks, email, siteUrl }: { blocks: Block[]; email: string | null; siteUrl: string }) {
+  const { t, locale } = useLocale();
+  const ask = t('Questions about the game, accounts, payments and personal data: write to {email}.').split('{email}');
+  return <div className="legal-page">
+    <header className="legal-header">
+      <Link href="/" className="legal-brand" aria-label={t('OMOBA player portal')}><Brand section={t('Player portal')} /></Link>
+      <div className="grow" />
+      <LanguageSelector />
+    </header>
+    <main className="legal-main">
+      <article className="legal-document" data-contacts>
+        {locale !== 'ru' ? <p className="notice" lang={locale === 'zh' ? 'zh-CN' : locale}>{t('This document is available in Russian only.')}</p> : null}
+        <h1>{t('Contacts and requisites')}</h1>
+        {email ? <p data-contacts-email>{ask[0]}<a href={'mailto:' + email}>{email}</a>{ask[1] ?? ''}</p> : null}
+        <div lang="ru">{blocks.map((block, index) => <DocumentBlock key={index} block={block} />)}</div>
       </article>
     </main>
     <footer className="legal-page-footer"><a href={siteUrl}>OMOBA · {t('Website')} ↗</a><LegalLinks /></footer>

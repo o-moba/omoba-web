@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { contourSiteUrl } from "@/lib/navigation.mjs";
+import { contourSiteUrl, portalShellRoute } from "@/lib/navigation.mjs";
 import { initialAccount, initialSocialTicket } from '@/lib/server-api';
 import { landingFacts, landingReleases } from '@/lib/landing-server';
 import { getLocale } from '@/lib/locale-server';
@@ -41,6 +41,8 @@ export default async function Page({params}:{params:Promise<{path?:string[]}>}) 
   // Existing public/game files are served before this dynamic route. A missing
   // game asset must be a 404, never portal HTML masquerading as an image/JSON.
   if (path[0] === 'game') notFound();
+  // Only the shell's own pages; an unknown path is a real 404 (before any account call).
+  if (!portalShellRoute('/' + path.join('/'))) notFound();
   // Supporter pages exist only in markets that sell Hero (not ru, cn).
   if (!routeEnabled('/'+path.join('/'), marketFeatures())) notFound();
   const initial=await initialAccount();
