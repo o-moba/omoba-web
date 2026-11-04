@@ -266,7 +266,7 @@ test('the user agreement covers conduct, chat, the sanctions ladder, liability a
 test('the offer covers the 30-day aura, prices, the payment service, refunds and the seller', async () => {
   const text = legalPlainText((await documents())['ru/offer'].doc);
   for (const pattern of [/на 30 дней/, /не даёт преимуществ/, /100, 250, 500, 1000, 2500, 5000 или 10 000 рублей/, /от 100 до 100 000 рублей/,
-    /ЮKassa/, /54-ФЗ/, /Возврат/, /не продлевается автоматически/, /ИНН: 501502113878/, /ОГРНИП или ОГРН: 326508100266477/, /Адрес: 143180/, /Телефон: \+7 903 785-95-95/, /prostosobolev@gmail\.com/, /не облагается/, /неиспользованным дням/])
+    /ЮKassa/, /54-ФЗ/, /Возврат/, /не продлевается автоматически/, /ИНН: 501502113878/, /ОГРНИП: 326508100266477/, /«Роза»/, /«Багрянец»/, /Адрес: 143180/, /Телефон: \+7 903 785-95-95/, /prostosobolev@gmail\.com/, /не облагается/, /неиспользованным дням/])
     assert.match(text, pattern);
 });
 
