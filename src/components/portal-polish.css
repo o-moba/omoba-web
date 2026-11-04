@@ -1,0 +1,323 @@
+/* Player surfaces only. Keep the canonical Arena / Armory brand tokens and
+   avoid leaking account-layout rules into the separately routed workshop. */
+.portal-shell {
+  --result-win: #77dcb2;
+  --result-loss: #f08c86;
+  background: radial-gradient(ellipse at 80% -15%, #19335540, transparent 48%), var(--omoba-void);
+  font-variant-numeric: tabular-nums;
+}
+.portal-shell .sidebar {
+  width: 244px;
+  padding: 24px 18px 20px;
+  background: linear-gradient(180deg, #0c1625, #080e1a 48%);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.portal-shell .sidebar .brand { margin: 0 12px 28px; }
+.portal-shell .sidebar .omoba-brand { flex-direction: row; align-items: center; gap: 10px; }
+.portal-shell .sidebar .omoba-brand > img { width: 64px; height: 64px; }
+.portal-shell .sidebar .omoba-brand b { font-size: 29px; }
+.portal-shell .sidebar .omoba-brand small { font-size: 9px; letter-spacing: .12em; }
+.portal-shell .sidebar-play { width: 100%; min-height: 48px; margin-bottom: 24px; font-size: 13px; }
+.portal-shell .sidebar nav { gap: 4px; }
+.portal-shell .sidebar nav a { min-height: 42px; padding: 9px 13px; border-radius: 7px; font-size: 12px; }
+.portal-shell .sidebar nav a svg { flex-shrink: 0; width: 18px; height: 18px; }
+.portal-shell .sidebar nav a.active { color: var(--text); background: #173254; border-color: #285887; box-shadow: inset 3px 0 var(--omoba-crystal); }
+.portal-shell .sidebar nav a:hover { background-color: #17253b80; }
+.portal-shell .sidebar nav a.nav-utility { color: var(--muted); }
+.portal-shell .sidebar nav a.nav-utility:first-of-type { margin-top: 16px; }
+.portal-shell .sidebar-bottom { padding-top: 24px; gap: 10px; }
+.portal-shell .sidebar-bottom .button { min-height: 38px; font-size: 11px; border-color: transparent; justify-content: flex-start; color: var(--muted); }
+.portal-shell .sidebar-bottom small { margin-top: 7px; color: var(--muted); font-size: 8px; }
+.portal-shell .workspace { margin-left: 244px; width: calc(100% - 244px); min-width: 0; }
+.portal-shell .topbar { min-height: 76px; gap: 16px; padding: 14px 36px; background: #080e1abf; backdrop-filter: blur(12px); }
+.portal-shell .topbar .beta { letter-spacing: .13em; color: var(--gold); background: #c9a56a0a; border-color: #c9a56a40; }
+.portal-shell .topbar-location { font-size: 12px; }
+.portal-shell .topbar select { font-size: 11px; border-color: transparent; padding: 7px 10px; }
+.portal-shell .topbar-play { min-height: 36px; padding: 7px 12px; font-size: 11px; border-color: #3478f64a; background: #3478f610; }
+.portal-shell .account-link { font-size: 12px; }
+.portal-shell .topbar > button { border-color: transparent; color: var(--muted); }
+.portal-shell .workspace main { max-width: 1320px; padding: 36px 38px 64px; }
+.portal-shell .card { border-radius: 12px; background: linear-gradient(155deg, #14213745, transparent 70%), var(--omoba-surface); box-shadow: 0 8px 30px #0307131a; }
+.portal-shell .section-kicker { display: block; margin-bottom: 5px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-size: 9px; font-weight: 600; }
+.portal-shell .section-heading { margin-bottom: 22px; }
+.portal-shell .section-heading h2 { font-size: 25px; line-height: 1.15; }
+.portal-shell .section-heading > button { min-height: 34px; padding: 6px 12px; font-size: 11px; }
+.portal-shell .section-heading > a { font-size: 11px; font-weight: 600; }
+.portal-shell .eyebrow { margin-bottom: 14px; font-size: 9px; letter-spacing: .19em; }
+.portal-shell .portal-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 22px; margin-bottom: 28px; }
+.portal-shell .portal-page-heading h1 { margin-bottom: 10px; font-size: 48px; }
+.portal-shell .portal-page-heading p { max-width: 610px; margin: 0; font-size: 13px; }
+.portal-shell .portal-page-heading .button { font-size: 12px; flex-shrink: 0; }
+.portal-shell .metric strong { font-size: 40px; line-height: 1.1; letter-spacing: 0; }
+.portal-shell .metric > span { font-size: 10px; letter-spacing: .01em; }
+.portal-shell .metric strong .record-wins,
+.portal-shell .metric strong .record-losses { display: inline; font: inherit; margin: 0; }
+.portal-shell .metric strong i { color: #647892; font-size: .7em; font-style: normal; font-weight: 400; }
+.portal-shell .record-wins, .portal-shell .rating-up { color: var(--result-win); }
+.portal-shell .record-losses, .portal-shell .rating-down { color: var(--result-loss); }
+.portal-shell .career-metrics .metric:first-child strong { color: var(--gold); }
+.portal-shell .empty { padding: 38px 16px; font-size: 13px; }
+.portal-shell .empty > span { width: 48px; height: 48px; display: grid; place-items: center; margin: 0 auto 16px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 25px; background: #17253b55; }
+.portal-shell .notice { border-radius: 8px; line-height: 1.7; }
+.portal-shell .notice.error { background: #f08c8609; border-color: #f08c864d; }
+.portal-shell .notice button { min-height: 32px; padding: 5px 10px; font-size: 11px; }
+.portal-shell .portal-loading { display: flex; align-items: center; gap: 10px; padding: 16px 0; font-size: 12px; }
+.portal-shell .portal-loading > span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--omoba-crystal); animation: portal-loading-spin .8s linear infinite; }
+@keyframes portal-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .portal-shell .portal-loading > span { animation: none; } }
+.portal-shell .career-hero { display: flex; position: relative; isolation: isolate; align-items: center; justify-content: space-between; gap: 24px; padding: 32px; margin-bottom: 22px; border: 1px solid #36516d; border-radius: 12px; overflow: hidden; background: #101b2d; }
+.portal-shell .career-hero::before { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #101b2df5 15%, #101b2dc9 62%, #101b2d30), url('/art/portal/verdant-arena.jpg') center 48% / cover; }
+.portal-shell .career-identity { min-width: 0; }
+.portal-shell .career-hero h1 { font-size: clamp(32px, 4vw, 54px); line-height: 1.05; margin: 0 0 12px; overflow-wrap: anywhere; }
+.portal-shell .career-hero p { color: #b4c4d6; font-size: 12px; margin: 0 0 18px; }
+.portal-shell .career-level { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 11px; color: var(--muted); }
+.portal-shell .career-level b { color: var(--text); margin-left: 4px; }
+.portal-shell .career-next { flex-shrink: 0; align-self: center; text-align: center; }
+.portal-shell .career-next .button { font-size: 12px; min-height: 48px; }
+.portal-shell .career-next small { font-size: 9px; color: #c4d0de; margin-top: 8px; }
+.portal-shell .career-summary { padding: 28px 30px 20px; }
+.portal-shell .profile-strip { margin-top: 26px; padding-top: 16px; gap: 20px; font-size: 10px; }
+.portal-shell .profile-strip > a { margin-left: auto; color: var(--mint); font-size: 11px; }
+.portal-shell .player-identity-card { display: flex; gap: 20px; align-items: center; justify-content: space-between; padding: 24px 28px; }
+.portal-shell .player-identity-card h2 { font-family: var(--omoba-sans); font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 400; }
+.portal-shell .player-identity-card .code { margin: 0; color: var(--text); font-size: 15px; }
+.portal-shell .identity-actions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+.portal-shell .identity-actions .button, .portal-shell .identity-actions button { min-height: 35px; padding: 7px 11px; font-size: 10px; }
+.portal-shell .history-card { padding: 26px 28px 12px; }
+.portal-shell .history-card .filters { margin: 0 0 18px; padding: 16px; border: 1px solid var(--line); background: #080e1a77; border-radius: 8px; gap: 12px; }
+.portal-shell .filters label { margin-bottom: 0; font-size: 10px; gap: 7px; }
+.portal-shell .filters select { min-height: 38px; font-size: 12px; background: #101b2d; }
+.portal-shell .match-list { gap: 8px; padding-bottom: 10px; }
+.portal-shell .match-row { display: grid; grid-template-columns: 44px minmax(100px, 1fr) 116px 110px minmax(150px, 1fr) 14px; align-items: center; gap: 16px; min-height: 88px; padding: 15px 17px; border: 1px solid #273a51; border-left: 3px solid #53667d; background: #101b2d; border-radius: 7px; transition: background .15s, border-color .15s, transform .15s; }
+.portal-shell .match-row:last-child { border-bottom: 1px solid #273a51; }
+.portal-shell .match-row:hover { background: #17253b; border-color: #45638a; transform: translateX(2px); }
+.portal-shell .match-row.won { border-left-color: var(--result-win); }
+.portal-shell .match-row.lost { border-left-color: var(--result-loss); }
+.portal-shell .match-row > div { min-width: 0; }
+.portal-shell .match-row b { font-size: 13px; }
+.portal-shell .match-row .outcome-label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+.portal-shell .outcome-indicator { display: inline-block; flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.portal-shell .match-row.won .outcome-label { color: var(--result-win); }
+.portal-shell .match-row.lost .outcome-label { color: var(--result-loss); }
+.portal-shell .match-row small { margin-top: 7px; font-size: 9px; }
+.portal-shell .match-row .match-kda b { font-family: var(--omoba-display); font-size: 22px; letter-spacing: .03em; font-weight: 700; white-space: nowrap; }
+.portal-shell .match-kda i, .portal-shell .score-kda i { color: #6b7e96; font: inherit; font-size: .7em; font-style: normal; }
+.portal-shell .match-row .match-end { text-align: right; }
+.portal-shell .match-row .match-end small { font-size: 9px; }
+.portal-shell .match-open { color: #7c94b3; font-size: 18px; transition: color .15s; }
+.portal-shell .match-row:hover .match-open { color: var(--omoba-crystal); }
+.portal-shell .class-icon { display: grid; place-items: center; width: 44px; height: 48px; border-radius: 8px; background: linear-gradient(150deg, #24364d, #152134); border: 1px solid #3d506d; color: var(--text); box-shadow: inset 0 1px #ffffff08; }
+.portal-shell .class-icon img { display: block; width: 28px; height: 28px; object-fit: contain; }
+.portal-shell .class-icon.warrior { background: linear-gradient(150deg, #54442e, #282638); border-color: #716044; }
+.portal-shell .class-icon.mage { background: linear-gradient(150deg, #3c365b, #20243b); border-color: #5e5486; }
+.portal-shell .class-icon.ranger { background: linear-gradient(150deg, #254d47, #182c31); border-color: #38675d; }
+.portal-shell .class-icon.cleric { background: linear-gradient(150deg, #444b50, #222e3b); border-color: #65727e; }
+.portal-shell .history-pagination { display: flex; justify-content: flex-end; padding: 12px 0 14px; }
+.portal-shell .history-pagination button { font-size: 12px; }
+.portal-shell .match-back { margin-bottom: 24px; font-size: 11px; color: var(--muted); }
+.portal-shell .match-banner { position: relative; display: flex; gap: 24px; align-items: center; justify-content: space-between; padding: 32px; margin-bottom: 22px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: linear-gradient(90deg, #101b2dfc 12%, #101b2dd9 65%, #101b2d9e), url('/art/portal/verdant-arena.jpg') center 48% / cover; }
+.portal-shell .match-banner h1 { margin: 0 0 16px; font-size: clamp(38px, 4vw, 58px); }
+.portal-shell .match-banner.won h1 { color: var(--result-win); }
+.portal-shell .match-banner.lost h1 { color: var(--result-loss); }
+.portal-shell .match-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; color: #b7c6d8; font-size: 10px; }
+.portal-shell .match-meta .tag { font-size: 9px; border: 1px solid #60748f66; background: #080e1a88; color: var(--text); }
+.portal-shell .match-score { display: flex; align-items: center; gap: 36px; }
+.portal-shell .score-team { position: relative; text-align: center; min-width: 92px; }
+.portal-shell .score-team > span { color: var(--muted); font-size: 10px; text-transform: capitalize; }
+.portal-shell .score-team > strong { display: block; font: 700 58px/1.15 var(--omoba-display); }
+.portal-shell .score-team.won > strong, .portal-shell .score-team.won > small { color: var(--result-win); }
+.portal-shell .score-team.lost > small { color: var(--result-loss); }
+.portal-shell .score-team > small { font-size: 9px; }
+.portal-shell .score-team > i { position: absolute; top: 24px; right: -24px; font: normal 28px/1 var(--omoba-display); color: #657b97; }
+.portal-shell .team-panels { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
+.portal-shell .team-card { padding: 22px 20px 12px; margin: 0; overflow: hidden; }
+.portal-shell .team-card.won { border-top: 2px solid #77dcb2; }
+.portal-shell .team-card.lost { border-top: 2px solid #6f91be; }
+.portal-shell .team-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.portal-shell .team-heading h2 { font-size: 28px; text-transform: capitalize; margin-bottom: 0; }
+.portal-shell .team-card.won .section-kicker { color: var(--result-win); }
+.portal-shell .team-kills { text-align: right; display: flex; align-items: baseline; gap: 6px; }
+.portal-shell .team-kills strong { font: 700 36px/1 var(--omoba-display); }
+.portal-shell .team-kills span { color: var(--muted); font-size: 10px; }
+.portal-shell .team-totals { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 17px 0 20px; font-size: 10px; color: var(--muted); }
+.portal-shell .team-totals b { color: var(--text); font-weight: 600; margin-right: 4px; }
+.portal-shell .scoreboard-cols { display: grid; grid-template-columns: minmax(0,1fr) 76px 76px 12px; gap: 10px; padding: 10px 0; color: #91a8c2; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; border-top: 1px solid var(--line); }
+.portal-shell .scoreboard-cols > span:first-child { padding-left: 42px; }
+.portal-shell .scoreboard-cols > span:last-child { text-align: right; }
+.portal-shell .scoreboard summary { display: grid; grid-template-columns: 32px minmax(54px,1fr) 76px 76px 12px; gap: 10px; padding: 15px 0; align-items: center; }
+.portal-shell .scoreboard .class-icon { width: 32px; height: 38px; border-radius: 5px; }
+.portal-shell .scoreboard .class-icon img { width: 23px; height: 23px; }
+.portal-shell .scoreboard .score-player { min-width: 0; }
+.portal-shell .score-player > strong { display: block; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.portal-shell .score-player small { color: #8ea5bf; font-size: 10px; line-height: 1.55; margin-top: 3px; overflow-wrap: anywhere; }
+.portal-shell .self-badge, .portal-shell .bot-badge { display: inline-block; font-size: 9px; font-style: normal; padding: 1px 4px; margin-left: 5px; border-radius: 3px; background: #3478f62b; color: var(--omoba-crystal); vertical-align: 1px; }
+.portal-shell .bot-badge { color: var(--muted); background: #ffffff08; }
+.portal-shell .scoreboard .score-kda { font-family: var(--omoba-display); font-size: 18px; line-height: 1.2; white-space: nowrap; text-align: center; }
+.portal-shell .scoreboard .score-damage { font-size: 11px; text-align: right; }
+.portal-shell .score-damage b { font-size: 11px; font-weight: 500; }
+.portal-shell .damage-meter { display: block; height: 3px; width: 100%; margin-top: 7px; background: #263951; border-radius: 3px; overflow: hidden; }
+.portal-shell .damage-meter > span { display: block; height: 100%; background: #6b9bcb; border-radius: inherit; }
+.portal-shell .team-card.won .damage-meter > span { background: #77dcb2; }
+.portal-shell .scoreboard summary > .detail-chevron:last-child { min-width: 0; width: 12px; font-size: 13px; color: var(--muted); text-align: right; }
+.portal-shell .scoreboard details[open] .detail-chevron { transform: rotate(180deg); }
+.portal-shell .scoreboard details.mine { margin-inline: -10px; padding-inline: 10px; border-radius: 6px; background: #3478f612; box-shadow: inset 2px 0 #3478f6; }
+.portal-shell .scoreboard summary:hover { color: var(--omoba-crystal); }
+.portal-shell .detail-grid { gap: 18px 12px; padding: 10px 0 22px; border-top: 1px solid #2a3e5a66; }
+.portal-shell .detail-grid .metric > span { font-size: 10px; }
+.portal-shell .detail-grid .metric strong { font-size: 22px; }
+.portal-shell .player-detail-heading { grid-column: 1/-1; color: var(--muted); font-size: 9px; padding-top: 8px; }
+.portal-shell .player-profile-link { min-height: 32px; padding: 5px 9px; font-size: 10px; align-self: end; }
+.portal-shell .match-historical { margin-top: 20px; font-size: 10px; }
+.portal-shell .stats-filters { padding: 18px 22px; }
+.portal-shell .stats-filters .filters { margin: 0; }
+.portal-shell .stats-record { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding-top: 20px; margin-top: 24px; border-top: 1px solid var(--line); font-size: 11px; }
+.portal-shell .stats-record small { font-size: 9px; margin-left: auto; }
+.portal-shell .sample-notice { margin: 20px 0 0; font-size: 11px; }
+.portal-shell .stats-detail-layout { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); gap: 20px; }
+.portal-shell .stats-detail-layout > .card { margin: 0; padding: 24px; }
+.portal-shell .latest-rating { font-family: var(--omoba-display); font-size: 30px; color: var(--gold); }
+.portal-shell .rating-chart { display: block; margin: 24px 0 12px; font: 11px var(--omoba-sans); color: #9baec6; max-height: none; overflow: visible; }
+.portal-shell .rating-chart text { fill: currentColor; }
+.portal-shell .rating-table summary { padding: 16px 0 0; min-height: 36px; font-size: 10px; color: var(--muted); }
+.portal-shell .rating-table ul { list-style: none; padding: 0; margin-bottom: 0; }
+.portal-shell .rating-table li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 9px; border-top: 1px solid var(--line); padding: 11px 0; }
+.portal-shell .rating-table li > span { color: var(--muted); }
+.portal-shell .class-performance .class-row { flex-wrap: nowrap; gap: 14px; padding: 18px 0; }
+.portal-shell .class-performance .class-row:last-child { padding-bottom: 0; }
+.portal-shell .class-performance-copy { flex: 1; min-width: 0; }
+.portal-shell .class-performance-copy > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.portal-shell .class-performance-copy strong { font-size: 12px; }
+.portal-shell .class-performance-copy > div:first-child > span { font-size: 9px; color: var(--muted); white-space: nowrap; }
+.portal-shell .class-win-rate { display: flex; align-items: center; gap: 10px; margin: 9px 0 6px; }
+.portal-shell .class-win-rate > b { min-width: 40px; text-align: right; font-size: 10px; font-weight: 500; }
+.portal-shell .win-rate-track { display: block; flex: 1; height: 4px; border-radius: 4px; background: #263951; overflow: hidden; }
+.portal-shell .win-rate-track > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--omoba-cobalt), var(--omoba-crystal)); }
+.portal-shell .class-performance-copy > small { font-size: 8px; }
+.portal-shell .class-performance-copy > small > span { padding: 0 5px; color: #596c84; }
+.portal-shell .stats-asof { font-size: 10px; margin-top: 20px; }
+.portal-shell .portal-login-layout { display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,1fr); align-items: stretch; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; max-width: 1040px; margin: 12px auto 30px; background: var(--panel); }
+.portal-shell .portal-login-story { display: flex; flex-direction: column; padding: 42px 34px; min-height: 520px; background: linear-gradient(180deg, #101b2d75, #101b2d 90%), linear-gradient(90deg, #101b2d50, #101b2d30), url('/art/portal/verdant-arena.jpg') center / cover; border-right: 1px solid var(--line); }
+.portal-shell .portal-login-story h2 { font-size: 44px; line-height: 1.1; max-width: 360px; margin-bottom: 30px; }
+.portal-shell .login-benefits { display: grid; gap: 15px; margin-top: auto; padding-top: 70px; }
+.portal-shell .login-benefits > span { display: flex; gap: 12px; align-items: center; color: #c7d6e8; font-size: 12px; }
+.portal-shell .login-benefits svg { color: var(--omoba-crystal); width: 18px; height: 18px; }
+.portal-shell .portal-login-story > .button { align-self: flex-start; margin-top: 28px; font-size: 11px; background: #101b2d66; }
+.portal-shell .portal-login-layout > .login-card { max-width: none; width: 100%; padding: 40px; margin: 0; border: 0; border-radius: 0; box-shadow: none; background: var(--panel); }
+.portal-shell .login-card h1 { font-size: 38px; }
+.portal-shell .login-card > p, .portal-shell .login-secondary > p { font-size: 12px; line-height: 1.8; }
+.portal-shell .login-secondary { margin-top: 26px; padding-top: 24px; }
+.portal-shell .login-secondary > h2 { font-size: 23px; }
+.portal-shell .vk-buttons { gap: 9px; margin-block: 25px 15px; }
+.portal-shell .vk-button { font-size: 12px; border-color: #2a3e5a; }
+.portal-shell .vk-vkid { background: #0077ff14; border-color: #0077ff88; }
+.portal-shell .pair-code { font-size: clamp(26px,3vw,42px); letter-spacing: .08em; }
+.portal-shell .login-card .legal-notice { font-size: 10px; }
+.portal-shell .landing-hero { background: linear-gradient(115deg, #15263b, #101b2d 62%); border-color: #36516d; }
+.portal-shell .landing-hero .eyebrow { color: var(--gold); }
+.portal-shell .landing-modes .card { border-top: 2px solid #3478f680; }
+.portal-shell footer { flex-wrap: wrap; gap: 14px 20px; font-size: 10px; padding: 22px 38px; }
+.portal-shell .portal-credits { font-size: 9px; color: var(--muted); }
+@media (max-width: 1220px) {
+  .portal-shell .sidebar { width: 212px; padding-inline: 14px; }
+  .portal-shell .sidebar .brand { margin-inline: 6px; }
+  .portal-shell .sidebar .omoba-brand > img { width: 64px; height: 64px; }
+  .portal-shell .sidebar .omoba-brand b { font-size: 26px; }
+  .portal-shell .workspace { margin-left: 212px; width: calc(100% - 212px); }
+  .portal-shell .workspace main { padding: 28px 24px 50px; }
+  .portal-shell .match-row { grid-template-columns: 40px minmax(90px,1fr) 100px minmax(130px,1fr) 14px; gap: 12px; }
+  .portal-shell .match-row .damage-cell { display: none; }
+  .portal-shell .team-panels { grid-template-columns: 1fr; }
+  .portal-shell .scoreboard summary { grid-template-columns: 36px minmax(100px,1fr) 112px 112px 12px; }
+  .portal-shell .scoreboard-cols { grid-template-columns: minmax(0,1fr) 112px 112px 12px; }
+  .portal-shell .stats-detail-layout { grid-template-columns: 1fr; }
+  .portal-shell .portal-login-story { padding: 32px 26px; }
+  .portal-shell .portal-login-layout > .login-card { padding: 32px 28px; }
+}
+@media (max-width: 760px) {
+  .portal-shell .sidebar { display: none; }
+  .portal-shell .workspace { margin-left: 0; width: 100%; }
+  .portal-shell .topbar { min-height: 70px; gap: 8px; padding: 10px 16px; }
+  .portal-shell .topbar .portal-mobile-brand { display: block; }
+  .portal-shell .topbar .beta { font-size: 8px; padding: 3px 6px; }
+  .portal-shell .topbar-play { display: none; }
+  .portal-shell .topbar select { max-width: 92px; font-size: 10px; }
+  .portal-shell .topbar > a:not(.portal-mobile-brand):not(.topbar-play) { font-size: 11px; }
+  .portal-shell .account-link { max-width: 100px; }
+  .portal-shell .workspace main { padding: 24px 16px 32px; }
+  .portal-shell .card { padding: 20px 18px; border-radius: 10px; margin-bottom: 16px; }
+  .portal-shell .portal-page-heading { gap: 12px; align-items: flex-start; flex-direction: column; margin-bottom: 22px; }
+  .portal-shell .portal-page-heading h1 { font-size: 36px; }
+  .portal-shell .portal-page-heading p { font-size: 12px; }
+  .portal-shell .portal-page-heading > .button { min-height: 36px; padding: 7px 11px; font-size: 11px; }
+  .portal-shell .section-heading h2 { font-size: 23px; }
+  .portal-shell .section-heading > a { font-size: 10px; }
+  .portal-shell .career-hero { flex-direction: column; align-items: flex-start; gap: 24px; padding: 25px 22px; margin-bottom: 16px; }
+  .portal-shell .career-hero::before { background: linear-gradient(90deg, #101b2df5, #101b2dbf), url('/art/portal/verdant-arena.jpg') center / cover; }
+  .portal-shell .career-hero h1 { font-size: 36px; }
+  .portal-shell .career-next { align-self: flex-start; text-align: left; }
+  .portal-shell .career-next small { display: inline; margin-left: 10px; font-size: 8px; }
+  .portal-shell .career-next .button { font-size: 11px; min-height: 42px; }
+  .portal-shell .metric strong { font-size: 34px; }
+  .portal-shell .profile-strip { font-size: 9px; gap: 14px; }
+  .portal-shell .profile-strip > a { font-size: 10px; }
+  .portal-shell .player-identity-card { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .portal-shell .identity-actions { justify-content: flex-start; }
+  .portal-shell .history-card { padding: 22px 14px 8px; }
+  .portal-shell .history-card .filters { padding: 12px; gap: 12px 8px; }
+  .portal-shell .filters label { font-size: 9px; }
+  .portal-shell .filters select { padding: 8px; font-size: 11px; }
+  .portal-shell .match-row { grid-template-columns: 36px minmax(0,1fr) auto; gap: 10px; min-height: 118px; padding: 13px 12px; }
+  .portal-shell .match-row .class-icon { width: 36px; height: 42px; }
+  .portal-shell .match-row .class-icon img { width: 24px; height: 24px; }
+  .portal-shell .match-row .outcome-label { font-size: 11px; gap: 6px; }
+  .portal-shell .match-row .match-kda { text-align: right; }
+  .portal-shell .match-row .match-kda b { font-size: 21px; }
+  .portal-shell .match-row small { font-size: 8px; margin-top: 4px; }
+  .portal-shell .match-row .match-end { display: flex; grid-column: 2/-1; align-items: baseline; gap: 6px; justify-content: space-between; text-align: left; margin-top: 2px; }
+  .portal-shell .match-row .match-end b, .portal-shell .match-row .match-end small { font-size: 8px; }
+  .portal-shell .match-row .match-open { display: none; }
+  .portal-shell .match-back { margin-bottom: 18px; }
+  .portal-shell .match-banner { flex-direction: column; align-items: flex-start; gap: 22px; padding: 24px 20px; margin-bottom: 16px; }
+  .portal-shell .match-banner h1 { font-size: 42px; }
+  .portal-shell .match-meta { font-size: 9px; gap: 8px 12px; }
+  .portal-shell .match-score { width: 100%; justify-content: center; padding-top: 18px; border-top: 1px solid #61758e44; gap: 36px; }
+  .portal-shell .score-team > strong { font-size: 48px; }
+  .portal-shell .score-team > i { top: 22px; }
+  .portal-shell .team-panels { grid-template-columns: 1fr; gap: 16px; }
+  .portal-shell .team-card { padding: 20px 14px 8px; margin-bottom: 0; }
+  .portal-shell .team-heading h2 { font-size: 27px; }
+  .portal-shell .team-totals { gap: 8px 12px; font-size: 8px; }
+  .portal-shell .scoreboard summary { grid-template-columns: 28px minmax(52px,1fr) 66px 58px 10px; gap: 7px; }
+  .portal-shell .scoreboard-cols { grid-template-columns: minmax(0,1fr) 66px 58px 10px; gap: 7px; font-size: 7px; }
+  .portal-shell .scoreboard-cols > span:first-child { padding-left: 35px; }
+  .portal-shell .scoreboard .class-icon { width: 28px; height: 34px; }
+  .portal-shell .scoreboard .class-icon img { width: 21px; height: 21px; }
+  .portal-shell .scoreboard .score-kda { font-size: 16px; }
+  .portal-shell .score-player > strong { font-size: 9px; }
+  .portal-shell .score-player small { font-size: 7px; }
+  .portal-shell .score-damage b { font-size: 9px; }
+  .portal-shell .scoreboard .detail-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .portal-shell .scoreboard .detail-grid .metric > span { font-size: 7px; }
+  .portal-shell .scoreboard .detail-grid .metric strong { font-size: 20px; }
+  .portal-shell .stats-filters { padding: 16px; }
+  .portal-shell .stats-record { gap: 12px; }
+  .portal-shell .stats-record small { flex-basis: 100%; margin: 0; font-size: 8px; }
+  .portal-shell .stats-detail-layout { display: block; }
+  .portal-shell .stats-detail-layout > .card { padding: 22px 18px; margin-bottom: 16px; }
+  .portal-shell .class-performance .class-row { flex-wrap: nowrap; }
+  .portal-shell .class-performance-copy > div:first-child > span { font-size: 9px; }
+  .portal-shell .rating-chart { font-size: 11px; }
+  .portal-shell .portal-login-layout { display: block; border-radius: 12px; margin-top: 0; }
+  .portal-shell .portal-login-story { padding: 26px 24px; min-height: 0; border-right: 0; border-bottom: 1px solid var(--line); background-position: center 45%; }
+  .portal-shell .portal-login-story h2 { font-size: 31px; max-width: 300px; margin-bottom: 0; }
+  .portal-shell .portal-login-story .eyebrow { font-size: 8px; }
+  .portal-shell .login-benefits { display: none; }
+  .portal-shell .portal-login-story > .button { margin-top: 22px; }
+  .portal-shell .portal-login-layout > .login-card { padding: 26px 24px; margin: 0; }
+  .portal-shell .login-card h1 { font-size: 32px; }
+  .portal-shell .mobile-nav { background: #0b1423f5; padding-block: 10px calc(10px + env(safe-area-inset-bottom)); }
+  .portal-shell .mobile-nav a { font-size: 9px; gap: 5px; }
+  .portal-shell .mobile-nav a.active { color: var(--omoba-crystal); }
+  .portal-shell footer { padding: 22px 16px calc(100px + env(safe-area-inset-bottom)); font-size: 9px; }
+}

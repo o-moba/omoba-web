@@ -1,0 +1,38 @@
+[Unit]
+Description=OMOBA RU player website
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=omoba-portal-ru
+Group=omoba-portal-ru
+WorkingDirectory=/opt/omoba-ru/web-current
+EnvironmentFile=/opt/omoba-ru/portal.env
+Environment=PATH=/opt/omoba-ru/node-current/bin:/usr/bin:/bin
+ExecStart=/opt/omoba-ru/node-current/bin/node /opt/omoba-ru/web-current/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+ReadWritePaths=/var/cache/omoba-portal-ru
+MemoryAccounting=yes
+MemoryHigh=384M
+MemoryMax=512M
+CPUQuota=100%
+TasksMax=64
+LimitNOFILE=16384
+
+[Install]
+WantedBy=multi-user.target

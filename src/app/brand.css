@@ -83,3 +83,19 @@
 .omoba-brand > img {
   border-radius: 12px;
 }
+/* Dev contour only (ContourBadge): unmistakable next to the mark, never in production.
+   Beats `.omoba-brand > span`, which lays out the name column. */
+.omoba-brand > .contour-badge {
+  display: inline-block;
+  align-self: center;
+  padding: 3px 8px;
+  border: 1px solid #ffb020;
+  border-radius: 6px;
+  background: #ffb020;
+  color: #1a1000;
+  font-family: var(--omoba-sans);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+}

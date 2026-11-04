@@ -1,0 +1,13 @@
+import type { Match, Participant } from './types';
+export type ResultTone = 'won' | 'lost' | 'neutral';
+export function resultTone(won: boolean | null, state: string): ResultTone;
+export function playerResult(match: Match, profileId: string): boolean | null;
+export type TeamSummary = { id: string; participants: Participant[]; kills: number; deaths: number; assists: number; damage: number; structures: number; result: ResultTone };
+export function teamSummaries(match: Match): TeamSummary[];
+export function recordRate(wins: number | undefined, losses: number | undefined): number | null;
+export function meterPercent(ratio: number | null | undefined): number | null;
+export function ratingBounds(points: {before: number; after: number}[]): { min: number; max: number } | null;
+export function classArtwork(name: string): string | null;
+export function classDisplayName(name: string): string;
+export function teamDisplayName(name: string, locale: string): string;
+export function presentationWords(locale: string): Record<'career' | 'careerIntro' | 'play' | 'practice' | 'record' | 'matches' | 'historyIntro' | 'statsIntro' | 'report' | 'score' | 'winner' | 'loser' | 'undecided' | 'you' | 'performance' | 'details' | 'rating' | 'damage' | 'teamDamage' | 'structures' | 'kills' | 'account' | 'accountHint' | 'signIn' | 'signInIntro' | 'ratingEmpty' | 'classesEmpty' | 'credits' | 'viewMatch' | 'current' | 'start' | 'noResult' | 'allResults', string>;

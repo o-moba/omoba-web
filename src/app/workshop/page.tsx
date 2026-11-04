@@ -1,6 +1,6 @@
 import { getLocale } from "@/lib/locale-server";
 import { creatorText } from "@/lib/creator-translations";
-import { publicSiteUrl } from "@/lib/navigation.mjs";
+import { contourSiteUrl } from "@/lib/navigation.mjs";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { readFile, stat } from "node:fs/promises";
@@ -9,6 +9,8 @@ import { initialAccount } from "@/lib/server-api";
 import { parseAssetCatalog, MAX_CATALOG_BYTES } from "@/lib/asset-catalog.mjs";
 import { verifyCatalogRevision } from "@/lib/asset-catalog-server.mjs";
 import { parseWorkshopCatalog, MAX_WORKSHOP_BYTES } from "@/lib/workshop.mjs";
+import { studioOrigin } from "@/lib/ekza-link.mjs";
+import { marketFeatures } from "@/lib/market-profile.mjs";
 import Workshop from "@/components/workshop";
 import "../creators/creators.css";
 import "./workshop.css";
@@ -38,7 +40,8 @@ export default async function WorkshopPage() {
     throw new Error("Workshop and asset gameplay revisions differ");
   return (
     <Workshop
-      siteUrl={publicSiteUrl(process.env.OMOBA_SITE_URL,process.env.NODE_ENV)}
+      siteUrl={contourSiteUrl()}
+      studioUrl={marketFeatures().ekza ? studioOrigin() : null}
       catalog={catalog}
       assets={assets}
       initialAccount={session.account}

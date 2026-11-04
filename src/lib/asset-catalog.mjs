@@ -297,6 +297,6 @@ export function contributionBrief(catalog, requirementId, classId) {
     uses: r.uses,
     baseline: r.baseline,
     workflow:
-      "Preparation only. Save this brief with your design. Studio drafts are not exact-slot submissions or approvals; publication and in-game equipping are not connected yet.",
+      "Preparation only. Save this brief with your design. Studio drafts are not exact-slot submissions or approvals: submit the finished model for OMOBA in Ekza Studio; it is listed in the market and selectable in the game only after OMOBA approves it.",
   };
 }
