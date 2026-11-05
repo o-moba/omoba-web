@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Show a neutral remake for innocent players while retaining a proved leaver's
+  individual ranked loss. Add a remake history filter and explain surrender
+  separately from a base victory. The new terminal reason remains optional.
+- Remake/surrender portal verification: 243 tests passed (3 expected skips),
+  typecheck and production build passed; focused RU phone browser scenarios
+  passed and their screenshots were inspected. Game-side completion remains
+  tracked in the game TODO.
+
 - Show a player's own forfeited loss separately from the team's victory, including
   ranked penalties after an unattended match ends. Preserve historical results
   that have no participation evidence.

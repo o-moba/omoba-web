@@ -1,4 +1,5 @@
 const ru = {
+  remade:'Ремейк', matchSurrender:'Матч завершён сдачей команды.', unratedRemake:'Ранний ремейк: обычных наград и сыгранного матча нет. Личный штраф подтверждённого ливера сохраняется.',
   overview:'Обзор', matches:'Матчи', players:'Игроки', friends:'Друзья', profile:'Профиль', stats:'Статистика', settings:'Настройки', download:'Скачать игру',
   title:'Твоя игра. В деталях.', intro:'Результаты матчей, прогресс и люди, с которыми хочется играть снова.',
   friendSearchHelp:'Ник друга и четыре цифры после #',handleTaken:'Такой ник и тег уже заняты. Выбери другие четыре цифры.',playerNotFound:'Игрок не найден. Проверь ник и четыре цифры после #.',handleHelp:'От 1 до 20 символов в имени, затем # и ровно 4 цифры. Ник и цифры можно менять.',
@@ -41,6 +42,7 @@ const ru = {
   listedHelp:'Ник и рейтинг уже видны соперникам в отчётах о матчах; этот переключатель скрывает только строку в таблице лидеров.',
 };
 const en: typeof ru = {
+  remade:'Remade', matchSurrender:'The match ended by surrender.', unratedRemake:'Early remake: no ordinary awards or played totals. A proven leaver keeps the individual penalty.',
   overview:'Overview',matches:'Matches',players:'Players',friends:'Friends',profile:'Profile',stats:'Statistics',settings:'Settings',download:'Get the game',
   friendSearchHelp:'Friend nickname and four digits after #',handleTaken:'This nickname and tag are taken. Choose another four digits.',playerNotFound:'Player not found. Check the name and four-digit tag.',handleHelp:'Use 1–20 name characters, then # and exactly 4 digits. Both can be changed.',
   title:'Your game. In detail.',intro:'Match results, your progress, and the people you want to play with again.',login:'Connect your game',logout:'Sign out',refresh:'Refresh',retry:'Try again',loading:'Loading…',
@@ -50,6 +52,7 @@ const en: typeof ru = {
   account:'Player account',contacts:'Contact',public:'Public profile',limitedStats:'This player has not published their statistics.',
 };
 const zh: typeof ru = {
+  remade:'重新比赛', matchSurrender:'队伍投降，比赛结束。', unratedRemake:'提前重新比赛：不计常规奖励或场次。已确认离开的玩家仍承受个人处罚。',
   abandons:'离开对局 / 挂机', playerAbandoned:'本局已确认离开或挂机。', unratedAbandoned:'对局因没有活跃玩家而结束。已确认的离开或挂机仍会受罚。', unratedCapped:'对局已达到时间上限，不会处罚离开或挂机。',
 
   "overview": "概览",

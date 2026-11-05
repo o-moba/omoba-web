@@ -47,7 +47,7 @@ function Status({error,busy,w,retry}:{error:unknown;busy:boolean;w:Words;retry:(
 const formatNumber=(n:number|string|null|undefined,locale:string)=>n==null?'—':typeof n==='string'?BigInt(n).toLocaleString(locale):new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(n);
 const duration=(ms:string)=>`${Math.floor(Number(ms)/60000)}:${String(Math.floor(Number(ms)/1000)%60).padStart(2,'0')}`;
 function time(value:string,tz:string,locale:string){return new Date(value).toLocaleString(locale,{timeZone:tz,dateStyle:'medium',timeStyle:'short'});}
-function outcome(won:boolean|null,state:string,w:Words){return state==='interrupted'&&won===false?w.defeat:state==='interrupted'?w.interrupted:state==='abandoned'?w.abandoned:won===null?w.outcome:won?w.victory:w.defeat;}
+function outcome(won:boolean|null,state:string,w:Words){return ['interrupted','remade'].includes(state)&&won===false?w.defeat:state==='remade'?w.remade:state==='interrupted'?w.interrupted:state==='abandoned'?w.abandoned:won===null?w.outcome:won?w.victory:w.defeat;}
 function ClassIcon({name}:{name:string}){const image=classArtwork(name);return <span className={'class-icon '+name.toLowerCase()} aria-hidden="true">{image?<img src={image} width={32} height={32} alt=""/>:<NavIcon href="/workshop"/>}</span>;}
 /** «Новичок · n/20 рейтинговых матчей» with the bracket explanation as a tooltip; null once the account has left the bracket. */
 function NewcomerTag({account,w,className='tag'}:{account:Account;w:Words;className?:string}){const total=account.rules.newcomer_matches,n=account.profile.rated_matches||0;if(n>=total)return null;const values={n:String(n),total:String(total)};return <span className={className} title={fill(w.newcomerHelp,values)} data-newcomer>{fill(w.newcomerProgress,values)}</span>;}
@@ -86,7 +86,7 @@ function FilterBar({w,stats=false}:{w:Words;stats?:boolean}){
   return <div className="filters"><label>{w.period}<select value={params.get('days')||'30'} onChange={e=>update('days',e.target.value)}>{['7','30','90','all'].map(v=><option key={v} value={v}>{v==='all'?w.allTime:v+' '+w.days}</option>)}</select></label>
     <label>{w.hero}<select value={params.get('hero_class')||''} onChange={e=>update('hero_class',e.target.value)}><option value="">{w.all}</option>{HERO_CLASSES.map(hero=><option key={hero.id} value={hero.id}>{classDisplayName(hero.id,locale)}</option>)}</select></label>
     <label>{w.matches}<select value={params.get('rated')||(stats?'true':'all')} onChange={e=>update('rated',e.target.value)}><option value="all">{w.all}</option><option value="true">{w.rated}</option><option value="false">{w.unrated}</option></select></label>
-    {!stats?<label>{w.outcome}<select value={params.get('outcome')||''} onChange={e=>update('outcome',e.target.value)}><option value="">{w.all}</option><option value="win">{w.victory}</option><option value="loss">{w.defeat}</option><option value="interrupted">{w.interrupted}</option><option value="abandoned">{w.abandoned}</option></select></label>:null}</div>;
+    {!stats?<label>{w.outcome}<select value={params.get('outcome')||''} onChange={e=>update('outcome',e.target.value)}><option value="">{w.all}</option><option value="win">{w.victory}</option><option value="loss">{w.defeat}</option><option value="interrupted">{w.interrupted}</option><option value="abandoned">{w.abandoned}</option><option value="remade">{w.remade}</option></select></label>:null}</div>;
 }
 function query(params:URLSearchParams,stats=false){const q=new URLSearchParams(params);if(!q.has('days'))q.set('days','30');if(!q.has('rated'))q.set('rated',stats?'true':'all');return q.toString();}
 function HistoryView({w,tz,locale,compact=false}:{w:Words;tz:string;locale:string;compact?:boolean}) {
@@ -130,6 +130,7 @@ function MatchView({id,w,tz,locale,me}:{id:string;w:Words;tz:string;locale:strin
         <div className="match-banner-copy"><span className="eyebrow">{c.report}</span><h1>{outcome(ownResult,m.outcome,w)}</h1><div className="match-meta"><span>{time(m.ended_at,tz,locale)}</span><span>{duration(m.duration_ms)}</span><span className="tag">{m.rated?w.ratedOne:w.unratedOne}</span></div></div>
         <div className="match-score" aria-label={c.score} data-match-team-summary>{teams.map((team,index)=><div className={'score-team '+team.result} key={team.id}><span>{w.team} {teamDisplayName(team.id,locale)}</span><strong>{number(team.kills)}</strong><small>{team.result==='won'?w.victory:team.result==='lost'?w.defeat:c.undecided}</small>{index<teams.length-1?<i aria-hidden="true">:</i>:null}</div>)}</div>
       </section>
+      {m.end_reason==='surrender'?<p className="muted" data-match-surrender>{w.matchSurrender}</p>:null}
       {!m.rated?<div className="notice" data-unrated-reason>{w.noReward}{m.unrated_reason?' · '+unratedReason(m.unrated_reason,w):''}</div>:null}
       {teams.length>0&&teams.every(team=>team.result==='neutral')?<p className="muted">{c.noResult}</p>:null}
       <div className="team-panels">{teams.map((team,index)=><Card key={team.id} className={'team-card team-'+index+' '+team.result}>

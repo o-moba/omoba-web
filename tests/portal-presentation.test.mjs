@@ -140,3 +140,21 @@ test('personal forfeits are losses without rewriting the winning team or legacy 
   assert.equal(playerResult({...reaped,unrated_reason:'duration_capped'}, 'me'), null);
   assert.equal(playerResult({...reaped,participants:reaped.participants.map(p=>({...p,rating:null}))}, 'me'), null);
 });
+
+test('a remake is neutral for innocent players and keeps only the proved individual ranked loss', async () => {
+  const remade = {...match,outcome:'remade',winner:null,rated:false,unrated_reason:'remake',end_reason:'remake',
+    participants:match.participants.map(p=>({...p,participation:{abandoned:p.profile_id==='me'},
+      rating:p.profile_id==='me'?{before:1000,after:968,delta:-32}:null}))};
+  assert.equal(playerResult(remade,'me'),false);
+  assert.equal(resultTone(false,'remade'),'lost');
+  const innocent=remade.participants.find(p=>p.profile_id!=='me');
+  assert.equal(playerResult(remade,innocent.profile_id),null);
+  assert.equal(resultTone(null,'remade'),'neutral');
+  assert.ok(teamSummaries(remade).every(t=>t.result==='neutral'));
+  assert.equal(playerResult({...remade,participants:remade.participants.map(p=>({...p,rating:null}))},'me'),null);
+  const {dictionaries}=await importTs('../src/lib/i18n.ts');
+  for(const words of Object.values(dictionaries)) {
+    assert.ok(words.remade && words.matchSurrender && words.unratedRemake);
+    assert.equal(unratedReason('remake',words),words.unratedRemake);
+  }
+});
