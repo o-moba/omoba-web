@@ -126,3 +126,17 @@ test('unrated reasons become sentences in every language and a raw code never re
   assert.doesNotMatch(source, /['"> ]MMR['"<]|['"> ]XP['"<]/);
   assert.doesNotMatch(source, /m\.unrated_reason:''/);
 });
+
+
+test('personal forfeits are losses without rewriting the winning team or legacy receipts', () => {
+  const tracked = { ...match, participants: match.participants.map(p => ({...p, participation:{abandoned:p.profile_id==='me'}})) };
+  assert.equal(playerResult(tracked, 'me'), false);
+  assert.equal(teamSummaries(tracked).find(t => t.id === 'blue').result, 'won');
+  assert.equal(playerResult({...match,participants:match.participants.map(p=>({...p,disconnected:true}))}, 'me'), true);
+  const reaped = {...tracked,outcome:'interrupted',winner:null,unrated_reason:'abandoned_reaped',participants:tracked.participants.map(p=>({...p,rating:{before:1000,after:968,delta:-32}}))};
+  assert.equal(playerResult(reaped, 'me'), false);
+  assert.equal(resultTone(playerResult(reaped, 'me'), reaped.outcome), 'lost');
+  assert.equal(playerResult({...reaped,unrated_reason:'server_interrupted'}, 'me'), null);
+  assert.equal(playerResult({...reaped,unrated_reason:'duration_capped'}, 'me'), null);
+  assert.equal(playerResult({...reaped,participants:reaped.participants.map(p=>({...p,rating:null}))}, 'me'), null);
+});

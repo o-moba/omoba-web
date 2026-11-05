@@ -1,13 +1,14 @@
 /** Presentation only: settled server results remain the source of truth. */
 export function resultTone(won, state) {
-  if (state !== 'completed') return 'neutral';
+  if (state !== 'completed' && !(state === 'interrupted' && won === false)) return 'neutral';
   return won === true ? 'won' : won === false ? 'lost' : 'neutral';
 }
 
 export function playerResult(match, profileId) {
   const player = match.participants.find(participant => participant.profile_id === profileId);
+  if (player?.participation?.abandoned && match.outcome === 'interrupted' && match.unrated_reason === 'abandoned_reaped' && player.rating != null) return false;
   if (!player || !match.winner || match.outcome !== 'completed' || !match.participants.some(participant => participant.team === match.winner)) return null;
-  return player.team === match.winner;
+  return player.team === match.winner && !player.participation?.abandoned;
 }
 
 export function teamSummaries(match) {
@@ -89,6 +90,8 @@ export function unratedReason(code, words) {
     case 'allocated_bots': return words.unratedBots;
     case 'server_interrupted': return words.unratedServer;
     case 'not_completed': return words.unratedNotCompleted;
+    case 'abandoned_reaped': return words.unratedAbandoned;
+    case 'duration_capped': return words.unratedCapped;
     default: return words.unratedOther;
   }
 }

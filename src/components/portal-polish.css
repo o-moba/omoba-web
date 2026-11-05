@@ -341,3 +341,6 @@
   .portal-shell .mobile-nav a.active { color: var(--omoba-crystal); }
   .portal-shell footer { padding: 22px 16px calc(100px + env(safe-area-inset-bottom)); font-size: 9px; }
 }
+
+/* Participation notices explain one player across the whole details panel. */
+.detail-grid .notice { grid-column: 1 / -1; }

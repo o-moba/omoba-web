@@ -47,7 +47,7 @@ function Status({error,busy,w,retry}:{error:unknown;busy:boolean;w:Words;retry:(
 const formatNumber=(n:number|string|null|undefined,locale:string)=>n==null?'—':typeof n==='string'?BigInt(n).toLocaleString(locale):new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(n);
 const duration=(ms:string)=>`${Math.floor(Number(ms)/60000)}:${String(Math.floor(Number(ms)/1000)%60).padStart(2,'0')}`;
 function time(value:string,tz:string,locale:string){return new Date(value).toLocaleString(locale,{timeZone:tz,dateStyle:'medium',timeStyle:'short'});}
-function outcome(won:boolean|null,state:string,w:Words){return state==='interrupted'?w.interrupted:state==='abandoned'?w.abandoned:won===null?w.outcome:won?w.victory:w.defeat;}
+function outcome(won:boolean|null,state:string,w:Words){return state==='interrupted'&&won===false?w.defeat:state==='interrupted'?w.interrupted:state==='abandoned'?w.abandoned:won===null?w.outcome:won?w.victory:w.defeat;}
 function ClassIcon({name}:{name:string}){const image=classArtwork(name);return <span className={'class-icon '+name.toLowerCase()} aria-hidden="true">{image?<img src={image} width={32} height={32} alt=""/>:<NavIcon href="/workshop"/>}</span>;}
 /** «Новичок · n/20 рейтинговых матчей» with the bracket explanation as a tooltip; null once the account has left the bracket. */
 function NewcomerTag({account,w,className='tag'}:{account:Account;w:Words;className?:string}){const total=account.rules.newcomer_matches,n=account.profile.rated_matches||0;if(n>=total)return null;const values={n:String(n),total:String(total)};return <span className={className} title={fill(w.newcomerHelp,values)} data-newcomer>{fill(w.newcomerProgress,values)}</span>;}
@@ -55,7 +55,7 @@ function Metric({label,value,accent=false}:{label:string;value:React.ReactNode;a
 function ProfileMetrics({p,w}:{p:Profile;w:Words}) {
   const {locale}=useLocale(),c=presentationWords(locale);
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale),rate=recordRate(p.wins,p.losses);
-  return <div className="metrics career-metrics"><Metric label={w.rating} value={number(p.rating)} accent/><Metric label={c.matches} value={number(p.matches_played)}/><Metric label={c.record} value={<><span className="record-wins">{number(p.wins)}</span><i> / </i><span className="record-losses">{number(p.losses)}</span></>}/><Metric label={w.winRate} value={rate===null?'—':number(rate*100)+'%'}/></div>;
+  return <><div className="metrics career-metrics"><Metric label={w.rating} value={number(p.rating)} accent/><Metric label={c.matches} value={number(p.matches_played)}/><Metric label={c.record} value={<><span className="record-wins">{number(p.wins)}</span><i> / </i><span className="record-losses">{number(p.losses)}</span></>}/><Metric label={w.winRate} value={rate===null?'—':number(rate*100)+'%'}/></div>{p.abandons!==undefined?<p className="muted" data-abandon-total>{w.abandons}: {number(p.abandons)}</p>:null}</>;
 }
 function Copy({value,w}:{value:string;w:Words}){const[done,setDone]=useState(false);return <button onClick={()=>navigator.clipboard.writeText(value).then(()=>setDone(true)).catch(()=>setDone(false))}>{done?w.copied:w.copy}</button>;}
 
@@ -147,7 +147,7 @@ function MatchView({id,w,tz,locale,me}:{id:string;w:Words;tz:string;locale:strin
           <div className="detail-grid"><span className="player-detail-heading">{c.details}</span>
             {([['structures','damage_to_structures'],['creeps','damage_to_creeps'],['taken','damage_taken'],['minions','minion_last_hits'],['jungle','jungle_last_hits'],['towers','structures_destroyed'],['finalLevel','final_level']] as const).map(([label,key])=><Metric key={key} label={w[label]} value={number(p.stats[key])}/>)}
             <Metric label={w.rating} value={p.rating?(p.rating.delta>0?'+':'')+number(p.rating.delta):'—'}/><Metric label={w.xp} value={number(p.progression_xp_gained)}/>
-            {p.disconnected?<span className="notice error">{w.disconnected}</span>:null}{p.profile_id?<Link className="button player-profile-link" href={'/players/'+p.profile_id}>{w.profile} ↗</Link>:null}
+            {p.participation?.abandoned?<span className="notice error" data-player-abandon>{w.playerAbandoned}</span>:p.disconnected?<span className="notice error">{w.disconnected}</span>:null}{p.profile_id?<Link className="button player-profile-link" href={'/players/'+p.profile_id}>{w.profile} ↗</Link>:null}
           </div>
         </details>)}</div>
       </Card>)}</div>
