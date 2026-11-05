@@ -664,7 +664,7 @@ const supplementalTranslations: Record<string, { ru: string; zh: string }> = {
     "zh": "OMOBA 概念图 · 非游戏皮肤"
   },
   "Guest prototype": {
-    "ru": "Гостевой прототип",
+    "ru": "Гостевой режим",
     "zh": "访客原型"
   },
   "Development environment: test data, not the live OMOBA site": {

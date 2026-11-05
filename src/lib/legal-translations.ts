@@ -4,6 +4,11 @@ export const legalTranslations: Record<string, { ru: string; zh: string }> = {
   'Privacy policy': { ru: 'Политика конфиденциальности', zh: '隐私政策' },
   'Terms of use': { ru: 'Пользовательское соглашение', zh: '用户协议' },
   'Public offer': { ru: 'Оферта', zh: '公开要约' },
+  'Contacts and requisites': { ru: 'Контакты и реквизиты', zh: '联系方式与经营者信息' },
+  'Questions about the game, accounts, payments and personal data: write to {email}.': {
+    ru: 'Вопросы об игре, аккаунте, оплате и персональных данных: пишите на {email}.',
+    zh: '关于游戏、账号、付款和个人数据的问题，请发送邮件至 {email}。',
+  },
   'Support': { ru: 'Поддержка', zh: '支持' },
   'Source code': { ru: 'Исходный код', zh: '源代码' },
   'VK community': { ru: 'Сообщество VK', zh: 'VK 社区' },

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MOBILE_NAV, PORTAL_NAV, mobileNav, portalReturnTo, portalLoginHref, publicSiteUrl } from '../src/lib/navigation.mjs';
+import { MOBILE_NAV, PORTAL_NAV, mobileNav, portalReturnTo, portalLoginHref, portalShellRoute, publicSiteUrl } from '../src/lib/navigation.mjs';
 
 test('sign-in preserves history filters, report IDs and workshop destinations', () => {
   for (const path of ['/me/matches?days=all&class=Ranger', '/matches/browser-fixture-123', '/workshop', '/me/stats', '/leaderboard', '/supporter', '/supporters', '/sponsor']) {
@@ -20,4 +20,11 @@ test('the leaderboard follows statistics in the sidebar and leaves the phone bar
   assert.equal(PORTAL_NAV[PORTAL_NAV.indexOf('/me/stats') + 1], '/leaderboard');
   assert.ok(!MOBILE_NAV.includes('/leaderboard'));
   assert.ok(mobileNav().length <= 6);
+});
+
+test('the portal shell serves only its own pages; anything else is a real 404', () => {
+  for (const path of ['/me', '/me/matches', '/me/stats', '/leaderboard', '/friends', '/players', '/devices', '/settings', '/download', '/connect', '/login', '/supporter', '/supporters',
+    '/matches/0123abcdef', '/players/' + 'a'.repeat(64)]) assert.equal(portalShellRoute(path), true, path);
+  for (const path of ['/zzz', '/contacts', '/me/zzz', '/matches', '/matches/a/b', '/players/', '/download/ru', '/game/x', '/me/', '/matches/' + 'x'.repeat(129), '/players/a%2fb'])
+    assert.equal(portalShellRoute(path), false, path);
 });

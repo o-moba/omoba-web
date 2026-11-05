@@ -268,7 +268,7 @@ if (market === "ru") {
   await run("ru legal pages, the sign-in notice and the footer links (LR-06)", RU, async ({ origin }) => {
     const before = calls.length;
     // The user agreement and the privacy policy are drafts; the offer is published as edition 1.
-    for (const [name, title, version] of [["privacy", "Политика обработки персональных данных", "0-draft"], ["terms", "Пользовательское соглашение", "0-draft"], ["offer", "Публичная оферта", "1"]]) {
+    for (const [name, title, version] of [["privacy", "Политика обработки персональных данных", "1"], ["terms", "Пользовательское соглашение", "1"], ["offer", "Публичная оферта", "1"]]) {
       const response = await get(origin, "/" + name);
       assert.equal(response.status, 200, name);
       const html = await response.text();
@@ -285,12 +285,12 @@ if (market === "ru") {
     assert.equal(calls.length, before, "a legal page called the Account API");
     const login = await (await get(origin, "/login")).text();
     const notice = /<p class="legal-notice"[\s\S]*?<\/p>/.exec(login)?.[0] ?? "";
-    assert.match(notice, /data-legal-version="0-draft"/);
+    assert.match(notice, /data-legal-version="1"/);
     assert.match(notice, /Входя, вы принимаете/);
     assert.deepEqual([...notice.matchAll(/href="([^"]+)"/g)].map((m) => m[1]), ["/terms", "/privacy"]);
     const footer = /<nav class="legal-links"[\s\S]*?<\/nav>/.exec(login)?.[0] ?? "";
     // RU sells Hero tiers (LR-67): the offer is linked; support and community wait for the owner (LR-21).
-    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "delete", "source"]);
+    assert.deepEqual([...footer.matchAll(/data-legal-link="(\w+)"/g)].map((m) => m[1]), ["privacy", "terms", "offer", "contacts", "delete", "support", "source"]);
     assert.match(footer, /href="https:\/\/github.com\/o-moba\/omoba-bevy"/);
     assert.match(await (await get(origin, "/connect?code=" + CODE)).text(), /<p class="legal-notice"/);
     assert.match(await (await get(origin, "/workshop")).text(), /data-legal-links/);
@@ -306,7 +306,12 @@ if (market === "ru") {
       await page.goto(origin + "/login");
       await page.locator("footer [data-legal-link=privacy]").click();
       await page.waitForURL("**/privacy");
-      await page.locator("[data-legal-document=privacy] [data-legal-draft]").waitFor();
+      await page.locator("[data-legal-document=privacy][data-legal-status=final]").waitFor();
+      assert.equal(await page.locator("[data-legal-draft]").count(), 0, "a published policy has no draft banner");
+      await page.locator("footer [data-legal-link=contacts]").click();
+      await page.waitForURL("**/contacts");
+      assert.equal(await page.locator("h1").innerText(), "Контакты и реквизиты");
+      assert.match(await page.locator("[data-contacts]").innerText(), /ИНН: 501502113878[\s\S]*ОГРНИП: 326508100266477[\s\S]*prostosobolev@gmail\.com/);
       await page.locator("footer [data-legal-link=terms]").click();
       await page.waitForURL("**/terms");
       assert.equal(await page.locator("h1").innerText(), "Пользовательское соглашение");
@@ -328,7 +333,7 @@ if (market === "ru") {
       phone.on("pageerror", (error) => errors.push(error.message));
       await phone.goto(origin + "/login");
       assert.ok(await phone.locator("footer [data-legal-links]").isVisible(), "legal links hidden on a phone");
-      for (const path of ["/login", "/privacy", "/terms", "/offer", "/delete"]) {
+      for (const path of ["/login", "/privacy", "/terms", "/offer", "/contacts", "/delete"]) {
         await phone.goto(origin + path);
         await phone.locator("footer [data-legal-links]").waitFor();
         assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), path + " overflows on a phone");
@@ -337,6 +342,11 @@ if (market === "ru") {
     } finally {
       await browser.close();
     }
+  });
+
+  await run("unknown paths are real 404s; shell pages and legal pages answer 200", RU, async ({ origin }) => {
+    for (const path of ["/zzz", "/me/zzz", "/matches/a/b", "/download/ru", "/contacts/x"]) assert.equal((await get(origin, path)).status, 404, path);
+    for (const path of ["/login", "/download", "/supporter", "/supporters", "/contacts", "/offer", "/privacy", "/terms", "/delete"]) assert.equal((await get(origin, path)).status, 200, path);
   });
 
   await run("a ru build refuses to serve as global", {}, async ({ first, log }) => {

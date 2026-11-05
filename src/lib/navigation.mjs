@@ -5,6 +5,16 @@ export const DEFAULT_SITE_URL = CONTOURS.production.site;
 
 const privateRoutes = new Set(['/me', '/me/matches', '/me/stats', '/leaderboard', '/play', '/workshop', '/friends', '/players', '/devices', '/supporter', '/supporters', '/settings', '/download', '/creators', '/market', '/sponsor']);
 
+/**
+ * The pages the portal shell (`[[...path]]`, components/portal.tsx) renders. Anything else
+ * under the catch-all is a 404, not the shell with an empty card.
+ */
+const SHELL_ROUTES = new Set(['/me', '/me/matches', '/me/stats', '/leaderboard', '/friends', '/players', '/devices', '/settings', '/download', '/connect', '/login', '/supporter', '/supporters']);
+/** @param {string} pathname */
+export function portalShellRoute(pathname) {
+  return SHELL_ROUTES.has(pathname) || /^\/(matches|players)\/[A-Za-z0-9_-]{1,128}$/.test(pathname);
+}
+
 /** The device-confirmation page the game opens: exactly one 8-character enrollment code. */
 export const CONNECT_CODE = /^[A-Z2-9]{8}$/;
 

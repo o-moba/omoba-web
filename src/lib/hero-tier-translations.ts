@@ -95,9 +95,9 @@ export const heroTierTranslations: Record<string, { ru: string; zh: string }> = 
     ru: 'Оплата проходит на странице ЮKassa, затем вы вернётесь сюда. Разовый платёж, без автоматического продления.',
     zh: '你将在 YooKassa 页面付款，完成后返回此处。一次性付款，不会自动续费。',
   },
-  'Payments open soon. You can already read the prices and {offer}; you will pay on the YooKassa page.': {
-    ru: 'Оплата скоро откроется. Уже можно посмотреть цены и {offer}; оплата пройдёт на странице ЮKassa.',
-    zh: '付款即将开放。你现在已可查看价格和{offer}；届时将在 YooKassa 页面付款。',
+  'Payments open soon. You can already read the prices and {offer}; you will pay on the YooKassa page. One payment for 30 days, no automatic renewal; the aura appears on your hero once the payment is confirmed.': {
+    ru: 'Оплата скоро откроется. Уже можно посмотреть цены и {offer}; оплата пройдёт на странице ЮKassa. Разовый платёж на 30 дней без автоматического продления; аура появляется у героя после подтверждения оплаты.',
+    zh: '付款即将开放。你现在已可查看价格和{offer}；届时将在 YooKassa 页面付款。一次性付款，有效 30 天，不会自动续费；付款确认后光环即出现在你的英雄身上。',
   },
   'Sign in to support': { ru: 'Войти и поддержать', zh: '登录后支持' },
   'Prices and {offer} are open to everyone; paying needs your OMOBA account so that the aura reaches your hero.': {

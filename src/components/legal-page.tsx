@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { cache } from 'react';
 import { DeletionView } from '@/components/deletion';
-import { LegalDocumentView } from '@/components/legal';
+import { ContactsView, LegalDocumentView } from '@/components/legal';
 import { deletionText } from '@/lib/deletion-translations';
 import { LEGAL_DIR, deletionPage, legalDocumentFile, legalDocumentVersion, parseLegalDocument, type LegalDocumentName } from '@/lib/legal.mjs';
 import { getLocale } from '@/lib/locale-server';
@@ -58,4 +58,19 @@ export function DeletionPage() {
   const page = loadDeletionPage();
   if (!page) notFound();
   return <DeletionView page={page} siteUrl={contourSiteUrl()} />;
+}
+
+/**
+ * `/contacts`: the offer's requisites section (`## … {#seller}` up to the next `##`)
+ * and the support address; 404 where the market has no offer (global, cn).
+ */
+export async function ContactsPage() {
+  const document = await loadLegalDocument('offer');
+  if (!document) notFound();
+  const start = document.blocks.findIndex(block => block.type === 'h2' && block.id === 'seller');
+  if (start < 0) throw new Error('legal: the offer has no requisites section (#seller)');
+  const next = document.blocks.findIndex((block, index) => index > start && block.type === 'h2');
+  const blocks = document.blocks.slice(start + 1, next < 0 ? undefined : next);
+  const { market } = assertMarket();
+  return <ContactsView blocks={blocks} email={marketLegal(market).supportEmail} siteUrl={contourSiteUrl()} />;
 }

@@ -8,6 +8,8 @@ import { supporterLinks } from "./market-profile.mjs";
 
 /** The documents this portal serves, each at a fixed page. */
 export const LEGAL_PAGES = Object.freeze({ privacy: "/privacy", terms: "/terms", offer: "/offer" });
+/** The seller's contacts and requisites, taken from the offer's requisites section. */
+export const CONTACTS_PAGE = "/contacts";
 /** The public account-deletion page (O-15): a page of this portal, not a versioned document. */
 export const DELETION_PAGE = "/delete";
 /** A document version is also a folder name: lower case, digits, dots and dashes. */
@@ -67,7 +69,9 @@ export function legalSourceUrl(legal, version = null) {
  * @param {MarketLegal} legal
  * @param {{supporter: boolean}} features
  * @param {boolean} [shown] the Supporter-links switch (default: on with the feature)
- * @returns {{key: "privacy" | "terms" | "offer" | "delete" | "support" | "source" | "vk" | "telegram", href: string, external: boolean}[]}
+ * The contacts page is linked wherever the market has an offer, also in store builds:
+ * it shows the seller's requisites, not payment terms.
+ * @returns {{key: "privacy" | "terms" | "offer" | "contacts" | "delete" | "support" | "source" | "vk" | "telegram", href: string, external: boolean}[]}
  */
 export function legalLinks(legal, features, shown = supporterLinks(features)) {
   /** @type {{key: any, href: string, external: boolean}[]} */
@@ -75,6 +79,7 @@ export function legalLinks(legal, features, shown = supporterLinks(features)) {
   if (legal.privacy) links.push({ key: "privacy", href: LEGAL_PAGES.privacy, external: false });
   if (legal.terms) links.push({ key: "terms", href: LEGAL_PAGES.terms, external: false });
   if (legal.offer && shown) links.push({ key: "offer", href: LEGAL_PAGES.offer, external: false });
+  if (legal.offer) links.push({ key: "contacts", href: CONTACTS_PAGE, external: false });
   if (legal.delete) links.push({ key: "delete", href: DELETION_PAGE, external: false });
   if (legal.supportEmail) links.push({ key: "support", href: "mailto:" + legal.supportEmail, external: true });
   const source = legalSourceUrl(legal);
