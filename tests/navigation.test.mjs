@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { portalReturnTo, portalLoginHref, portalShellRoute, publicSiteUrl } from '../src/lib/navigation.mjs';
+import { MOBILE_NAV, PORTAL_NAV, mobileNav, portalReturnTo, portalLoginHref, portalShellRoute, publicSiteUrl } from '../src/lib/navigation.mjs';
 
 test('sign-in preserves history filters, report IDs and workshop destinations', () => {
-  for (const path of ['/me/matches?days=all&class=Ranger', '/matches/browser-fixture-123', '/workshop', '/me/stats', '/supporter', '/supporters', '/sponsor']) {
+  for (const path of ['/me/matches?days=all&class=Ranger', '/matches/browser-fixture-123', '/workshop', '/me/stats', '/leaderboard', '/supporter', '/supporters', '/sponsor']) {
     assert.equal(portalReturnTo(path), path);
     assert.equal(new URL(portalLoginHref(path), 'https://app.omoba.io').searchParams.get('returnTo'), path);
   }
@@ -16,9 +16,14 @@ test('back-to-site link accepts explicit local development only and no credentia
   assert.equal(publicSiteUrl('http://127.0.0.1:3102', 'development'), 'http://127.0.0.1:3102');
   for (const value of ['http://127.0.0.1:3102', 'http://remote.example', 'https://u:p@site.example', 'https://site.example/path', 'javascript:alert(1)']) assert.equal(publicSiteUrl(value, 'production'), 'https://omoba.io');
 });
+test('the leaderboard follows statistics in the sidebar and leaves the phone bar at six entries', () => {
+  assert.equal(PORTAL_NAV[PORTAL_NAV.indexOf('/me/stats') + 1], '/leaderboard');
+  assert.ok(!MOBILE_NAV.includes('/leaderboard'));
+  assert.ok(mobileNav().length <= 6);
+});
 
 test('the portal shell serves only its own pages; anything else is a real 404', () => {
-  for (const path of ['/me', '/me/matches', '/me/stats', '/friends', '/players', '/devices', '/settings', '/download', '/connect', '/login', '/supporter', '/supporters',
+  for (const path of ['/me', '/me/matches', '/me/stats', '/leaderboard', '/friends', '/players', '/devices', '/settings', '/download', '/connect', '/login', '/supporter', '/supporters',
     '/matches/0123abcdef', '/players/' + 'a'.repeat(64)]) assert.equal(portalShellRoute(path), true, path);
   for (const path of ['/zzz', '/contacts', '/me/zzz', '/matches', '/matches/a/b', '/players/', '/download/ru', '/game/x', '/me/', '/matches/' + 'x'.repeat(129), '/players/a%2fb'])
     assert.equal(portalShellRoute(path), false, path);

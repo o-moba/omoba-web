@@ -8,6 +8,8 @@ export function recordRate(wins: number | undefined, losses: number | undefined)
 export function meterPercent(ratio: number | null | undefined): number | null;
 export function ratingBounds(points: {before: number; after: number}[]): { min: number; max: number } | null;
 export function classArtwork(name: string): string | null;
-export function classDisplayName(name: string): string;
+export const HERO_CLASSES: readonly { id: string; en: string; ru: string; zh: string }[];
+export function classDisplayName(name: string, locale?: string): string;
+export function unratedReason(code: string | null | undefined, words: Record<'unratedCasual' | 'unratedBots' | 'unratedServer' | 'unratedNotCompleted' | 'unratedOther' | 'unratedAbandoned' | 'unratedCapped', string>): string;
 export function teamDisplayName(name: string, locale: string): string;
 export function presentationWords(locale: string): Record<'career' | 'careerIntro' | 'play' | 'practice' | 'record' | 'matches' | 'historyIntro' | 'statsIntro' | 'report' | 'score' | 'winner' | 'loser' | 'undecided' | 'you' | 'performance' | 'details' | 'rating' | 'damage' | 'teamDamage' | 'structures' | 'kills' | 'account' | 'accountHint' | 'signIn' | 'signInIntro' | 'ratingEmpty' | 'classesEmpty' | 'credits' | 'viewMatch' | 'current' | 'start' | 'noResult' | 'allResults', string>;

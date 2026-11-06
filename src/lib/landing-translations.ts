@@ -58,7 +58,22 @@ export const landingTranslations: Record<string, { ru: string; zh: string }> = {
     zh: '实验性功能：职业工坊仍是原型。职业构筑只是草稿，不能在联网比赛中使用。',
   },
   'OMOBA · Free 5v5 MOBA': { ru: 'OMOBA · Бесплатная MOBA 5 на 5', zh: 'OMOBA · 免费 5v5 MOBA' },
+  'Rating': { ru: 'Рейтинг', zh: '评分' },
+  'Everyone starts at a rating of 1000.': { ru: 'Все начинают с рейтинга 1000.', zh: '所有人的初始评分为 1000。' },
+  'Only Ranked matches change it.': { ru: 'Его меняют только рейтинговые матчи.', zh: '只有排位赛会改变评分。' },
+  'The first 20 rated matches are played in a newcomer bracket.': { ru: 'Первые 20 рейтинговых матчей проходят в группе новичков.', zh: '前 20 场排位赛在新手组中进行。' },
+  'Casual PvP and vs Bots give experience, never rating.': { ru: 'Обычный PvP и матчи против ботов дают опыт, но не рейтинг.', zh: '匹配对战和人机对战只提供经验，不影响评分。' },
+  'The leaderboard lists players after 20 rated matches.': { ru: 'В таблицу лидеров попадают игроки после 20 рейтинговых матчей.', zh: '完成 20 场排位赛后即可进入排行榜。' },
 };
+
+/** The rating rules the guest home states (the game's career rules: start, Ranked only, newcomer bracket, experience, leaderboard). */
+export const RATING_FACTS = Object.freeze([
+  'Everyone starts at a rating of 1000.',
+  'Only Ranked matches change it.',
+  'The first 20 rated matches are played in a newcomer bracket.',
+  'Casual PvP and vs Bots give experience, never rating.',
+  'The leaderboard lists players after 20 rated matches.',
+] as const);
 
 /** The hero class claim with the right plural form: `17 классов героев`, `21 класс героев`. */
 export function classesClaim(locale: Locale, classes: number): string {

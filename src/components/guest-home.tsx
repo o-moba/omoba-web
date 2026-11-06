@@ -4,7 +4,7 @@ import { useLocale } from '@/components/locale-provider';
 import { useMarket } from '@/components/market-profile';
 import { ReleaseList } from '@/components/releases';
 import { dictionaries } from '@/lib/i18n';
-import { classesClaim } from '@/lib/landing-translations';
+import { RATING_FACTS, classesClaim } from '@/lib/landing-translations';
 import { releaseStatus, type Release } from '@/lib/releases.mjs';
 
 export type GuestHomeData = { facts: { classes: number }; releases: Release[]; unavailable: boolean };
@@ -52,6 +52,10 @@ export function GuestHome({ home, loginHref, signInLabel }: { home: GuestHomeDat
     <section className="landing-section" aria-labelledby="landing-modes">
       <h2 id="landing-modes">{t('Modes')}</h2>
       <div className="landing-modes">{MODES.map(([name, description]) => <section className="card" key={name} data-landing-mode><h3>{t(name)}</h3><p className="muted">{t(description)}</p></section>)}</div>
+    </section>
+    <section className="card landing-section" aria-labelledby="landing-rating" data-landing-rating>
+      <h2 id="landing-rating">{t('Rating')}</h2>
+      <ul className="landing-facts">{RATING_FACTS.map((fact) => <li key={fact}>{t(fact)}</li>)}</ul>
     </section>
     <section className="landing-section" id="download" aria-labelledby="landing-download">
       <div className="section-heading"><h2 id="landing-download">{t('Download')}</h2><Link href="/download">{t('All downloads')} →</Link></div>
