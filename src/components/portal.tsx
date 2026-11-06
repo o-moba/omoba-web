@@ -16,6 +16,8 @@ import SupporterView from './supporter';
 import HeroTiersView from './hero-tiers';
 import SupportersView from './supporters';
 import { HeroRecognitionBadge } from './hero-recognition';
+import {RankedTag, RankedSeason, RankedArchive} from './ranked-season';
+import {rankedWords} from '@/lib/ranked-seasons.mjs';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { dictionaries, type Words } from '@/lib/i18n';
@@ -49,13 +51,13 @@ const duration=(ms:string)=>`${Math.floor(Number(ms)/60000)}:${String(Math.floor
 function time(value:string,tz:string,locale:string){return new Date(value).toLocaleString(locale,{timeZone:tz,dateStyle:'medium',timeStyle:'short'});}
 function outcome(won:boolean|null,state:string,w:Words){return ['interrupted','remade'].includes(state)&&won===false?w.defeat:state==='remade'?w.remade:state==='interrupted'?w.interrupted:state==='abandoned'?w.abandoned:won===null?w.outcome:won?w.victory:w.defeat;}
 function ClassIcon({name}:{name:string}){const image=classArtwork(name);return <span className={'class-icon '+name.toLowerCase()} aria-hidden="true">{image?<img src={image} width={32} height={32} alt=""/>:<NavIcon href="/workshop"/>}</span>;}
-/** «Новичок · n/20 рейтинговых матчей» with the bracket explanation as a tooltip; null once the account has left the bracket. */
-function NewcomerTag({account,w,className='tag'}:{account:Account;w:Words;className?:string}){const total=account.rules.newcomer_matches,n=account.profile.rated_matches||0;if(n>=total)return null;const values={n:String(n),total:String(total)};return <span className={className} title={fill(w.newcomerHelp,values)} data-newcomer>{fill(w.newcomerProgress,values)}</span>;}
+/** Current-season calibration progress or the calibrated tier. */
+function NewcomerTag({account,className='tag'}:{account:Account;w:Words;className?:string}){return <RankedTag p={account.profile} total={account.rules.newcomer_matches} className={className}/>;}
 function Metric({label,value,accent=false}:{label:string;value:React.ReactNode;accent?:boolean}){return <div className="metric"><span>{label}</span><strong className={accent?'accent':''}>{value}</strong></div>;}
 function ProfileMetrics({p,w}:{p:Profile;w:Words}) {
   const {locale}=useLocale(),c=presentationWords(locale);
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale),rate=recordRate(p.wins,p.losses);
-  return <><div className="metrics career-metrics"><Metric label={w.rating} value={number(p.rating)} accent/><Metric label={c.matches} value={number(p.matches_played)}/><Metric label={c.record} value={<><span className="record-wins">{number(p.wins)}</span><i> / </i><span className="record-losses">{number(p.losses)}</span></>}/><Metric label={w.winRate} value={rate===null?'—':number(rate*100)+'%'}/></div>{p.abandons!==undefined?<p className="muted" data-abandon-total>{w.abandons}: {number(p.abandons)}</p>:null}</>;
+  return <><RankedSeason p={p}/><div className="metrics career-metrics"><Metric label={w.rating} value={number(p.rating)} accent/><Metric label={c.matches} value={number(p.matches_played)}/><Metric label={c.record} value={<><span className="record-wins">{number(p.wins)}</span><i> / </i><span className="record-losses">{number(p.losses)}</span></>}/><Metric label={w.winRate} value={rate===null?'—':number(rate*100)+'%'}/></div>{p.abandons!==undefined?<p className="muted" data-abandon-total>{w.abandons}: {number(p.abandons)}</p>:null}<RankedArchive p={p}/></>;
 }
 function Copy({value,w}:{value:string;w:Words}){const[done,setDone]=useState(false);return <button onClick={()=>navigator.clipboard.writeText(value).then(()=>setDone(true)).catch(()=>setDone(false))}>{done?w.copied:w.copy}</button>;}
 
@@ -219,18 +221,19 @@ function LeaderboardView({w,tz,locale,me}:{w:Words;tz:string;locale:string;me:st
   const c=presentationWords(locale);
   const number=(value:Parameters<typeof formatNumber>[0])=>formatNumber(value,locale);
   const {data,error,busy,refresh}=useData<Leaderboard>('leaderboard?limit=100');
-  const total=String(data?.min_rated_matches??20),own=data?.me;
+  const total=String(data?.min_rated_matches??20),own=data?.me,played=own?.ranked?.rated_matches??own?.rated_matches??0;
+  const rw=rankedWords(locale),matchesLabel=own?.ranked?rw.seasonMatches:w.ratedMatches;
   return <>
-    <div className="page-heading portal-page-heading"><div><span className="eyebrow">{c.career}</span><h1>{w.leaderboard}</h1><p>{fill(w.leaderboardIntro,{total})}</p></div><button onClick={refresh}>{w.refresh}</button></div>
+    <div className="page-heading portal-page-heading"><div><span className="eyebrow">{c.career}</span><h1>{w.leaderboard}</h1><p>{fill(own?.ranked?rw.ladderIntro:w.leaderboardIntro,{total})}</p></div><button onClick={refresh}>{w.refresh}</button></div>
     <Status error={error} busy={busy&&!data} w={w} retry={refresh}/>
     {data&&own?<>
       <Card className="leaderboard-me" data-leaderboard-me>{!own.listed?<p className="muted"><Link href="/settings">{w.leaderboardHidden}</Link></p>
-        :own.rank!=null?<div className="metrics"><Metric label={w.yourPlace} value={'#'+number(own.rank)} accent/><Metric label={w.rating} value={number(own.rating)}/><Metric label={w.ratedMatches} value={number(own.rated_matches)}/></div>
-        :own.rated_matches<Number(total)?<p className="muted">{fill(w.leaderboardNewcomer,{n:String(own.rated_matches),total})}</p>
-        :<div className="metrics"><Metric label={w.rating} value={number(own.rating)} accent/><Metric label={w.ratedMatches} value={number(own.rated_matches)}/></div>}</Card>
+        :own.rank!=null?<div className="metrics"><Metric label={w.yourPlace} value={'#'+number(own.rank)} accent/><Metric label={w.rating} value={number(own.rating)}/><Metric label={matchesLabel} value={number(played)}/></div>
+        :played<Number(total)?<p className="muted">{fill(w.leaderboardNewcomer,{n:String(played),total})}</p>
+        :<div className="metrics"><Metric label={w.rating} value={number(own.rating)} accent/><Metric label={matchesLabel} value={number(played)}/></div>}{own.ranked?<RankedSeason p={{...own,profile_id:me,nickname:''}}/>:null}</Card>
       <Card className="leaderboard-card">{data.entries.length===0?<Empty text={fill(w.leaderboardEmpty,{total})}/>:<div className="leaderboard-scroll"><table className="leaderboard-table" data-leaderboard>
-        <thead><tr><th>{w.rank}</th><th>{w.player}</th><th>{w.rating}</th><th>{w.ratedMatches}</th><th>{w.winsLosses}</th></tr></thead>
-        <tbody>{data.entries.map(entry=><tr key={entry.profile_id} className={entry.profile_id===me?'mine':''}><td>#{number(entry.rank)}</td><td><Link href={'/players/'+entry.profile_id}>{entry.nickname}</Link>{entry.profile_id===me?<em className="self-badge">{c.you}</em>:null}</td><td>{number(entry.rating)}</td><td>{number(entry.rated_matches)}</td><td><span className="record-wins">{number(entry.wins)}</span> / <span className="record-losses">{number(entry.losses)}</span></td></tr>)}</tbody>
+        <thead><tr><th>{w.rank}</th><th>{w.player}</th><th>{w.rating}</th><th>{matchesLabel}</th><th>{w.winsLosses}</th></tr></thead>
+        <tbody>{data.entries.map(entry=><tr key={entry.profile_id} className={entry.profile_id===me?'mine':''}><td>#{number(entry.rank)}</td><td><Link href={'/players/'+entry.profile_id}>{entry.nickname}</Link> <RankedTag p={entry}/>{entry.profile_id===me?<em className="self-badge">{c.you}</em>:null}</td><td>{number(entry.rating)}</td><td>{number(entry.ranked?.rated_matches??entry.rated_matches)}</td><td><span className="record-wins">{number(entry.ranked?.wins??entry.wins)}</span> / <span className="record-losses">{number(entry.ranked?.losses??entry.losses)}</span></td></tr>)}</tbody>
       </table></div>}</Card>
       {data.data_as_of?<p className="muted stats-asof">{w.asOf} {time(data.data_as_of,tz,locale)}</p>:null}
     </>:null}
@@ -244,7 +247,7 @@ function FriendsView({w}:{w:Words}){
   async function act(id:string,action:string,etag?:string){setPending(true);setActionError(null);try{await api('me/friend-actions','POST',{target_profile_id:id,action,...(etag?{expected_etag:etag}:{})});refresh();}catch(e){setActionError(e);}finally{setPending(false);}}
   async function find(){setPending(true);setActionError(null);setFound(null);try{const result=await api<{players:Profile[]}>('players?query='+encodeURIComponent(code.trim()));if(!result.players.length)throw new ApiFailure('player_not_found',404);setFound(result.players[0]);}catch(e){setActionError(e);}finally{setPending(false);}}
   return <><h1>{w.friends}</h1><Card><form className="search" onSubmit={e=>{e.preventDefault();void find();}}><label>{w.friendSearchHelp}<input value={code} onChange={e=>{setCode(e.target.value);setFound(null);}} maxLength={45} placeholder={t("Nickname#1234")} autoComplete="off" autoCapitalize="none" spellCheck={false} disabled={pending}/></label><button className="primary" disabled={pending||!/^[^#]{1,20}#[0-9]{4}$/u.test(code.trim())}>{w.search}</button></form>{found?<div className="friend-row"><strong>{found.nickname}</strong><button disabled={pending} onClick={()=>void act(found.profile_id,'request')}>{w.addFriend}</button></div>:null}</Card><Status error={error||actionError} busy={busy} w={w} retry={refresh}/>
-    {(['incoming','friends','outgoing'] as const).map(group=><Card key={group}><h2>{w[group]} <span className="count">{data?.[group].length??'—'}</span></h2>{data?.[group].length===0?<Empty text={w.empty}/>:null}{data?.[group].map(f=><div className="friend-row" key={f.profile.profile_id}><div className="avatar">{f.profile.nickname.slice(0,1)}</div><div className="grow"><Link href={'/players/'+f.profile.profile_id}><strong>{f.profile.nickname}</strong></Link><small>{group==='friends'?w[f.presence==='playing'?'playing':f.presence==='online'?'online':f.presence==='offline'?'offline':'unknown']:'…'}</small></div>{(group==='incoming'?['accept','reject']:group==='outgoing'?['cancel']:['remove']).map(action=><button key={action} disabled={pending} onClick={()=>void act(f.profile.profile_id,action,f.etag)}>{w[action as keyof Words]}</button>)}</div>)}</Card>)}</>;
+    {(['incoming','friends','outgoing'] as const).map(group=><Card key={group}><h2>{w[group]} <span className="count">{data?.[group].length??'—'}</span></h2>{data?.[group].length===0?<Empty text={w.empty}/>:null}{data?.[group].map(f=><div className="friend-row" key={f.profile.profile_id}><div className="avatar">{f.profile.nickname.slice(0,1)}</div><div className="grow"><Link href={'/players/'+f.profile.profile_id}><strong>{f.profile.nickname}</strong></Link> <RankedTag p={f.profile}/><small>{group==='friends'?w[f.presence==='playing'?'playing':f.presence==='online'?'online':f.presence==='offline'?'offline':'unknown']:'…'}</small></div>{(group==='incoming'?['accept','reject']:group==='outgoing'?['cancel']:['remove']).map(action=><button key={action} disabled={pending} onClick={()=>void act(f.profile.profile_id,action,f.etag)}>{w[action as keyof Words]}</button>)}</div>)}</Card>)}</>;
 }
 
 function PlayersView({id,w,me}:{id?:string;w:Words;me?:string}){

@@ -1,7 +1,10 @@
 export type HeroRecognition = { months_supported:number; hero_active:boolean; hero_until:number|null };
 export type SupporterRecognition = { months_supported:number; visible:boolean; public_profile_enabled:boolean };
 export type SupportersDirectory = { supporters:(HeroRecognition & {profile_id:string; nickname:string})[]; next_cursor:string|null; data_as_of:string };
-export type Profile = { profile_id:string; nickname:string; rating?:number; rated_matches?:number; matches_played?:number; wins?:number; losses?:number; abandons?:number; progression_xp?:string; level?:string; supporter?:HeroRecognition };
+export type SeasonBadge = {season_id:number; ended_at_ms:number; rating:number; rated_matches:number; tier?:string|null};
+export type RankedProfile = {season_id:number; started_at_ms:number; ends_at_ms:number; rated_matches:number; wins:number; losses:number; completed_matches:number; latest_badge?:SeasonBadge|null};
+export type RankedArchive = {season_id:number; started_at_ms:number; ends_at_ms:number; rating:number; rated_matches:number; wins:number; losses:number; completed_matches:number; badge:SeasonBadge|null};
+export type Profile = { ranked?:RankedProfile|null; ranked_archive?:RankedArchive[]; profile_id:string; nickname:string; rating?:number; rated_matches?:number; matches_played?:number; wins?:number; losses?:number; abandons?:number; progression_xp?:string; level?:string; supporter?:HeroRecognition };
 /** `leaderboard_listed` is absent on Account APIs without the leaderboard (treated as listed; no toggle is shown). */
 export type Settings = { public_profile_enabled:boolean; public_stats_enabled:boolean; discoverable:boolean; leaderboard_listed?:boolean; locale:'ru'|'en'; timezone:string; version:string };
 /** `social` (linked VK ID) is absent on Account APIs without social sign-in. */
@@ -18,6 +21,6 @@ export type Aggregate = {matches:number; wins:number; losses:number; kills:numbe
 export type Analytics = {summary:Aggregate; classes:(Aggregate & {hero_class:string})[]; rating:{result_id:string;ended_at:string;before:number;after:number;delta:number}[]; rating_truncated:boolean;projection_status:string;pending_results:number;data_as_of:string|null};
 export type Sessions = {sessions:{session_id:string;label:string;created_at:string;last_seen:string;expires_at:string;current:boolean}[]};
 export type Release = {platform:string;architecture:string;version:string;url:string;sha256:string;size_bytes:string;published_at:string;instructions:string;test_status:string};
-export type LeaderboardEntry = {rank:number; profile_id:string; nickname:string; rating:number; rated_matches:number; wins:number; losses:number};
+export type LeaderboardEntry = {ranked?:RankedProfile|null; rank:number; profile_id:string; nickname:string; rating:number; rated_matches:number; wins:number; losses:number};
 /** `me.rank` is null for a newcomer (fewer than `min_rated_matches` rated matches) or an unlisted player. */
-export type Leaderboard = {entries:LeaderboardEntry[]; me:{rank:number|null; rating:number; rated_matches:number; listed:boolean}; min_rated_matches:number; data_as_of:string};
+export type Leaderboard = {entries:LeaderboardEntry[]; me:{ranked?:RankedProfile|null; rank:number|null; rating:number; rated_matches:number; listed:boolean}; min_rated_matches:number; data_as_of:string};
