@@ -100,3 +100,16 @@ matches first) checks the `/leaderboard` page: ordering and own rank, no `MMR` o
 codes in the copy, the 390 px layout, the Settings opt-out (`leaderboard_listed`) hiding
 the player and saying so, and the newcomer progress line on the overview. Screenshots
 land in `.agent/browser/leaderboard/`.
+
+
+## Seasonal rank notices
+
+After `npm run build`, run `npm run test:ranked-notices`. It starts an owned
+loopback Account API fixture and production Next server, then Chrome at
+RU852×393. Focus refresh drives real account updates without a page reload.
+Seven checks cover calibration/promotion, personal-penalty demotion, dismissal,
+repeated/late snapshots, account/season reset and suppression of celebrations
+for a leave penalty. Only calibration/demotion are captured; page overflow,
+console errors and unexpected fixture routes fail the run. Output defaults to
+`.agent/browser/ranked-notices/`; set `OMOBA_SEASON_EVIDENCE_DIR` for a fresh run.
+This is rendered API-fixture evidence, not actual settlement or a physical phone.

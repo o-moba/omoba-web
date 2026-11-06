@@ -1,6 +1,7 @@
 'use client';
 import {useLocale} from '@/components/locale-provider';
-import {rankedProgress,earnedSeasonBadge,rankedWords} from '@/lib/ranked-seasons.mjs';
+import {useEffect,useRef,useState} from 'react';
+import {rankedProgress,earnedSeasonBadge,rankedWords,rankedTransition,type RankedTransition} from '@/lib/ranked-seasons.mjs';
 import type {Profile} from '@/lib/types';
 import './ranked-season.css';
 const fill=(template:string,values:Record<string,string>)=>template.replace(/\{(\w+)\}/g,(_,key)=>values[key]??'');
@@ -35,4 +36,26 @@ export function RankedArchive({p}:{p:Profile}){
       <small>{season.badge?season.badge.tier?words[season.badge.tier]??words.participation:words.participation:words.noBadge}</small>
     </li>)}</ol>}
   </section>;
+}
+
+/** Own account only. A new account/season remounts the baseline silently. */
+export function RankedChangeNotice({p}:{p:Profile}){
+  const progress=rankedProgress(p);
+  if(!progress||progress.seasonId==null)return null;
+  return <RankedChangeTracker key={p.profile_id+':'+progress.seasonId} p={p}/>;
+}
+function RankedChangeTracker({p}:{p:Profile}){
+  const {locale}=useLocale(),words=rankedWords(locale),previous=useRef(p);
+  const [notice,setNotice]=useState<RankedTransition|null>(null);
+  useEffect(()=>{
+    const old=rankedProgress(previous.current),next=rankedProgress(p);
+    if(!old||!next||next.played<=old.played)return;
+    const event=rankedTransition(previous.current,p);
+    previous.current=p;
+    setNotice(event);
+  },[p]);
+  return notice?<div className="notice ranked-change" role="status" aria-live="polite" data-ranked-notice={notice.kind}>
+    <strong>{fill(words[notice.kind],{tier:words[notice.tier]})}</strong>
+    <button type="button" onClick={()=>setNotice(null)} aria-label={words.dismissNotice}>×</button>
+  </div>:null;
 }

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Announce calibration, promotion and personal-penalty demotion for a newly
+  observed own-account Ranked award. The dismissible localized banner follows
+  existing visible-tab account refresh; first loads, account/season changes,
+  stale/repeated snapshots and unknown participation never trigger celebration.
+  RU/EN/ZH copy included; no new dependency or browser-persisted account state.
+- Verification:250 tests passed (3 expected skips), typecheck and production
+  build passed. Seven focused RU852×393 real Chrome/Next notice checks pass;
+  calibration/demotion screenshots inspected. Data is a synthetic loopback API,
+  separate from game PostgreSQL settlement and physical-device verification.
+
 - Show current-season calibration/tier, season dates, earned badge and the latest
   ten archived seasons on profile cards. Seasonal ladder and friend tags use
   current progress; lifetime experience remains separate. Older APIs and hidden
