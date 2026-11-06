@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Verify interrupted Ranked without a rating award through the actual RU phone
+  portal: history and personal rating retain a dash, detail keeps singular
+  «Рейтинговый», and neither team gets a win. Add a focused real Next/Chrome
+  regression; existing production build, synthetic loopback API. Three render
+  checks and257 unit checks PASS (3 expected skips); application source unchanged.
+
 - Complete focused EN852×393 seasonal acceptance on ccee8fa: six real Next/
   Chrome checks PASS for current-season calibration/ladder, historical badge/
   archive, friend tier, hidden statistics and older APIs. Badge/ladder pixels
