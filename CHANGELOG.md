@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Complete focused EN852×393 seasonal acceptance on ccee8fa: six real Next/
+  Chrome checks PASS for current-season calibration/ladder, historical badge/
+  archive, friend tier, hidden statistics and older APIs. Badge/ladder pixels
+  inspected; no page errors/unexpected API calls. Together with seven RU notice
+  checks, accepted unmodified screenshots and source hashes are preserved in
+  omoba-bevy docs/evidence/ranked-2026-11-06. No source/build/runtime change.
+
 - Announce calibration, promotion and personal-penalty demotion for a newly
   observed own-account Ranked award. The dismissible localized banner follows
   existing visible-tab account refresh; first loads, account/season changes,
