@@ -38,7 +38,7 @@ const reservation=createServer();await new Promise(resolve=>reservation.listen(0
 const port=reservation.address().port;await new Promise(resolve=>reservation.close(resolve));
 const origin='http://127.0.0.1:'+port,api='http://127.0.0.1:'+fixture.address().port;
 const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('OMOBA_')));
-Object.assign(env,{PORT:String(port),OMOBA_PORTAL_ORIGIN:origin,OMOBA_ACCOUNT_API_URL:api,OMOBA_ALLOW_INSECURE_LOCAL:'1',NO_PROXY:'127.0.0.1,localhost,::1',no_proxy:'127.0.0.1,localhost,::1'});
+Object.assign(env,{PORT:String(port),OMOBA_MARKET:'ru',OMOBA_PORTAL_ORIGIN:origin,OMOBA_ACCOUNT_API_URL:api,OMOBA_ALLOW_INSECURE_LOCAL:'1',NO_PROXY:'127.0.0.1,localhost,::1',no_proxy:'127.0.0.1,localhost,::1'});
 const log=await open(out+'/next.log','w');
 const child=spawn(process.execPath,['scripts/start.mjs'],{env,stdio:['ignore',log.fd,log.fd]});
 let browser;
