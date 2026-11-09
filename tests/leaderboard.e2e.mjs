@@ -55,10 +55,11 @@ try {
  await a.locator('main').filter({hasText:/скрыт|hidden/i}).waitFor();
  await a.screenshot({path:out+'/hidden.png',fullPage:true});
 
- // Newcomer progress line on the overview for the second fixture.
+ // Current-season placement progress on the overview for the second fixture.
  const b=await login(8);
  const mb=(await call(b,'me')).data;
- if(mb.profile.rated_matches<20){await b.goto(origin+'/me');await b.locator('main').filter({hasText:/Новичок · \d+\/20/}).waitFor();}
+ const placements=mb.profile.ranked?.rated_matches??mb.profile.rated_matches;
+ if(placements<20){await b.goto(origin+'/me');await b.locator('[data-newcomer]').filter({hasText:/(?:Новичок ·|Калибровка|Placement) \d+\/20/}).first().waitFor();}
  await b.close();
  await writeFile(out+'/result.json',JSON.stringify({passed:true,entries:board.entries.length,me:board.me,checks:['ladder ordered, ranked, own row','no MMR/raw codes','390px no horizontal scroll','settings opt-out hides and explains','newcomer progress line'],limitations:['Loopback fixture database; not the RU production API.']},null,2));
  console.log('PASS leaderboard page, opt-out and newcomer line',JSON.stringify(board.me));
