@@ -94,12 +94,15 @@ from one address limit only that address, and that no request through the ingres
 from the real file; `OMOBA_E2E_API_MARKET=global` accepts a global Account API build
 (the VK callback and its limit are checked, VK sign-in success is not).
 
-`npm run test:leaderboard` (after `seed-local-portal`, with the portal on 3010 and the
-Account API on 40550 against the disposable cluster; give fixture 7 at least 20 rated
-matches first) checks the `/leaderboard` page: ordering and own rank, no `MMR` or raw
-codes in the copy, the 390 px layout, the Settings opt-out (`leaderboard_listed`) hiding
-the player and saying so, and the newcomer progress line on the overview. Screenshots
-land in `.agent/browser/leaderboard/`.
+`npm run test:leaderboard` (after the current `seed-local-portal`, with the portal on
+3010 and the Account API on 40550 against the disposable cluster) checks the
+`/leaderboard` page using seeds 7/8/9. Seeds 7 and 9 have different eligible ratings;
+seed 8 has lifetime experience but remains in current-season placement. The test
+requires at least two entries and distinct ratings, verifies API and DOM ordering and
+own rank, checks for no `MMR` or raw codes and no 390 px overflow, exercises the
+Settings opt-out (`leaderboard_listed`), and requires the exact visible seasonal
+placement counter. Screenshots and the observed counters land in
+`.agent/browser/leaderboard/`.
 
 
 ## Seasonal rank notices

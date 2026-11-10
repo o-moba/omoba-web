@@ -1,6 +1,7 @@
 // Leaderboard page and the opt-out toggle against a local portal + Account API
-// (LR-47). Public synthetic fixture key 7 (seed-local-portal); local test
-// services only, never production. Expects fixture 7 to have rated_matches >= 20.
+// (LR-47). Public synthetic fixture keys 7/8/9 (seed-local-portal); local test
+// services only, never production. Seeds 7/9 have distinct eligible ratings;
+// seed 8 has lifetime experience but remains in current-season placement.
 import {chromium} from '@playwright/test';
 import {createPrivateKey,createPublicKey,sign} from 'node:crypto';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -21,9 +22,13 @@ try {
  await settings(a,{leaderboard_listed:true});
  const board=(await call(a,'leaderboard')).data;
  assert.equal(board.min_rated_matches,20);
- assert.ok(board.entries.length>=1);
+ assert.ok(board.entries.length>=2,'at least two leaderboard entries');
+ assert.ok(new Set(board.entries.map(e=>e.rating)).size>=2,'at least two distinct ratings');
  assert.ok(board.entries.every((e,i)=>e.rank===i+1&&typeof e.nickname==='string'&&Number.isInteger(e.rating)));
- assert.ok(board.entries.every((e,i,all)=>i===0||all[i-1].rating>=e.rating),'ordered by rating');
+ const played=e=>e.ranked?.rated_matches??e.rated_matches;
+ const expected=[...board.entries].sort((x,y)=>y.rating-x.rating||played(y)-played(x)||x.profile_id.localeCompare(y.profile_id));
+ assert.deepEqual(board.entries.map(e=>e.profile_id),expected.map(e=>e.profile_id),'rating, seasonal count and profile-id ordering');
+ assert.ok(board.entries.some(e=>e.profile_id===me.profile.profile_id),'own profile appears in the ladder');
  assert.ok(Number.isInteger(board.me.rank),'the fixture is ranked');
  assert.equal(board.me.listed,true);
 
@@ -32,6 +37,8 @@ try {
  await a.locator('[data-leaderboard]').waitFor();
  const rows=await a.locator('[data-leaderboard] tbody tr').count();
  assert.equal(rows,board.entries.length);
+ const visibleNames=await a.locator('[data-leaderboard] tbody tr td:nth-child(2) a').allInnerTexts();
+ assert.deepEqual(visibleNames,board.entries.map(e=>e.nickname),'DOM preserves the API ordering');
  const text=await a.locator('main').innerText();
  assert.ok(text.includes(me.profile.nickname),'own nickname on the ladder');
  assert.ok(!/MMR/.test(text),'no MMR jargon');
@@ -55,14 +62,22 @@ try {
  await a.locator('main').filter({hasText:/скрыт|hidden/i}).waitFor();
  await a.screenshot({path:out+'/hidden.png',fullPage:true});
 
- // Current-season placement progress on the overview for the second fixture.
+ // The second fixture has lifetime experience but is still in seasonal placement.
+ // Its exact current-season counter and visible copy are mandatory, not conditional.
  const b=await login(8);
  const mb=(await call(b,'me')).data;
- const placements=mb.profile.ranked?.rated_matches??mb.profile.rated_matches;
- if(placements<20){await b.goto(origin+'/me');await b.locator('[data-newcomer]').filter({hasText:/(?:Новичок ·|Калибровка|Placement) \d+\/20/}).first().waitFor();}
+ assert.ok(mb.profile.rated_matches>=board.min_rated_matches,'second fixture has lifetime experience');
+ assert.ok(mb.profile.ranked&&Number.isInteger(mb.profile.ranked.rated_matches),'second fixture has current-season progress');
+ const placements=mb.profile.ranked.rated_matches;
+ assert.ok(placements>=0&&placements<board.min_rated_matches,'second fixture is in seasonal placement');
+ await b.goto(origin+'/me');
+ const newcomer=b.locator('[data-newcomer]').first();
+ await newcomer.waitFor();
+ const placementText=(await newcomer.innerText()).replace(/\s+/g,' ').trim();
+ assert.match(placementText,new RegExp(`(?:Калибровка|Placement) ${placements}/${board.min_rated_matches}(?:\\D|$)`),'visible exact current-season progress');
  await b.close();
- await writeFile(out+'/result.json',JSON.stringify({passed:true,entries:board.entries.length,me:board.me,checks:['ladder ordered, ranked, own row','no MMR/raw codes','390px no horizontal scroll','settings opt-out hides and explains','newcomer progress line'],limitations:['Loopback fixture database; not the RU production API.']},null,2));
- console.log('PASS leaderboard page, opt-out and newcomer line',JSON.stringify(board.me));
+ await writeFile(out+'/result.json',JSON.stringify({passed:true,entries:board.entries.length,ratings:board.entries.map(e=>({profile_id:e.profile_id,nickname:e.nickname,rating:e.rating,rank:e.rank})),me:board.me,placement:{lifetime_rated_matches:mb.profile.rated_matches,season_rated_matches:placements,text:placementText},checks:['two or more entries with distinct ratings','API and DOM ordering, ranked own row','no MMR/raw codes','390px no horizontal scroll','settings opt-out hides and explains','mandatory current-season placement progress line'],limitations:['Loopback fixture database; not the RU production API.']},null,2));
+ console.log('PASS leaderboard ordering, opt-out and mandatory seasonal progress',JSON.stringify({entries:board.entries.length,placement:placementText}));
 } finally {
  if(a){try{await settings(a,{leaderboard_listed:true});}catch{} await call(a,'auth/logout','POST',{});}
  await browser.close();
