@@ -9,6 +9,10 @@ test('BFF denies arbitrary proxies, trusted methods and native proofs',()=>{
   assert.equal(allowedPath('matches/'+'a'.repeat(64),'GET'),true);
   assert.equal(allowedPath('me/settings','PATCH'),true);
   assert.equal(allowedPath('me/settings','GET'),false);
+  // The leaderboard is a read; the browser cannot write to it or reach other players' rows.
+  assert.equal(allowedPath('leaderboard','GET'),true);
+  for (const method of ['POST','PATCH','DELETE']) assert.equal(allowedPath('leaderboard',method),false);
+  for (const path of ['leaderboard/'+'a'.repeat(64),'leaderboard/admin','me/leaderboard']) assert.equal(allowedPath(path,'GET'),false);
 });
 test('mutations require exact origin and matching unpredictable cookie token',()=>{
   const token='a'.repeat(64);

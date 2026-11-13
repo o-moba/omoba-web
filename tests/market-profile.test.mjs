@@ -115,9 +115,9 @@ test('pages belong to their feature; nested paths follow their page', () => {
 test('nav, mobile nav and guest buttons show only the pages of the market', () => {
   assert.deepEqual(portalNav(PORTAL_NAV, GLOBAL), [...PORTAL_NAV]);
   assert.deepEqual(portalNav(PORTAL_NAV), [...PORTAL_NAV]);
-  const free = ['/me', '/me/matches', '/me/stats', '/players', '/friends', '/workshop', '/devices', '/settings'];
+  const free = ['/me', '/me/matches', '/me/stats', '/leaderboard', '/players', '/friends', '/workshop', '/devices', '/settings'];
   // RU: the Hero pages (YooKassa, LR-67) next to the free pages, no Ekza page.
-  assert.deepEqual(portalNav(PORTAL_NAV, RU), ['/me', '/me/matches', '/me/stats', '/players', '/friends', '/workshop', '/supporter', '/supporters', '/devices', '/settings']);
+  assert.deepEqual(portalNav(PORTAL_NAV, RU), ['/me', '/me/matches', '/me/stats', '/leaderboard', '/players', '/friends', '/workshop', '/supporter', '/supporters', '/devices', '/settings']);
   assert.deepEqual(portalNav(PORTAL_NAV, CN), free);
   assert.deepEqual(portalNav(MOBILE_NAV, RU), ['/me', '/me/matches', '/workshop', '/supporters', '/friends']);
   assert.deepEqual(portalNav(GUEST_LINKS, GLOBAL), ['/creators', '/sponsor', '/market']);

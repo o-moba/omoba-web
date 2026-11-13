@@ -1,13 +1,14 @@
 /** Presentation only: settled server results remain the source of truth. */
 export function resultTone(won, state) {
-  if (state !== 'completed') return 'neutral';
+  if (state !== 'completed' && !(['interrupted', 'remade'].includes(state) && won === false)) return 'neutral';
   return won === true ? 'won' : won === false ? 'lost' : 'neutral';
 }
 
 export function playerResult(match, profileId) {
   const player = match.participants.find(participant => participant.profile_id === profileId);
+  if (player?.participation?.abandoned && (match.outcome === 'remade' || (match.outcome === 'interrupted' && match.unrated_reason === 'abandoned_reaped')) && player.rating != null) return false;
   if (!player || !match.winner || match.outcome !== 'completed' || !match.participants.some(participant => participant.team === match.winner)) return null;
-  return player.team === match.winner;
+  return player.team === match.winner && !player.participation?.abandoned;
 }
 
 export function teamSummaries(match) {
@@ -45,14 +46,55 @@ export function ratingBounds(points) {
   return { min: Math.floor((low - padding) / 10) * 10, max: Math.ceil((high + padding) / 10) * 10 };
 }
 
+/**
+ * The game's hero classes (shared/src/lib.rs `HeroClass::ALL`, names from client/i18n
+ * hero.json). The portal filters and labels by this list; an unknown class keeps its id.
+ */
+export const HERO_CLASSES = Object.freeze([
+  { id: 'warrior', en: 'Warrior', ru: 'Воин', zh: '战士' },
+  { id: 'mage', en: 'Mage', ru: 'Маг', zh: '法师' },
+  { id: 'ranger', en: 'Ranger', ru: 'Следопыт', zh: '游侠' },
+  { id: 'cleric', en: 'Cleric', ru: 'Жрец', zh: '牧师' },
+  { id: 'warden', en: 'Warden', ru: 'Хранитель', zh: '守林人' },
+  { id: 'dawnweaver', en: 'Dawnweaver', ru: 'Ткач рассвета', zh: '织晓者' },
+  { id: 'wildspark', en: 'Wildspark', ru: 'Дикая искра', zh: '狂野星火' },
+  { id: 'cinderforge', en: 'Cinderforge', ru: 'Горнило', zh: '烬铸者' },
+  { id: 'edgeweaver', en: 'Edgeweaver', ru: 'Клинок граней', zh: '织刃者' },
+  { id: 'stormfist', en: 'Stormfist', ru: 'Грозовой кулак', zh: '雷拳' },
+  { id: 'veilstalker', en: 'Veilstalker', ru: 'Сумрачный ловец', zh: '暮影猎手' },
+  { id: 'emberveil', en: 'Emberveil', ru: 'Огненная вуаль', zh: '焰纱' },
+  { id: 'orbitwright', en: 'Orbitwright', ru: 'Мастер орбиты', zh: '御轨师' },
+  { id: 'riftshot', en: 'Riftshot', ru: 'Разломный стрелок', zh: '裂隙射手' },
+  { id: 'chainkeeper', en: 'Chainkeeper', ru: 'Хранитель цепей', zh: '锁链守望者' },
+  { id: 'frostguard', en: 'Frostguard', ru: 'Ледяной бастион', zh: '霜卫' },
+  { id: 'adventurer', en: 'Adventurer', ru: 'Авантюрист', zh: '寻宝者' },
+].map(Object.freeze));
+const CLASS_NAMES = new Map(HERO_CLASSES.map(hero => [hero.id, hero]));
+/** Portraits exist for the first four classes; the others get the neutral glyph. */
 const CLASS_ART = Object.freeze({ warrior: 'warrior', ranger: 'ranger', mage: 'mage', cleric: 'cleric' });
 export function classArtwork(name) {
   const key = String(name).toLowerCase();
   return Object.hasOwn(CLASS_ART, key) ? '/art/portal/classes/' + CLASS_ART[key] + '.png' : null;
 }
-export function classDisplayName(name) {
-  const key = String(name).toLowerCase();
-  return Object.hasOwn(CLASS_ART, key) ? key[0].toUpperCase() + key.slice(1) : String(name);
+export function classDisplayName(name, locale = 'en') {
+  const hero = CLASS_NAMES.get(String(name).toLowerCase());
+  return hero ? hero[locale] || hero.en : String(name);
+}
+/**
+ * The server's `unrated_reason` codes as a sentence (the game's career.unrated.* wording);
+ * an unknown or future code never reaches the page as text.
+ */
+export function unratedReason(code, words) {
+  switch (code) {
+    case 'casual_queue': return words.unratedCasual;
+    case 'allocated_bots': return words.unratedBots;
+    case 'server_interrupted': return words.unratedServer;
+    case 'not_completed': return words.unratedNotCompleted;
+    case 'abandoned_reaped': return words.unratedAbandoned;
+    case 'duration_capped': return words.unratedCapped;
+    case 'remake': return words.unratedRemake;
+    default: return words.unratedOther;
+  }
 }
 export function teamDisplayName(name, locale) {
   const names = { green: { en: 'Green', ru: 'зелёных', zh: '绿色' }, blue: { en: 'Blue', ru: 'синих', zh: '蓝色' } };

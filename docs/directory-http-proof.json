@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "scope": "RU loopback real Account API/PostgreSQL and production Next, publicly known fixture key; no client routing, live signing key, host or deployment",
+  "checks": [
+    "real Rust publisher to production Next preserves exact signed bytes with no browser account headers or cookies",
+    "native offline verifier accepts the document delivered through the portal and preserves closed admission policy",
+    "anonymous HEAD",
+    "mutation method rejected",
+    "request cannot choose a foreign account region",
+    "corrupted publication unavailable, never reflected or treated as an empty directory",
+    "atomic new signed publication visible without restarting API or portal"
+  ],
+  "unexpected_requests": [],
+  "private_fixture_removed": true,
+  "api_binary_sha256": "2742a5def9afe6268fa43c4174c47862db4e5bdb9e390f0facbca441a826154d",
+  "signer_binary_sha256": "dea4d28fa44674a1140e4b716364ec399f17b7c2027d84ee21e8340682e6797d"
+}
