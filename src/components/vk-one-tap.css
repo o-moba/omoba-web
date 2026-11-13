@@ -1,0 +1,8 @@
+.vk-one-tap{width:100%;min-width:0;margin:20px 0}
+.vk-one-tap>div[aria-label]{width:100%;min-height:108px}
+.vk-one-tap>[hidden]{display:none}
+.vk-one-tap>p{margin:12px 0;font-size:13px}
+.vk-fallback{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.vk-fallback>summary{cursor:pointer;color:var(--muted);font-size:13px;padding:6px 0}
+.vk-fallback>summary:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
+.vk-fallback .vk-buttons{margin-top:12px}

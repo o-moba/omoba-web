@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { api, ApiFailure } from "@/lib/client-api";
 import { Brand } from "@/components/brand";
 import { LanguageSelector, useLocale } from "@/components/locale-provider";
+import { useMarket } from "@/components/market-profile";
+import { LegalLinks } from "@/components/legal";
 import { creatorText } from "@/lib/creator-translations";
 import type { Account } from "@/lib/types";
 import type { AssetCatalog, CatalogIcon } from "@/lib/asset-catalog-types";
@@ -62,6 +64,7 @@ export default function Workshop({
   initiallyUnavailable,
   accountDisabled = false,
   siteUrl = DEFAULT_SITE_URL,
+  studioUrl,
 }: {
   catalog: WorkshopCatalog;
   assets: AssetCatalog;
@@ -69,8 +72,15 @@ export default function Workshop({
   initiallyUnavailable: boolean;
   accountDisabled?: boolean;
   siteUrl?: string;
+  /** Studio of the active contour; null hides hosted approval links. */
+  studioUrl: string | null;
 }) {
   const { locale, t } = useLocale();
+  // Without the Ekza feature (ru, cn): no Ekza library panel, no asset library, market or Studio links.
+  const market = useMarket();
+  const { ekza, vkSignIn } = market.features;
+  // Where the market labels the workshop experimental (marketLanding, LR-22).
+  const experimental = market.landing.workshop === "experimental";
   const ct = (source: string | undefined, values: Record<string, string | number> = {}) => creatorText(locale, source, values);
   const [document, setDocument] = useState<ClassBuildDocument>(() =>
     defaultBuild(catalog, "dawnweaver"),
@@ -207,7 +217,7 @@ export default function Workshop({
   useEffect(() => {
     if (!account) return;
     void refreshBuilds();
-    void refreshLibrary();
+    if (ekza) void refreshLibrary();
   }, [account?.profile.profile_id]);
   async function refreshAccount() {
     setBusy(true);
@@ -389,6 +399,7 @@ export default function Workshop({
   }
   const verificationUrl = library?.verificationUrl
     ? safeLibraryVerificationUrl(library.verificationUrl, {
+        studio: studioUrl,
         prototype: library.prototype === true,
         loopback:
           hydrated &&
@@ -401,12 +412,13 @@ export default function Workshop({
     <div className="creator-page workshop-page" lang={locale === "zh" ? "zh-CN" : locale}>
       <a className="creator-skip" href="#workshop-content">{t("Skip to class editor")}</a>
       <header className="creator-header">
-        <Link href="/creators" className="creator-brand">
+        <Link href={ekza ? "/creators" : "/workshop"} className="creator-brand">
           <Brand section={t("Class workshop")} />
         </Link>
         <nav aria-label={t("Workshop navigation")}>
           <a href={siteUrl}>{t("OMOBA website ↗")}</a>
-          <Link href="/creators">{t("Asset library")}</Link>
+          {ekza ? <Link href="/creators">{t("Asset library")}</Link> : null}
+          {ekza ? <Link href="/market">{t("Market")}</Link> : null}
           <Link href="/me" prefetch={false}>{t("Player portal")}</Link>
           <a href="#workshop-account">
             {account ? t("My account") : t("Browser draft")}
@@ -415,6 +427,11 @@ export default function Workshop({
         <LanguageSelector />
       </header>
       <main id="workshop-content">
+        {experimental ? (
+          <p className="notice workshop-experimental" role="note" data-experimental>
+            {t("Experimental: the class workshop is a prototype. Class builds are drafts and cannot be used in online matches.")}
+          </p>
+        ) : null}
         <section className="workshop-heading">
           <div>
             <span className="creator-overline">{t("OMOBA / CLASS WORKSHOP")}</span>
@@ -783,15 +800,19 @@ export default function Workshop({
                       : t("Guest · saved only in this browser")}
               </p>
               {accountDisabled ? (
-                <p>{t("Browser drafts and JSON downloads work here. Sign-in, account saves and Ekza library connection are unavailable in this public prototype.")}</p>
+                <p>{ekza
+                  ? t("Browser drafts and JSON downloads work here. Sign-in, account saves and Ekza library connection are unavailable in this public prototype.")
+                  : t("Browser drafts and JSON downloads work here. Sign-in and account saves are unavailable in this public prototype.")}</p>
               ) : !account ? (
                 <>
-                  <p>{t("Sign in through the game to save and reopen private builds on another browser. The draft here stays intact.")}</p>
+                  <p>{vkSignIn
+                    ? t("Sign in to save and reopen private builds on another browser. The draft here stays intact.")
+                    : t("Sign in through the game to save and reopen private builds on another browser. The draft here stays intact.")}</p>
                   <Link
                     className="creator-primary"
                     href="/login?returnTo=/workshop"
                     prefetch={false}
-                  >{t("Sign in with game account ↗")}</Link>
+                  >{vkSignIn ? t("Sign in ↗") : t("Sign in with game account ↗")}</Link>
                   <button
                     className="workshop-text-button"
                     onClick={() => void refreshAccount()}
@@ -849,7 +870,7 @@ export default function Workshop({
                 </>
               )}
             </section>
-            {account ? (
+            {account && ekza ? (
               <section
                 className="workshop-panel"
                 aria-label={t("Ekza library connection")}
@@ -925,7 +946,7 @@ export default function Workshop({
               <span className="creator-overline">{t("04 / CREATIVE REFERENCES")}</span>
               <h2>{t("Visual needs for this combination")}</h2>
             </div>
-            <Link href={"/creators?class=" + document.recipe.core}>{t("Explore")}{" "}{ct(core.name)}{" "}{t("defaults ↗")}</Link>
+            {ekza ? <Link href={"/creators?class=" + document.recipe.core}>{t("Explore")}{" "}{ct(core.name)}{" "}{t("defaults ↗")}</Link> : null}
           </div>
           <p className="workshop-small">{t("Core basic attack plus your selected skills. Borrowing a skill does not equip its home class’s weapon. These references do not grant cosmetic approval.")}</p>
           <div className="workshop-asset-list">
@@ -971,6 +992,7 @@ export default function Workshop({
           <div>
             <strong>{t("OMOBA / CLASS WORKSHOP")}</strong>
             <p>{t("Private drafts. Real game rules. Local experiments.")}</p>
+            <LegalLinks />
           </div>
           <details>
             <summary>{t("Source & compatibility")}</summary>

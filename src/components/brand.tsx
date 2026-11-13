@@ -1,3 +1,5 @@
+import { ContourBadge } from '@/components/contour';
+
 /** The game-owned mark stays intact; section names are navigation, not sub-brands. */
 export function Brand({ section }: { section: string }) {
   return (
@@ -7,6 +9,7 @@ export function Brand({ section }: { section: string }) {
         <b>OMOBA</b>
         <small>{section}</small>
       </span>
+      <ContourBadge />
     </span>
   );
 }
