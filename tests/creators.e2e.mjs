@@ -145,9 +145,16 @@ try {
   assert.deepEqual(brief.profile, chosen.profile);
   assert.match(brief.workflow, /not exact-slot/);
   const studio = card.getByRole("link", { name: "Start a Studio draft" });
+  // Wildspark's Q guns are contributed as one repeater + launcher set.
   assert.equal(
     await studio.getAttribute("href"),
-    "https://studio.ekza.io/studio?view=new",
+    "https://hub.ekza.io/studio?view=new&kind=weapon&project=omoba&requirement=wildspark.handheld.set",
+  );
+  assert.equal(
+    await card
+      .getByRole("link", { name: "Community sets in the market ↗" })
+      .getAttribute("href"),
+    "/market#wildspark",
   );
   await card
     .getByText("Default & technical reference", { exact: true })

@@ -17,7 +17,7 @@ The portable document has exactly four fields:
   "description": "A local experiment",
   "recipe": {
     "schema_version": 1,
-    "catalog_revision": "standard-kits-7",
+    "catalog_revision": "standard-kits-8",
     "core": "dawnweaver",
     "passive": "radiance",
     "skills": ["rift_needle", "dawn_barrier", "dawn_field", "dawn_ray"]
@@ -62,7 +62,7 @@ An authenticated user can start the existing separate Studio device flow, visit 
 
 This is read-only library access, not unified SSO: the current Registry protocol exposes a username rather than an immutable account subject. Connecting a library does not approve assets or abilities for the game. Upstream outage does not silently unlink an existing connection.
 
-Production verification links must use `https://studio.ekza.io/studio?view=connect`. A loopback verification link is accepted only when both the portal is loopback and the API explicitly marks the response `prototype: true`. The interface labels the local synthetic Registry fixture visibly. No hosted Ekza account is connected by that demo fixture.
+Production verification links must use `https://hub.ekza.io/studio?view=connect`. A loopback verification link is accepted only when both the portal is loopback and the API explicitly marks the response `prototype: true`. The interface labels the local synthetic Registry fixture visibly. No hosted Ekza account is connected by that demo fixture.
 
 ## Refresh and verify
 

@@ -321,11 +321,18 @@ export function derivedAssetRequirements(document, assets) {
           r.classIds.includes(document.recipe.core))),
   );
 }
+/**
+ * The Studio approval page of the active contour (`context.studio`, from
+ * studioOrigin() on the server) or an explicitly labelled local fixture. No
+ * Studio (a misconfigured contour) accepts nothing but the fixture.
+ */
 export function safeLibraryVerificationUrl(value, context = {}) {
   try {
     const url = new URL(value);
-    const production =
-      url.protocol === "https:" && url.origin === "https://studio.ekza.io";
+    const hosted =
+      typeof context.studio === "string" &&
+      url.protocol === "https:" &&
+      url.origin === context.studio;
     const fixture =
       context.prototype === true &&
       context.loopback === true &&
@@ -334,7 +341,7 @@ export function safeLibraryVerificationUrl(value, context = {}) {
     if (
       url.username ||
       url.password ||
-      (!production && !fixture) ||
+      (!hosted && !fixture) ||
       url.pathname !== "/studio" ||
       url.searchParams.get("view") !== "connect"
     )

@@ -9,3 +9,5 @@ playwright-report/
 test-results/
 .DS_Store
 .vercel/
+# Generated, integrity-checked game distribution; rebuilt from the game repository.
+public/game/
